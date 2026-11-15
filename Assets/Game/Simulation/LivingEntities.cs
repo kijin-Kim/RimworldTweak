@@ -25,8 +25,17 @@ namespace RimworldTweak.Simulation
         public int ReservedAmount { get { var sum = 0; foreach (var amount in reservations.Values) sum += amount; return sum; } }
         public int AvailableAmount => Amount - ReservedAmount;
         public int AccessibleAmount => Exists && !OwnerId.HasValue ? Amount : 0;
-        public int? OwnerId { get; private set; }
-        public long OwnerActionId { get; private set; }
+        internal InteractionClaim Claim { get; private set; } = new InteractionClaim();
+        public int? StorageSlotId { get; internal set; }
+        internal long CreatedTick { get; set; } = -1;
+        public int? OwnerId => Claim.OwnerId;
+        public long OwnerActionId => Claim.ActionId;
+        internal void AttachClaim(InteractionClaim claim) { Claim = claim; }
+        internal void DetachStorage() { StorageSlotId = null; Claim = new InteractionClaim(); reservations.Clear(); IsInUse = false; }
+        // Transfers never count as production, consumption, or external mutation.
+        internal void TransferOut(int amount) { Amount -= amount; }
+        internal void TransferIn(int amount) { Amount += amount; }
+
         public bool IsInUse { get; private set; }
         public bool Exists { get; private set; } = true;
         public int ConsumedAmount { get; private set; }
@@ -36,7 +45,8 @@ namespace RimworldTweak.Simulation
         internal bool Reserve(int owner, long actionId, int amount)
         {
             if (!Exists || amount <= 0 || Amount < amount || OwnerId.HasValue) return false;
-            OwnerId = owner; OwnerActionId = actionId; reservations.Add(owner, amount); return true;
+            if (!Claim.Acquire(owner, actionId)) return false;
+            reservations.Add(owner, amount); return true;
         }
         internal void Release(int owner, long actionId)
         {
@@ -45,7 +55,7 @@ namespace RimworldTweak.Simulation
         }
         private void ClearOwner()
         {
-            reservations.Clear(); OwnerId = null; OwnerActionId = 0; IsInUse = false;
+            reservations.Clear(); Claim.Clear(); IsInUse = false;
         }
         internal bool HasReservation(int owner, long actionId, int amount) => Exists && OwnerId == owner && OwnerActionId == actionId && Amount >= amount && reservations.TryGetValue(owner, out var held) && held == amount;
         internal void Occupy(int owner, long actionId)

@@ -54,3 +54,8 @@ E1은 실제 B 검사를 실행해 결과 판정까지 확인해야 완료다. E
 다음 변경은 [R 소집·상호작용 단일 점유 계획](Plans/Interaction-Occupancy-Draft.md)이다. 명령 취소와 점유 해제, 바닥 수면자의 빈 침대 재선택을 포함하며 구현·자동검증했다.
 
 현재R/점유규칙과최종87개검사·Windows결과는 [점유검증](Verification/2026-11-15-occupancy.md)을따른다. 이전검증수치는당시버전의기록이다.
+
+
+## 채집·운반·저장 구현
+
+[공통 계약](Contracts/GatherHaulStorage.md)과 [작업 계획](Plans/Task3-Gather-Haul-Storage.md)에 따른 채집·운반·저장 및 생활/점유 연계를 구현했다. [검증 기록](Verification/2026-11-15-work.md)을 참고한다.

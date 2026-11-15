@@ -27,3 +27,8 @@
 이동·시간 조작은 사용자 정상 확인을 받았다. 생활·소집·점유도 자동 검증 및 사용자 정상 확인 보고를 받았다.
 
 [R 토글·단일 점유 계획](Docs/Plans/Interaction-Occupancy-Draft.md)과 [공통 계약](Docs/Contracts/InteractionOccupancy.md)에 따라 구현·자동 검증했다. 2026-11-15 사용자 정상 확인 보고를 받았다.
+
+
+## 채집·운반·저장 구현
+
+[공통 계약](Docs/Contracts/GatherHaulStorage.md)과 [작업 계획](Docs/Plans/Task3-Gather-Haul-Storage.md)에 따른 채집·운반·저장 및 생활/점유 연계를 구현했다. [검증 기록](Docs/Verification/2026-11-15-work.md)을 참고한다.

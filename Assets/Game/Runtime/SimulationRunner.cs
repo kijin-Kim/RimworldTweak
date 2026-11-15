@@ -12,7 +12,7 @@ namespace RimworldTweak.Runtime
 
         private void Awake()
         {
-            if (Session == null) Initialize(LivingScenario.Create());
+            if (Session == null) Initialize(WorkScenario.Create());
         }
 
         private void Update() => AdvanceTime((decimal)Time.unscaledDeltaTime);
@@ -45,6 +45,10 @@ namespace RimworldTweak.Runtime
         }
 
         public bool MoveColonist(int id, GridPosition target) => Session.World.QueueMove(id, target);
+        public bool DesignateGather(int id, bool designated) => Session.World.QueueDesignateGather(id, designated);
+        public bool CreateStorage(GridPosition first, GridPosition second) => Session.World.QueueCreateStorage(first, second);
+        public bool SetStorageFilter(int id, ResourceKind kind, bool allowed) => Session.World.QueueStorageFilter(id, kind, allowed);
+        public bool DeleteStorage(int id) => Session.World.QueueDeleteStorage(id);
         public bool ToggleDraft(int id) => Session.World.ToggleDraft(id);
     }
 }

@@ -11,7 +11,7 @@ using UnityEngine.UI;
 
 namespace RimworldTweak.Presentation
 {
-    public sealed class SettlementView : MonoBehaviour
+    public sealed partial class SettlementView : MonoBehaviour
     {
         private readonly List<WorldMarker> markers = new List<WorldMarker>();
         private readonly List<Button> colonistButtons = new List<Button>();
@@ -85,7 +85,7 @@ namespace RimworldTweak.Presentation
                 case Key.Period:
                     if (!Runner.IsPaused) return false;
                     Runner.StepOnce(); break;
-                case Key.Escape: ClearSelection(); return true;
+                case Key.Escape: if (CancelWorkTool()) return true; ClearSelection(); ClearObjectSelection(); return true;
                 case Key.R: return ToggleDraftSelected();
                 default: return false;
             }
@@ -133,7 +133,10 @@ namespace RimworldTweak.Presentation
             if (Runner == null) return false;
             var world = Runner.Session.World;
             if (position.X < 0 || position.Y < 0 || position.X >= world.Width || position.Y >= world.Height) return false;
+            if (TextInputFocused()) return false;
+            if (HandleWorkToolClick(position, rightButton, out var handled)) return handled;
             if (rightButton) return MoveSelected(position);
+            SelectWorldObject(position);
             int? found = null;
             foreach (var colonist in world.Colonists)
                 if (colonist.Position == position && (!found.HasValue || colonist.Id < found.Value)) found = colonist.Id;
@@ -165,12 +168,13 @@ namespace RimworldTweak.Presentation
             if (!ReferenceEquals(displayedWorld, world))
             {
                 SelectedColonistId = null;
+                ResetWorkView(world);
                 DrawWorld(world);
                 EnsureSelectionUI(world);
                 displayedWorld = world;
                 displayedRevision = world.MapRevision;
             }
-            else if (displayedRevision != world.MapRevision)
+            else if (displayedRevision != world.MapRevision || displayedResourceCount != world.Resources.Count)
             {
                 DrawWorld(world);
                 displayedRevision = world.MapRevision;
@@ -184,11 +188,12 @@ namespace RimworldTweak.Presentation
             Speed1Button.GetComponent<Image>().color = Runner.SpeedMultiplier == 1 ? new Color(0.30f, 0.44f, 0.42f) : new Color(0.19f, 0.29f, 0.31f);
             Speed3Button.GetComponent<Image>().color = Runner.SpeedMultiplier == 3 ? new Color(0.30f, 0.44f, 0.42f) : new Color(0.19f, 0.29f, 0.31f);
             RefreshSelection(world);
+            RefreshWorkUI(world);
         }
 
         private void BuildUI()
         {
-            font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            font = Font.CreateDynamicFontFromOSFont(new[] { "Malgun Gothic", "Arial" }, 16);
             square = MakeSprite(false, out squareTexture);
             triangle = MakeSprite(true, out triangleTexture);
             outlineSprite = MakeOutlineSprite(out outlineTexture);
@@ -239,6 +244,7 @@ namespace RimworldTweak.Presentation
             selectedOutline = Outline("Selected colonist", SelectedColor);
             destinationOutline = Outline("Active destination", SelectedColor);
             pendingOutline = Outline("Pending destination", PendingColor);
+            BuildWorkUI();
         }
 
         private RectTransform Outline(string name, Color color)
@@ -326,6 +332,10 @@ namespace RimworldTweak.Presentation
             }
             for (var i = 0; i < colonistButtons.Count && i < world.Colonists.Count; i++)
                 colonistButtons[i].GetComponent<Image>().color = SelectedColonistId == world.Colonists[i].Id ? new Color(0.39f, 0.38f, 0.22f) : new Color(0.19f, 0.29f, 0.31f);
+            if (selected != null && !selected.IsDrafted && selected.LifeActivity == LifeActivity.Idle && (selected.IsWorking || !string.IsNullOrEmpty(selected.WorkReason)))
+                LifeText.text = "WORK " + selected.WorkActivity + "  TARGET " + selected.WorkTargetId +
+                    "\nCARGO " + selected.CargoKind + " " + selected.CargoAmount + "\n" + selected.WorkReason +
+                    "\nFood: " + LifeReasonMessage(selected.FoodReason) + " / Sleep: " + LifeReasonMessage(selected.SleepReason);
             feedbackText.text = ErrorMessage(world.LastCommandError);
         }
 
@@ -338,6 +348,7 @@ namespace RimworldTweak.Presentation
                 case "BlockedDestination": return "Target is blocked. Previous order kept.";
                 case "Unreachable": return "No route to target. Previous order kept.";
                 case "OccupiedTile": return "Cannot block an occupied tile.";
+                case "WorkBusy": return "Automatic work active. Press R to draft, then move.";
                 case "LifeBusy": return "Automatic life active. Press R to draft, then move.";
                 default: return string.IsNullOrEmpty(code) ? "" : code;
             }
@@ -404,7 +415,6 @@ namespace RimworldTweak.Presentation
                 var sharesResource = false;
                 foreach (var resource in world.Resources)
                     if (resource.Exists && resource.Amount > 0 && resource.Position == colonist.Position) sharesResource = true;
-                // Keep the logical tile center, but leave the resource's upper amount band visible.
                 rect.sizeDelta = Vector2.one * cell * (sharesResource ? 0.24f : 0.57f);
                 rect.SetAsLastSibling();
             }
@@ -452,6 +462,7 @@ namespace RimworldTweak.Presentation
 
         private void DrawWorld(WorldState world)
         {
+            displayedResourceCount = world.Resources.Count;
             var cell = 552f / Mathf.Max(world.Width, world.Height);
             board.sizeDelta = new Vector2(cell * world.Width, cell * world.Height);
             var blocked = new HashSet<GridPosition>(world.BlockedTiles);
@@ -612,6 +623,7 @@ namespace RimworldTweak.Presentation
             if (triangleTexture != null) Destroy(triangleTexture);
             if (squareTexture != null) Destroy(squareTexture);
             if (outlineTexture != null) Destroy(outlineTexture);
+            if (font != null) Destroy(font);
             markers.Clear();
             colonistButtons.Clear();
             pathDots.Clear();

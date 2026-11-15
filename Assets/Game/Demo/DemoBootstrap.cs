@@ -20,6 +20,10 @@ namespace RimworldTweak.Demo
         private sealed class SmokeReport
         {
             public bool passed;
+            public bool workPassed, workDraftDropPassed, workFilterRecoveryPassed, workSpeedEquivalent;
+            public int producedWood, producedIngredients, storedWood, storedIngredients, workConsumedIngredients;
+            public long workStarvationTicks;
+            public long workTicks;
             public string error;
             public long automaticTicks;
             public long exactTicks;
@@ -133,6 +137,7 @@ namespace RimworldTweak.Demo
                 report.screenshot = Path.Combine(output, "demo.png");
             })) yield break;
             if (!Check(CheckLiving)) yield break;
+            if (!Check(CheckWork)) yield break;
             yield return null;
             yield return new WaitForEndOfFrame();
             if (!Check(() => ScreenCapture.CaptureScreenshot(report.screenshot))) yield break;
@@ -323,6 +328,65 @@ namespace RimworldTweak.Demo
             report.livingObjectsAfter = View.TickText.canvas.GetComponentsInChildren<Transform>(true).Length;
             Require(report.livingObjectsAfter == report.livingObjectsBefore, "Living UI count after progress");
             report.livingPassed = true;
+        }
+
+        private void ConfigureWork()
+        {
+            Runner.Initialize(WorkScenario.Create()); Runner.SetPaused(true); View.RefreshNow();
+            View.StorageButton.onClick.Invoke();
+            Require(View.HandleMapClick(new GridPosition(0, 4), false), "Work first corner");
+            Require(View.HandleMapClick(new GridPosition(0, 7), false), "Work second corner");
+            View.GatherButton.onClick.Invoke();
+            foreach (var node in Runner.Session.World.Gatherables) Require(View.HandleMapClick(node.Position, false), "Gather designation input");
+            View.SetWorkTool(SettlementView.WorkTool.None);
+        }
+        private void CheckWorkConservation()
+        {
+            var world = Runner.Session.World;
+            foreach (var kind in new[] { ResourceKind.Wood, ResourceKind.Ingredients, ResourceKind.Meal })
+            {
+                var initial = kind == ResourceKind.Wood ? 40 : kind == ResourceKind.Meal ? 18 : 0;
+                var expected = initial + world.ProducedAmount(kind) + world.Resources.Where(r => r.Kind == kind).Sum(r => r.AddedAmount - r.RemovedAmount - r.ConsumedAmount);
+                Require(expected == world.ResourceTotal(kind, false) + world.ResourceTotal(kind, true) + world.CargoTotal(kind), "Work resource conservation: " + kind);
+            }
+            Require(world.Colonists.All(c => c.CargoAmount >= 0 && c.CargoAmount <= 10 && (!c.IsWorking || c.LifeActivity == LifeActivity.Idle)), "Work/life exclusion and capacity");
+        }
+        private string WorkSignature()
+        {
+            var w = Runner.Session.World;
+            return LivingSignature() + "|" + string.Join(";", w.Resources.Select(r => r.Id + ":" + r.Amount + ":" + r.StorageSlotId)) +
+                "|" + string.Join(";", w.Colonists.Select(c => c.WorkActivity + ":" + c.CargoAmount + ":" + c.ActionId));
+        }
+        private void CheckWork()
+        {
+            ConfigureWork();
+            var world = Runner.Session.World;
+            for (var i = 0; i < 150 && !world.Colonists.Any(c => c.CargoAmount > 0); i++) { Runner.Session.Step(1); CheckWorkConservation(); }
+            var carrier = world.Colonists.FirstOrDefault(c => c.CargoAmount > 0);
+            Require(carrier != null, "No work carrier reached");
+            View.SelectColonist(carrier.Id); View.DraftButton.onClick.Invoke();
+            Require(carrier.CargoAmount == 0 && carrier.IsDrafted && world.Resources.All(r => r.OwnerId != carrier.Id) &&
+                world.StorageZones.SelectMany(z => z.Slots).All(slot => slot.OwnerId != carrier.Id), "Work draft drop and release");
+            CheckWorkConservation(); report.workDraftDropPassed = true; View.DraftButton.onClick.Invoke();
+            while (world.Tick < 2400) { Runner.Session.Step(1); CheckWorkConservation(); }
+            report.workTicks = world.Tick; report.producedWood = world.ProducedAmount(ResourceKind.Wood); report.producedIngredients = world.ProducedAmount(ResourceKind.Ingredients);
+            report.storedWood = world.ResourceTotal(ResourceKind.Wood, true); report.storedIngredients = world.ResourceTotal(ResourceKind.Ingredients, true);
+            report.workConsumedIngredients = world.Resources.Where(r => r.Kind == ResourceKind.Ingredients).Sum(r => r.ConsumedAmount);
+            report.workStarvationTicks = world.Colonists.Sum(c => c.StarvationTicks);
+            Require(report.producedWood == 20 && report.producedIngredients == 8 && report.storedWood == 60 &&
+                report.storedIngredients + report.workConsumedIngredients == 8 && world.ResourceTotal(ResourceKind.Ingredients, false) == 0 &&
+                world.CargoTotal(ResourceKind.Ingredients) == 0, "Work finite production, storage and raw food consumption");
+            Require(world.Colonists.All(c => c.MealsEaten > 0 && c.SleepsCompleted > 0 && c.StarvationTicks == 0), "Work living continuity");
+            var zone = world.StorageZones[0]; world.QueueStorageFilter(zone.Id, ResourceKind.Wood, false); Runner.Session.Step(1);
+            Require(world.ResourceTotal(ResourceKind.Wood, true) == 0 && world.ResourceTotal(ResourceKind.Wood, false) == 60, "Filter must preserve stored material");
+            world.QueueStorageFilter(zone.Id, ResourceKind.Wood, true);
+            for (var i = 0; i < 600 && world.ResourceTotal(ResourceKind.Wood, true) != 60; i++) { Runner.Session.Step(1); CheckWorkConservation(); }
+            Require(world.ResourceTotal(ResourceKind.Wood, true) == 60, "Filter recovery"); report.workFilterRecoveryPassed = true;
+            ConfigureWork(); Runner.SetSpeed(1); Runner.AdvanceTime(30m); var normal = WorkSignature();
+            ConfigureWork(); Runner.SetSpeed(3); Runner.AdvanceTime(10m); Require(WorkSignature() == normal, "Work speed equivalence"); report.workSpeedEquivalent = true;
+            ConfigureWork(); Runner.Session.Step(40); View.RefreshNow(); View.HandleMapClick(new GridPosition(0, 4), false);
+            View.SelectColonist(Runner.Session.World.Colonists.First(c => c.CargoAmount > 0).Id);
+            report.renderTick = Runner.Session.World.Tick; CheckMarkers(); report.workPassed = true;
         }
 
         private void Finish(bool passed)

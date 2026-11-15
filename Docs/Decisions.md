@@ -90,3 +90,8 @@
 ## 2026-11-15 R 토글·오브젝트 독점 구현 승인
 
 사용자가 R소집/해제토글과음식스택독점을승인했다. [점유계약](Contracts/InteractionOccupancy.md)을먼저확정하고명령세대검증·취소해제·수면목적유지·바닥수면재선택을구현한다. 기존X/Stop·R/Release UI는제거한다.
+
+
+## 채집·운반·저장 구현
+
+[공통 계약](Contracts/GatherHaulStorage.md)과 [작업 계획](Plans/Task3-Gather-Haul-Storage.md)에 따른 채집·운반·저장 및 생활/점유 연계를 구현했다. [검증 기록](Verification/2026-11-15-work.md)을 참고한다.

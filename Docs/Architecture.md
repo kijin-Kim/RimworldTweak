@@ -84,3 +84,8 @@ World는 ResourceState/BedState와 정착민 욕구·생활 상태를 독립 소
 ## 단일 점유와 수면 목적
 
 점유권은World내오브젝트에OwnerId/OwnerActionId로저장한다. Pawn의ActionId는행동취소·교체때증가하고접근→사용때유지한다. 수면목적HasSleepIntent는목표90까지유지하되명시취소/소집에서지운다. 바닥수면은가용대상변경과제한된재시도로대체침대를획득한다. UI는R토글하나와접근/사용단계를표시한다. [계약](Contracts/InteractionOccupancy.md)참조.
+
+
+## 채집·운반·저장 구현
+
+[공통 계약](Contracts/GatherHaulStorage.md)과 [작업 계획](Plans/Task3-Gather-Haul-Storage.md)에 따른 채집·운반·저장 및 생활/점유 연계를 구현했다. [검증 기록](Verification/2026-11-15-work.md)을 참고한다.

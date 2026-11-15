@@ -29,7 +29,7 @@ namespace RimworldTweak.Simulation
         public bool QueueSetResourceAmount(int id, int amount)
         {
             if (!resourcesById.ContainsKey(id)) return Reject("InvalidResource");
-            if (amount < 0) return Reject("InvalidAmount");
+            if (amount < 0 || resourcesById[id].StorageSlotId.HasValue && amount > StorageSlotState.Capacity) return Reject("InvalidAmount");
             return EnqueueLife(new LifeCommand(LifeCommandKind.SetResource, id, amount));
         }
         public bool QueueRemoveResource(int id)
@@ -88,6 +88,7 @@ namespace RimworldTweak.Simulation
                 if (resource.OwnerId == colonist.Id && resource.OwnerActionId == colonist.ActionId) { resource.Release(colonist.Id, colonist.ActionId); availabilityRevision++; }
             foreach (var bed in Beds)
                 if (bed.OwnerId == colonist.Id && bed.OwnerActionId == colonist.ActionId) { bed.Release(colonist.Id, colonist.ActionId); availabilityRevision++; }
+            ClearWork(colonist);
             colonist.Stop(); colonist.ClearPending();
             moveCommands.RemoveAll(command => command.Id == colonist.Id);
             colonist.InvalidateAction();
@@ -124,6 +125,7 @@ namespace RimworldTweak.Simulation
         private void UpdateNeedsAndActions()
         {
             foreach (var colonist in Colonists) colonist.UpdateNeeds();
+            InterruptWorkForNeeds();
             foreach (var colonist in Colonists)
             {
                 if (colonist.LifeActivity == LifeActivity.Eating)

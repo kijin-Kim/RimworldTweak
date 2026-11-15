@@ -11,12 +11,16 @@ namespace RimworldTweak.Simulation
             IEnumerable<GridPosition> blockedTiles,
             IEnumerable<ColonistSeed> colonists,
             IEnumerable<ResourceSeed> resources,
-            IEnumerable<BedSeed> beds = null, bool needsEnabled = false)
+            IEnumerable<BedSeed> beds = null, bool needsEnabled = false, IEnumerable<GatherSeed> gatherables = null)
         {
             if (blockedTiles == null) throw new ArgumentNullException(nameof(blockedTiles));
             if (colonists == null) throw new ArgumentNullException(nameof(colonists));
             if (resources == null) throw new ArgumentNullException(nameof(resources));
 
+            var gatherCopies = new List<GatherSeed>();
+            if (gatherables != null) foreach (var item in gatherables)
+                gatherCopies.Add(item == null ? null : new GatherSeed(item.Id, item.Kind, item.Position));
+            Gatherables = gatherCopies.AsReadOnly();
             NeedsEnabled = needsEnabled;
             var bedCopies = new List<BedSeed>();
             if (beds != null) foreach (var bed in beds) bedCopies.Add(bed == null ? null : new BedSeed(bed.Id, bed.Position));
@@ -44,6 +48,7 @@ namespace RimworldTweak.Simulation
             Resources = resourceCopies.AsReadOnly();
         }
 
+        public IReadOnlyList<GatherSeed> Gatherables { get; }
         public bool NeedsEnabled { get; }
         public IReadOnlyList<BedSeed> Beds { get; }
         public int Width { get; }

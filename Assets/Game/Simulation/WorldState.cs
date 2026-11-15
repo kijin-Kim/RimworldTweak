@@ -43,6 +43,7 @@ namespace RimworldTweak.Simulation
             BlockedTiles = blockedTiles.AsReadOnly();
             Colonists = colonists.AsReadOnly();
             Resources = resources.AsReadOnly();
+            mutableResources = resources;
             foreach (var colonist in colonists) colonistsById.Add(colonist.Id, colonist);
         }
 
@@ -54,12 +55,13 @@ namespace RimworldTweak.Simulation
         public IReadOnlyList<ResourceState> Resources { get; }
         public long MapRevision { get; private set; }
         public long PathSearchCount { get; private set; }
-        public int PendingCommandCount => moveCommands.Count + topologyCommands.Count + lifeCommands.Count;
+        public int PendingCommandCount => moveCommands.Count + topologyCommands.Count + lifeCommands.Count + workCommands.Count;
         public string LastCommandError { get; private set; } = string.Empty;
 
         public bool QueueMove(int colonistId, GridPosition destination)
         {
             if (!colonistsById.TryGetValue(colonistId, out var colonist)) return Reject("InvalidColonist");
+            if (colonist.IsWorking) return Reject("WorkBusy");
             if (NeedsEnabled && colonist.IsLifeBusy) return Reject("LifeBusy");
             if (!InBounds(destination)) return Reject("OutOfBounds");
             if (blockedSet.Contains(destination)) return Reject("BlockedDestination");
@@ -161,11 +163,17 @@ namespace RimworldTweak.Simulation
             {
                 cancelledThisTick.Clear();
                 ApplyLifeCommands();
+                ApplyWorkCommands();
                 ApplyTopologyCommands();
-                if (NeedsEnabled) { ValidateLifeTargets(); UpdateNeedsAndActions(); DecideLife(); }
+                ValidateWork();
+                if (NeedsEnabled) { ValidateLifeTargets(); UpdateNeedsAndActions(); }
+                if (NeedsEnabled) DecideLife();
+                ProgressWork();
+                DecideWork();
                 ApplyMoveCommands();
                 foreach (var colonist in Colonists) colonist.AdvanceMovement(NeedsEnabled && colonist.Nutrition == 0);
                 if (NeedsEnabled) HandleLifeArrivals();
+                HandleWorkArrivals();
                 Tick++;
             }
         }
@@ -209,6 +217,7 @@ namespace RimworldTweak.Simulation
             foreach (var command in moveCommands)
             {
                 var colonist = colonistsById[command.Id];
+                if (colonist.IsWorking) { Reject("WorkBusy"); continue; }
                 if (NeedsEnabled && colonist.IsLifeBusy) { Reject("LifeBusy"); continue; }
                 if (!command.Destination.HasValue)
                 {
@@ -301,7 +310,19 @@ namespace RimworldTweak.Simulation
                 beds.Add(new BedState(bed));
             }
             beds.Sort((left, right) => left.Id.CompareTo(right.Id));
-            return new WorldState(scenario.Width, scenario.Height, blockedTiles, colonists, resources, beds, scenario.NeedsEnabled);
+            var nodes = new List<GatherState>();
+            foreach (var seed in scenario.Gatherables)
+            {
+                if (seed == null) throw new ScenarioValidationException("NullEntity", "A gather target is null.");
+                ValidateEntity(seed.Id, seed.Position, scenario, ids, blockedSet);
+                if (!Enum.IsDefined(typeof(GatherKind), seed.Kind)) throw new ScenarioValidationException("InvalidGatherKind", "Unknown gather kind.");
+                nodes.Add(new GatherState(seed));
+            }
+            nodes.Sort((a, b) => a.Id.CompareTo(b.Id));
+            var world = new WorldState(scenario.Width, scenario.Height, blockedTiles, colonists, resources, beds, scenario.NeedsEnabled);
+            world.gatherables.AddRange(nodes);
+            foreach (var id in ids) world.nextEntityId = Math.Max(world.nextEntityId, id);
+            return world;
         }
 
         private static void ValidatePosition(GridPosition position, ScenarioDefinition scenario)

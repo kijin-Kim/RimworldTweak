@@ -62,5 +62,21 @@
   "RimworldTweak.Tests.EditMode.LivingTests.FloorCompetitionRetriesBlockedBedAndExcludesDraftedOrFinishedSleepers",
   "RimworldTweak.Tests.EditMode.LivingTests.StaleActionCannotCancelReleaseOrConsumeANewerOwnership",
   "RimworldTweak.Tests.EditMode.LivingTests.InterruptedSleepIntentSurvivesFoodAndBedRemovalUntilNinety",
-  "RimworldTweak.Tests.EditMode.LivingTests.ReleasedBedChoosesLowestRestThenIdAmongFloorSleepers"
+  "RimworldTweak.Tests.EditMode.LivingTests.ReleasedBedChoosesLowestRestThenIdAmongFloorSleepers",
+  "RimworldTweak.Tests.EditMode.WorkTests.GatherCompletesExactlyOnceAtDurationAndStartsAfterArrival",
+  "RimworldTweak.Tests.EditMode.WorkTests.GatherDraftTransfersWorkButPreservesDesignationAndProgress",
+  "RimworldTweak.Tests.EditMode.WorkTests.DesignationCancelAtCompletionBoundaryKeepsProgressWithoutYield",
+  "RimworldTweak.Tests.EditMode.WorkTests.StorageRejectsInvalidAreasAndAppliesCommandsInOrder",
+  "RimworldTweak.Tests.EditMode.WorkTests.PartialCapacityTransfersOnlyFiveAndDoesNotCountAsConsumption",
+  "RimworldTweak.Tests.EditMode.WorkTests.DestinationCompetitionNeverPicksUpWithoutClaim",
+  "RimworldTweak.Tests.EditMode.WorkTests.DraftAtEveryHaulStageConservesAndStaleCancelCannotAffectNewAction",
+  "RimworldTweak.Tests.EditMode.WorkTests.FilterChangeAndZoneDeletionKeepAllMaterials",
+  "RimworldTweak.Tests.EditMode.WorkTests.HungryWorkerCanProduceFoodWithoutRepeatedCancellation",
+  "RimworldTweak.Tests.EditMode.WorkTests.HungerDuringFoodHaulDropsThenUsesExistingEatingRules",
+  "RimworldTweak.Tests.EditMode.WorkTests.SleepInterruptsWorkAndKeepsSleepIntentUntilRestored",
+  "RimworldTweak.Tests.EditMode.WorkTests.StoredFoodAndIncomingCargoShareOneAuthority",
+  "RimworldTweak.Tests.EditMode.WorkTests.ThreePawnsGatherAndStoreFiniteResourcesWithoutPingPong",
+  "RimworldTweak.Tests.EditMode.WorkTests.BlockedHaulDropsAndResumesAfterCorridorOpens",
+  "RimworldTweak.Tests.EditMode.WorkTests.LifeSelectionWinsSameTickAsIncomingStackClaim",
+  "RimworldTweak.Tests.EditMode.WorkTests.WorkScenarioResetAndEqualTickBatchesProduceEquivalentState"
 ]

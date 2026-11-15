@@ -83,6 +83,7 @@ try {
     if ($Action -ne 'Prepare' -and $changed.Count -gt 0) { $passed = $false }
     if ($Action -eq 'Smoke') {
         $smoke = Get-Content (Join-Path $runDir 'smoke.json') -Raw | ConvertFrom-Json
+        if (-not $smoke.passed) { throw ('Player smoke failed: ' + $smoke.error) }
         $render = Get-RenderVerdict -Path (Join-Path $runDir 'demo.png')
         $render | ConvertTo-Json | Set-Content (Join-Path $runDir 'render.json')
         $passed = $passed -and $smoke.passed -and $render.Passed

@@ -21,5 +21,8 @@
   "RimworldTweak.Tests.PlayMode.MovementIntegrationTests.OverlapSelectsLowestIdAndListCanSelectOtherColonist",
   "RimworldTweak.Tests.PlayMode.LivingIntegrationTests.DraftWhilePausedReleasesReservationsAndAllowsPlayerMovement",
   "RimworldTweak.Tests.PlayMode.LivingIntegrationTests.RKeyboardPressAndHoldTogglesOnceAndXDoesNothing",
-  "RimworldTweak.Tests.PlayMode.LivingIntegrationTests.OwnershipUiDistinguishesApproachUseAndSpareStockFromAccess"
+  "RimworldTweak.Tests.PlayMode.LivingIntegrationTests.OwnershipUiDistinguishesApproachUseAndSpareStockFromAccess",
+  "RimworldTweak.Tests.PlayMode.WorkIntegrationTests.ToolsQueueDesignationAndRectangleThenShowDynamicMaterials",
+  "RimworldTweak.Tests.PlayMode.WorkIntegrationTests.EscapeAndRightClickCancelToolWithoutMovingAndFiltersPreserveStock",
+  "RimworldTweak.Tests.PlayMode.WorkIntegrationTests.DraftDuringWorkAndRepeatedResetClearOrdersAndUiState"
 ]
