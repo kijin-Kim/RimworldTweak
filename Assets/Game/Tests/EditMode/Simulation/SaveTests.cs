@@ -1,0 +1,140 @@
+using System;
+using System.IO;
+using System.Linq;
+using NUnit.Framework;
+using RimworldTweak.Runtime;
+using RimworldTweak.Simulation;
+namespace RimworldTweak.Tests.EditMode
+{
+    public sealed class SaveTests
+    {
+        private string directory;
+        private string path;
+        private SaveFileService files;
+        private static GridPosition P(int x,int y)=>new GridPosition(x,y);
+        private static SimulationSession Session()=>new SimulationSession(new ScenarioDefinition(8,8,Array.Empty<GridPosition>(),
+            new[]{new ColonistSeed(1,P(1,1))},new[]{new ResourceSeed(101,ResourceKind.Wood,20,P(2,1))},null,false));
+        private static SaveData Data()
+        {
+            var session=Session();session.AdvanceTime(0.037m);var captured=session.CaptureSaveData(true,3);
+            Assert.That(captured.Success,Is.True,captured.ErrorCode);return captured.Data;
+        }
+        [SetUp] public void Setup()
+        {
+            directory=Path.GetFullPath(Path.Combine(UnityEngine.Application.dataPath,"..","TestResults","SaveFileTests",Guid.NewGuid().ToString("N")));
+            Directory.CreateDirectory(directory);path=Path.Combine(directory,"settlement-v1.json");files=new SaveFileService();
+        }
+        [TearDown] public void Cleanup()
+        {
+            var root=Path.GetFullPath(Path.Combine(UnityEngine.Application.dataPath,"..","TestResults","SaveFileTests"))+Path.DirectorySeparatorChar;
+            if(directory!=null&&directory.StartsWith(root,StringComparison.OrdinalIgnoreCase)&&Directory.Exists(directory))Directory.Delete(directory,true);
+        }
+        [Test] public void JsonRoundTripKeepsExactLongDecimalAndStringEnums()
+        {
+            var data=Data();data.World.Tick=9007199254740993L;
+            var saved=files.Save(path,data);Assert.That(saved.Success,Is.True,saved.ErrorCode);
+            var text=File.ReadAllText(path);Assert.That(text,Does.Contain("9007199254740993"));Assert.That(text,Does.Contain("\"Kind\":\"Wood\""));
+            Assert.That(text,Does.Contain("\"PendingSeconds\":\"0.037\""));Assert.That(text,Does.Not.Contain("__type"));
+            var loaded=files.Load(path);Assert.That(loaded.Success,Is.True,loaded.ErrorCode);
+            Assert.That(loaded.Data.World.Tick,Is.EqualTo(data.World.Tick));Assert.That(loaded.Data.Session.PendingSeconds,Is.EqualTo("0.037"));
+            Assert.That(loaded.Data.Session.Paused,Is.True);Assert.That(loaded.Data.Session.Speed,Is.EqualTo(3));Assert.That(File.Exists(path+".tmp"),Is.False);
+        }
+        [Test] public void OverwriteReplacesSlotAfterValidationAndKeepsNoTemporaryFile()
+        {
+            var data=Data();Assert.That(files.Save(path,data).Success,Is.True);data.World.Tick=10;
+            Assert.That(files.Save(path,data).Success,Is.True);Assert.That(files.Load(path).Data.World.Tick,Is.EqualTo(10));Assert.That(File.Exists(path+".tmp"),Is.False);
+        }
+        [Test] public void InvalidSaveCannotOverwritePreviouslyValidFile()
+        {
+            var data=Data();Assert.That(files.Save(path,data).Success,Is.True);var before=File.ReadAllBytes(path);
+            data.World.Resources[0].Amount=-1;var result=files.Save(path,data);
+            Assert.That(result.Success,Is.False);Assert.That(result.ErrorCode,Is.EqualTo("SaveInvalidData"));CollectionAssert.AreEqual(before,File.ReadAllBytes(path));
+            Assert.That(files.Load(path).Success,Is.True);
+            data=Data();data.World.Resources[0].Amount++;
+            Assert.That(files.Save(path,data).Success,Is.False);CollectionAssert.AreEqual(before,File.ReadAllBytes(path));
+            data=Data();data.World.Resources[0].Amount--;data.World.Colonists[0].CargoAmount=1;
+            data.World.Colonists[0].WorkActivity=nameof(WorkActivity.GoingToStore);
+            Assert.That(SaveValidation.Validate(data).IsValid,Is.True,"Ledger is preserved, but action lacks a destination claim.");
+            Assert.That(files.Save(path,data).Success,Is.False);CollectionAssert.AreEqual(before,File.ReadAllBytes(path));
+        }
+        [Test] public void ReplaceFailureLeavesOriginalFileAndCleansOnlyTemporaryFile()
+        {
+            var data=Data();Assert.That(files.Save(path,data).Success,Is.True);var before=File.ReadAllBytes(path);data.World.Tick=20;
+            using(var locked=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.Read))
+            {var result=files.Save(path,data);Assert.That(result.Success,Is.False);Assert.That(result.ErrorCode,Is.EqualTo("SaveIoError"));}
+            CollectionAssert.AreEqual(before,File.ReadAllBytes(path));Assert.That(File.Exists(path+".tmp"),Is.False);
+        }
+        [Test] public void MissingOrTemporaryOnlySlotIsNotLoaded()
+        {
+            var result=files.Load(path);Assert.That(result.Success,Is.False);Assert.That(result.ErrorCode,Is.EqualTo("SaveNotFound"));
+            Assert.That(files.Save(path,Data()).Success,Is.True);File.Move(path,path+".tmp");
+            Assert.That(files.Load(path).ErrorCode,Is.EqualTo("SaveNotFound"));Assert.That(File.Exists(path+".tmp"),Is.True);
+        }
+        [Test] public void CorruptTrailingAndOversizeFilesAreRejectedWithoutMutation()
+        {
+            Assert.That(files.Save(path,Data()).Success,Is.True);var valid=File.ReadAllText(path);
+            foreach(var bad in new[]{"{broken",valid+"{}",valid.Replace("\"schemaVersion\":1,","")})
+            {
+                File.WriteAllText(path,bad);var result=files.Load(path);Assert.That(result.Success,Is.False,"Malformed JSON suffix: "+bad.Substring(Math.Max(0,bad.Length-80)));
+                Assert.That(result.ErrorCode,Is.EqualTo("SaveInvalidData"));Assert.That(File.ReadAllText(path),Is.EqualTo(bad));
+            }
+            using(var stream=new FileStream(path,FileMode.Create,FileAccess.Write))stream.SetLength(SaveValidation.MaximumFileBytes+1L);
+            Assert.That(files.Load(path).ErrorCode,Is.EqualTo("SaveInvalidData"));Assert.That(new FileInfo(path).Length,Is.EqualTo(SaveValidation.MaximumFileBytes+1L));
+        }
+        [Test] public void UnsupportedVersionAndNumericEnumAreRejected()
+        {
+            var data=Data();Assert.That(files.Save(path,data).Success,Is.True);var valid=File.ReadAllText(path);
+            File.WriteAllText(path,valid.Replace("\"schemaVersion\":1","\"schemaVersion\":99"));
+            Assert.That(files.Load(path).ErrorCode,Is.EqualTo("SaveUnsupportedVersion"));
+            data.World.Resources[0].Kind="0";Assert.That(SaveValidation.Validate(data).IsValid,Is.False);
+        }
+        [Test] public void ValidationRejectsDuplicateIdsMissingReferencesAndBadNextId()
+        {
+            var data=Data();data.World.NextEntityId=data.World.Resources[0].Id;Assert.That(SaveValidation.Validate(data).IsValid,Is.False);
+            data=Data();data.World.Resources[0].Id=data.World.Colonists[0].Id;Assert.That(SaveValidation.Validate(data).IsValid,Is.False);
+            data=Data();data.World.Colonists[0].WorkTargetId=99999;Assert.That(SaveValidation.Validate(data).IsValid,Is.False);
+            data=Data();data.World.WorkPolicies[0].Priorities[0].Priority=4;Assert.That(SaveValidation.Validate(data).IsValid,Is.False);
+            data=Data();data.Session.PendingSeconds="0,037";Assert.That(SaveValidation.Validate(data).IsValid,Is.False);
+            data=Data();data.World.Resources[0].Amount++;
+            Assert.That(SimulationSession.TryRestoreSave(data,out var invalidWorld,out var restoreError),Is.False);
+            Assert.That(invalidWorld,Is.Null);Assert.That(restoreError,Is.EqualTo("SaveInvalidData"));
+        }
+        [Test] public void MismatchedClaimOwnerActionIsRejectedWithoutChangingDto()
+        {
+            var data=Data();var resource=data.World.Resources[0];resource.Claim.OwnerId=1;resource.Claim.ActionId=999;
+            var result=SaveValidation.Validate(data);Assert.That(result.IsValid,Is.False);Assert.That(result.FieldPath,Does.Contain("Claim"));
+            Assert.That(resource.Claim.OwnerId,Is.EqualTo(1));Assert.That(resource.Claim.ActionId,Is.EqualTo(999));
+        }
+        [Test] public void StoredStackSharedClaimMustMatchSlotAuthority()
+        {
+            var session=Session();var w=session.World;w.QueueCreateStorage(P(6,1),P(6,1));
+            for(var i=0;i<300&&w.ResourceTotal(ResourceKind.Wood,true)==0;i++)session.Step(1);
+            var captured=session.CaptureSaveData();Assert.That(captured.Success,Is.True,captured.ErrorCode);var data=captured.Data;
+            Assert.That(SaveValidation.Validate(data).IsValid,Is.True);var slot=data.World.StorageZones.Single().Slots.Single();
+            var stack=data.World.Resources.Single(r=>r.Id==slot.StackId);stack.Claim.OwnerId=1;stack.Claim.ActionId=data.World.Colonists[0].ActionId;
+            Assert.That(SaveValidation.Validate(data).IsValid,Is.False);
+            session=Session();w=session.World;Assert.That(w.PlaceBlueprint(BuildingKind.Stove,P(4,4)),Is.True);
+            for(var i=0;i<600&&!w.Buildings.Any(b=>b.Exists&&b.Kind==BuildingKind.Stove);i++)session.Step(1);
+            var stove=w.Buildings.Single(b=>b.Exists&&b.Kind==BuildingKind.Stove);
+            Assert.That(w.DeleteCookingOrder(stove.Id),Is.True);captured=session.CaptureSaveData();
+            Assert.That(captured.Success,Is.True,captured.ErrorCode);data=captured.Data;
+            Assert.That(SaveValidation.Validate(data).IsValid,Is.True);
+            var deletedOrder=data.World.CookingOrders.Single(o=>!o.Exists);
+            deletedOrder.Claim=new ClaimSaveData{OwnerId=1,ActionId=data.World.Colonists[0].ActionId};
+            var invalid=SaveValidation.Validate(data);Assert.That(invalid.IsValid,Is.False);
+            Assert.That(invalid.FieldPath,Is.EqualTo("CookingOrder.SharedClaim"));
+            Assert.That(SimulationSession.TryRestoreSave(data,out _,out _),Is.False);
+        }
+        [Test] public void PausedMoveQueueAndFractionalTimeSurviveFileAndSessionRestore()
+        {
+            var original=Session();original.World.ToggleDraft(1);Assert.That(original.World.QueueMove(1,P(6,1)),Is.True);original.AdvanceTime(0.037m);
+            var capture=original.CaptureSaveData(true,3);Assert.That(capture.Success,Is.True,capture.ErrorCode);Assert.That(files.Save(path,capture.Data).Success,Is.True);
+            var loaded=files.Load(path);Assert.That(loaded.Success,Is.True,loaded.ErrorCode);
+            Assert.That(SimulationSession.TryRestoreSave(loaded.Data,out var restored,out var error),Is.True,error);
+            Assert.That(restored.World.Tick,Is.EqualTo(original.World.Tick));Assert.That(restored.PendingSeconds,Is.EqualTo(original.PendingSeconds));
+            Assert.That(restored.World.PendingCommandCount,Is.EqualTo(1));original.AdvanceTime(0.063m);restored.AdvanceTime(0.063m);
+            original.Step(30);restored.Step(30);Assert.That(restored.World.Colonists[0].Position,Is.EqualTo(original.World.Colonists[0].Position));
+            Assert.That(restored.World.PathSearchCount,Is.EqualTo(original.World.PathSearchCount));
+        }
+    }
+}

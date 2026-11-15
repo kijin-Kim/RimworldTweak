@@ -2,7 +2,8 @@
   "name": "RimworldTweak.Tests.EditMode",
   "rootNamespace": "RimworldTweak.Tests.EditMode",
   "references": [
-    "RimworldTweak.Simulation"
+    "RimworldTweak.Simulation",
+    "RimworldTweak.Runtime"
   ],
   "includePlatforms": [
     "Editor"

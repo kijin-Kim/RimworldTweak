@@ -7,7 +7,7 @@ namespace RimworldTweak.Simulation
     public enum MovementStatus { Idle, Moving, Arrived, Blocked }
     public enum LifeActivity { Idle, GoingToFood, Eating, GoingToBed, SleepingInBed, SleepingOnFloor }
 
-    public sealed class ColonistState
+    public sealed partial class ColonistState
     {
         private readonly List<GridPosition> path = new List<GridPosition>();
         internal ColonistState(int id, GridPosition position, int nutrition = 10000, int rest = 10000)

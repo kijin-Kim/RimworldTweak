@@ -5,7 +5,7 @@ namespace RimworldTweak.Simulation
     public enum CropStage { Empty, Growing, Mature }
 
     // A cell keeps its identity across harvest/replant cycles; stage describes its current crop.
-    public sealed class CropState
+    public sealed partial class CropState
     {
         internal CropState(int id, int zoneId, GridPosition position, long requestOrder)
         { Id = id; ZoneId = zoneId; Position = position; RequestOrder = requestOrder; }
@@ -25,7 +25,7 @@ namespace RimworldTweak.Simulation
         public long OwnerActionId => Claim.ActionId;
     }
 
-    public sealed class GrowingZoneState
+    public sealed partial class GrowingZoneState
     {
         internal GrowingZoneState(int id, List<CropState> cells)
         { Id = id; Cells = new List<CropState>(cells).AsReadOnly(); }

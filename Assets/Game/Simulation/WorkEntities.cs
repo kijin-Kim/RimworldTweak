@@ -28,7 +28,7 @@ namespace RimworldTweak.Simulation
         public GridPosition Position { get; }
     }
 
-    public sealed class GatherState
+    public sealed partial class GatherState
     {
         internal readonly InteractionClaim Claim = new InteractionClaim();
         internal GatherState(GatherSeed seed) { Id = seed.Id; Kind = seed.Kind; Position = seed.Position; }
@@ -46,7 +46,7 @@ namespace RimworldTweak.Simulation
         public long RequestOrder { get; internal set; }
     }
 
-    public sealed class StorageSlotState
+    public sealed partial class StorageSlotState
     {
         internal readonly InteractionClaim Claim = new InteractionClaim();
         internal StorageSlotState(int id, int zoneId, GridPosition position) { Id = id; ZoneId = zoneId; Position = position; }
@@ -60,7 +60,7 @@ namespace RimworldTweak.Simulation
         public long OwnerActionId => Claim.ActionId;
     }
 
-    public sealed class StorageZoneState
+    public sealed partial class StorageZoneState
     {
         private readonly HashSet<ResourceKind> allowed = new HashSet<ResourceKind> { ResourceKind.Wood, ResourceKind.Ingredients, ResourceKind.Meal };
         internal StorageZoneState(int id, List<StorageSlotState> slots) { Id = id; Slots = slots.AsReadOnly(); }

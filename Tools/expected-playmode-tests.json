@@ -53,5 +53,10 @@
   "RimworldTweak.Tests.PlayMode.WorkPolicyIntegrationTests.DisablingSelectedWorkersCategoryUpdatesClaimAndUiWhilePaused",
   "RimworldTweak.Tests.PlayMode.WorkPolicyIntegrationTests.ResetRestoresDefaultPrioritiesAndPanelBindsNewPolicy",
   "RimworldTweak.Tests.PlayMode.WorkPolicyIntegrationTests.ReenablingPausedWorkClearsDisabledReasonBeforeAnyNewAction",
-  "RimworldTweak.Tests.PlayMode.CookingIntegrationTests.LogisticsViewStaysOpenAfterClosingSelectedStovePanel"
+  "RimworldTweak.Tests.PlayMode.CookingIntegrationTests.LogisticsViewStaysOpenAfterClosingSelectedStovePanel",
+  "RimworldTweak.Tests.PlayMode.SaveIntegrationTests.SaveAndConfirmedLoadRestoreTimeStateAndClearSelectionToolsImmediately",
+  "RimworldTweak.Tests.PlayMode.SaveIntegrationTests.LoadConfirmationStopsTimeAndCancelKeepsLiveSessionAndSpeed",
+  "RimworldTweak.Tests.PlayMode.SaveIntegrationTests.InvalidDtoAndCorruptFileKeepCurrentWorldClockAndSelection",
+  "RimworldTweak.Tests.PlayMode.SaveIntegrationTests.SaveFailureDoesNotReplaceExistingSlotOrAdvanceWorld",
+  "RimworldTweak.Tests.PlayMode.SaveIntegrationTests.SaveSkipsOnlyFirstAutomaticFrameWithoutAccumulatingIoDelay"
 ]

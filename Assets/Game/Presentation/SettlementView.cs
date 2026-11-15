@@ -77,6 +77,7 @@ namespace RimworldTweak.Presentation
         public bool ProcessShortcut(Key key)
         {
             if (Runner == null || TextInputFocused()) return false;
+            if(Runner.IsLoadConfirmationOpen){if(key==Key.Escape){Runner.CancelLoad();RefreshNow();return true;}return false;}
             switch (key)
             {
                 case Key.Space: Runner.SetPaused(!Runner.IsPaused); break;
@@ -130,7 +131,7 @@ namespace RimworldTweak.Presentation
 
         public bool HandleMapClick(GridPosition position, bool rightButton)
         {
-            if (Runner == null) return false;
+            if (Runner == null || Runner.IsLoadConfirmationOpen) return false;
             var world = Runner.Session.World;
             if (position.X < 0 || position.Y < 0 || position.X >= world.Width || position.Y >= world.Height) return false;
             if (TextInputFocused()) return false;
@@ -192,6 +193,7 @@ namespace RimworldTweak.Presentation
             RefreshProductionUI(world);
             RefreshPlanningUI(world);
             RefreshInspection(world);
+            RefreshSaveUI();
         }
 
         private void BuildUI()
@@ -251,6 +253,7 @@ namespace RimworldTweak.Presentation
             BuildInspectionLayout();
             BuildProductionUI();
             BuildPlanningUI();
+            BuildSaveUI();
         }
 
         private RectTransform Outline(string name, Color color)

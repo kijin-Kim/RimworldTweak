@@ -1,6 +1,6 @@
 namespace RimworldTweak.Simulation
 {
-    public sealed class CookingOrderState
+    public sealed partial class CookingOrderState
     {
         internal CookingOrderState(int id, int stoveId, GridPosition serviceCell, InteractionClaim claim)
         { Id=id; StoveId=stoveId; ServiceCell=serviceCell; Claim=claim; }
@@ -20,7 +20,7 @@ namespace RimworldTweak.Simulation
         public int? OwnerId => Claim.OwnerId;
         public long OwnerActionId => Claim.ActionId;
     }
-    public sealed class CookingOutputState
+    public sealed partial class CookingOutputState
     {
         internal CookingOutputState(int id, int stoveId, GridPosition position)
         { Id=id; StoveId=stoveId; Position=position; }

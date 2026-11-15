@@ -1,7 +1,7 @@
 namespace RimworldTweak.Simulation
 {
     public enum BuildingKind { Wall, Door, Bed, Stove }
-    public sealed class BlueprintState
+    public sealed partial class BlueprintState
     {
         internal BlueprintState(int id, BuildingKind kind, GridPosition position, long requestOrder)
         { Id = id; Kind = kind; Position = position; RequestOrder = requestOrder; }
@@ -19,7 +19,7 @@ namespace RimworldTweak.Simulation
         public int? OwnerId => Claim.OwnerId;
         public long OwnerActionId => Claim.ActionId;
     }
-    public sealed class BuildingState
+    public sealed partial class BuildingState
     {
         internal BuildingState(int id, BuildingKind kind, GridPosition position)
         { Id = id; Kind = kind; Position = position; }

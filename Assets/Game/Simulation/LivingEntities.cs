@@ -10,7 +10,7 @@ namespace RimworldTweak.Simulation
         public GridPosition Position { get; }
     }
 
-    public sealed class ResourceState
+    public sealed partial class ResourceState
     {
         private readonly Dictionary<int, int> reservations = new Dictionary<int, int>();
         internal ResourceState(ResourceSeed seed)
@@ -75,7 +75,7 @@ namespace RimworldTweak.Simulation
         }
     }
 
-    public sealed class BedState
+    public sealed partial class BedState
     {
         internal BedState(BedSeed seed) { Id = seed.Id; Position = seed.Position; }
         public int Id { get; }

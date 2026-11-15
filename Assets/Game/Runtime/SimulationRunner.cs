@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace RimworldTweak.Runtime
 {
-    public sealed class SimulationRunner : MonoBehaviour
+    public sealed partial class SimulationRunner : MonoBehaviour
     {
         public SimulationSession Session { get; private set; }
         public bool IsPaused { get; private set; }
@@ -18,6 +18,7 @@ namespace RimworldTweak.Runtime
         private void Update()
         {
             // Synchronous file I/O must not become catch-up simulation time in the next frame.
+            if(skipNextAutomaticFrame){skipNextAutomaticFrame=false;return;}
             AdvanceTime((decimal)Time.unscaledDeltaTime);
         }
 
@@ -31,7 +32,7 @@ namespace RimworldTweak.Runtime
         public void AdvanceTime(decimal realSeconds)
         {
             if (realSeconds < 0m) throw new ArgumentOutOfRangeException(nameof(realSeconds));
-            if (!IsPaused) Session.AdvanceTime(checked(realSeconds * SpeedMultiplier));
+            if (!IsPaused && !SaveBusy && !IsLoadConfirmationOpen) Session.AdvanceTime(checked(realSeconds * SpeedMultiplier));
         }
 
         public void SetSpeed(int multiplier)
@@ -42,14 +43,15 @@ namespace RimworldTweak.Runtime
         }
 
         public void SetPaused(bool paused) => IsPaused = paused;
-        public void ResetWorld() => Session.Reset();
+        public void ResetWorld() { if(!SaveBusy&&!IsLoadConfirmationOpen){SaveMessage=string.Empty;Session.Reset();} }
         public void StepOnce()
         {
-            if (IsPaused) Session.Step(1);
+            if (IsPaused && !SaveBusy && !IsLoadConfirmationOpen) Session.Step(1);
         }
 
         private bool PlayerCommand(Func<bool> command)
         {
+            SaveMessage=string.Empty;
             return command();
         }
 

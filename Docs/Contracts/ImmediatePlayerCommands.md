@@ -25,3 +25,9 @@ root가 `WorldState.Work.cs`, `WorldState.Living.cs`, `WorldState.cs`의 명령/
 3. 입력 전후 Tick·욕구·현장 채집 진행도가 변하지 않는다. 취소된 행동의 로컬 진행도 초기화는 의도된 정리다. 자동 작업·빈 침대 재선택은 다음 Tick이다.
 4. 저장 구역 한 번 생성 후 일반 클릭은 추가 구역을 만들지 않으며 버튼 재선택 시에만 두 번째 구역을 만들 수 있다.
 5. 기존 이동·생활·점유·물류·UI 회귀, 신규 무시간 상태/표시 검사, Windows 빌드·Player·렌더를 실행한다. 사람의 실제 조작 확인은 별도 기록한다.
+
+## 수동 조작 제한과 건설 검사 수정 (2026-11-15)
+
+사용자 보고를 반영해 수동 이동은 소집된 Pawn만 허용한다. 선택은 소집 여부와 관계없다. 미소집 이동은 큐/목적지/행동/점유를 변경하지 않고 거부하며 R 안내를 표시한다. 소집 해제는 이미 접수한 이동도 취소한다. 자동 생활/작업의 내부 경로는 영향받지 않는다. 선택한 건설 Pawn은 출발 접근부터 반입/시공까지 PendingDeliveryTargetId 또는 WorkTargetId로 실제 현장을 조회한다. 현장 자재·진행·담당은 정지 중에도 표시한다.
+
+이번 수정은 S0 단독 소유: WorldState.cs, 기존 View 및 Production, 기존 이동/생활 검사와 Player smoke, 신규 PlayerControlTests/PlayerControlIntegrationTests 및 .meta, manifest와 관련문서. 건설/재배 전용 Rules/Panel은 변경하지 않는다. 통합 E:\Dev\RimworldTweak에서만 Unity를 직렬 실행한다.

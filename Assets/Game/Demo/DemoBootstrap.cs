@@ -149,6 +149,15 @@ namespace RimworldTweak.Demo
             if (!Check(CheckProduction)) yield break;
             if (!Check(CheckPlayerControlsAndInspection)) yield break;
             if (!Check(CheckCookingAndPolicy)) yield break;
+            if (!Check(CheckSaveLoad)) yield break;
+            if(!Check(()=>{Require(Runner.BeginLoad(),"Render load confirmation");View.RefreshNow();}))yield break;
+            yield return null;
+            yield return new WaitForEndOfFrame();
+            var confirmationImage=Path.Combine(output,"save-confirmation.png");
+            if(!Check(()=>ScreenCapture.CaptureScreenshot(confirmationImage)))yield break;
+            var confirmationDeadline=Time.realtimeSinceStartup+10f;
+            while(!File.Exists(confirmationImage)&&Time.realtimeSinceStartup<confirmationDeadline)yield return null;
+            if(!Check(()=>{Require(File.Exists(confirmationImage),"Confirmation image missing");Runner.CancelLoad();Require(Runner.BeginLoad()&&Runner.ConfirmLoad(),"Return to loaded display");View.RefreshNow();View.SelectColonist(1);View.RefreshNow();}))yield break;
             yield return null;
             yield return new WaitForEndOfFrame();
             if (!Check(() => ScreenCapture.CaptureScreenshot(report.screenshot))) yield break;
@@ -156,6 +165,31 @@ namespace RimworldTweak.Demo
             while (!File.Exists(report.screenshot) && Time.realtimeSinceStartup < deadline) yield return null;
             if (!Check(() => Require(File.Exists(report.screenshot) && new FileInfo(report.screenshot).Length > 0, "Screenshot missing"))) yield break;
             Finish(true);
+        }
+
+        private void CheckSaveLoad()
+        {
+            var original=Runner.Session;var world=original.World;var order=world.CookingOrders.Single(o=>o.Exists);
+            Require(order.Progress==10&&order.InputIngredients==2,"Save cooking phase");
+            var tick=world.Tick;var action=world.Colonists[0].ActionId;
+            report.defaultSavePath=Runner.SavePath;
+            Runner.SavePath=Path.Combine(output,"save-smoke","settlement-v1.json");
+            Require(Runner.SaveNow(),"Player save file: "+Runner.SaveMessage);
+            world.Step(8);Require(order.Progress==18,"Save original progression");
+            Require(Runner.BeginLoad(),"Player load prompt");Runner.AdvanceTime(100m);
+            Require(world.Tick==tick+8,"Load prompt freeze");
+            Require(Runner.ConfirmLoad(),"Player load file: "+Runner.SaveMessage);
+            Require(!ReferenceEquals(original,Runner.Session)&&Runner.Session.World.Tick==tick,"Restored world replacement");
+            world=Runner.Session.World;order=world.CookingOrders.Single(o=>o.Exists);
+            Require(order.Progress==10&&order.InputIngredients==2&&order.OwnerId==1&&world.Colonists[0].ActionId==action,"Restored active cooking claim");
+            Require(world.WorkPolicies[0].GetPriority(WorkCategory.Cook)==1,"Restored personal priority");
+            Require(Runner.IsPaused&&world.CookingProducedMeals==2&&world.CookingConsumedIngredients==4,"Restored clock and material ledger");
+            world.Step(30);Require(world.CookingProducedMeals==3&&world.CookingConsumedIngredients==6,"Restored completion occurs once");
+            world.Step(10);Require(world.CookingProducedMeals==3,"No duplicate restored production");
+            Require(Runner.BeginLoad()&&Runner.ConfirmLoad(),"Reload captured display phase");
+            View.RefreshNow();Require(!View.SelectedColonistId.HasValue&&View.ActiveWorkTool==SettlementView.WorkTool.None,"Restore selection reset");
+            View.SelectColonist(1);View.RefreshNow();
+            report.saveLoadPassed=true;report.restoredSaveTick=Runner.Session.World.Tick;report.renderTick=Runner.Session.World.Tick;
         }
 
         private void CheckCookingAndPolicy()

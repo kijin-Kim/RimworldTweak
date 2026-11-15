@@ -97,3 +97,24 @@ World는 ResourceState/BedState와 정착민 욕구·생활 상태를 독립 소
 ## 일시정지 명령 갱신 (2026-11-15)
 
 [즉시 명령 계약](Contracts/ImmediatePlayerCommands.md)에 따라 플레이어 설정·취소를 Tick과 분리한다. 자동 행동 선택과 진행은 Tick에서만 수행한다. [검증 기록](Verification/2026-11-15-immediate-commands.md)은 무시간 상태/표시 검사와 Windows 실행을 구분한다.
+
+## 후속 기능의 세션 경계
+
+[다중 세션 계획](Plans/MultiSessionRoadmap.md)과 [공통 계약](Contracts/ParallelFeatureIntegration.md)에 따라 기존 WorldState/작업 선택·취소/공유 상태, Runtime 명령, SettlementView 연결은 S0이 소유한다. 기능별 모듈·패널·검사는 전용 파일로 제안했으며 아직 생성하지 않았다. 순수 후보 조회→World의 시작/점유 재검증→공통 진행/취소→읽기 표시 경계를 먼저 고정한다. 파일 분리만으로 내부 상태의 공동 수정을 허용하지 않는다.
+
+
+## 현재 다섯 기능의 소유권
+
+현재 접점/파일 범위는 [다섯 기능 계약](Contracts/SettlementFiveFeatures.md)과 [3세션 소유권](Plans/SettlementFiveFeatures.md)을 우선한다. 통합S0이 기존 World/Runtime/View 연결, SA가 건설/조리/저장, SB가 재배/개인 작업계획과 연결 검사를 소유한다. 전용 파일은 예정이며 아직 생성하지 않았다. 전투/정보전용 데이터/조회 구조를 이번 구현에 미리 추가하지 않는다.
+
+## G0 연결 명세 (2026-11-15)
+
+[G0 준비 확정서](Plans/G0-Preparation.md)에 기존 WorldState/Runner/Session과 신규 후보/진행/저장 서명을 구분했다. S0 소유 예정 FeatureWorkContracts.cs와 WorldState.Features.cs를 소유권 표에 추가했으나 실제 파일은 없다. 규칙 조회는 상태를 변경하지 않고 경로 계산은 S0에서 수행한다. G0-C는 기존 Gather/Haul로 계약을 검증하며 없는 기능 타입을 참조하는 미완성 기준을 배포하지 않는다.
+
+## G0-C 공통 작업 연결
+
+`WorldState.Features.cs`가 기존 자동 선택 시점에 경로를 계산하고 `WorkReadContext`를 구성한다. 문맥/후보는 World나 live entity를 노출하지 않는다. 읽기 자체는 상태를 바꾸지 않지만 준비 단계의 경로 검색 진단 횟수는 증가한다. 실제 시작은 문맥 유효성과 대상 상태를 재검사한다. `ProgressFeatureWork`/`HandleFeatureArrivals`는 기존 Tick 위치에서 기존 채집/운반 진행을 수행한다. `CancelFeatureWork`는 오래된 ActionId를 무시하고 EndLife/ClearWork의 공통 정리에 합류한다. 소집/생활/대상 무효화도 같은 EndLife를 사용한다. 기능별 진행 결과 DTO/새 저장 API는 해당 기능 통합 때 제공한다. 상세 인계는 [G0-C 검증](Verification/2026-11-15-g0-c.md)을 따른다.
+
+## 건설·재배 실행 연결
+
+S0의 WorldState.Production은 공간검사/명령/ID/스택→운반→현장 이전/권한/진행결과 적용/동적 침대/통행을 담당한다. SA/SB의 읽기 상태와 순수 Rules를 WorkReadContext.Options/ActiveWork로 연결한다. 성장은 생활·노동 판단 전에 갱신하고 완파종 Tick에는0이다. 산출은 기존 SpawnResource/CreatedTick 규칙을 사용한다. 동적 Bed 목록과 View의 침대 수 변경 감지를 추가했다. 전용 패널은 기존View에 S0이 연결하며 화면은 권한/현장/운반을 읽을 뿐 상태를 직접 변경하지 않는다.
