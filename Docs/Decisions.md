@@ -95,3 +95,7 @@
 ## 채집·운반·저장 구현
 
 [공통 계약](Contracts/GatherHaulStorage.md)과 [작업 계획](Plans/Task3-Gather-Haul-Storage.md)에 따른 채집·운반·저장 및 생활/점유 연계를 구현했다. [검증 기록](Verification/2026-11-15-work.md)을 참고한다.
+
+## 식별·하단 선택 UI
+
+[표시 계약](Contracts/ReadableSettlementUI.md)에 따라 고정색/상시 이름, 종류별 모양, 저장 바닥/경계, 행동·운반·목적지·점유 패널을 추가했다. [검증 기록](Verification/2026-11-15-readable-ui.md) 및 [조작 안내](ReadableUiDemo.md)를 따른다.

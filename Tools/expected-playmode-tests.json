@@ -24,5 +24,9 @@
   "RimworldTweak.Tests.PlayMode.LivingIntegrationTests.OwnershipUiDistinguishesApproachUseAndSpareStockFromAccess",
   "RimworldTweak.Tests.PlayMode.WorkIntegrationTests.ToolsQueueDesignationAndRectangleThenShowDynamicMaterials",
   "RimworldTweak.Tests.PlayMode.WorkIntegrationTests.EscapeAndRightClickCancelToolWithoutMovingAndFiltersPreserveStock",
-  "RimworldTweak.Tests.PlayMode.WorkIntegrationTests.DraftDuringWorkAndRepeatedResetClearOrdersAndUiState"
+  "RimworldTweak.Tests.PlayMode.WorkIntegrationTests.DraftDuringWorkAndRepeatedResetClearOrdersAndUiState",
+  "RimworldTweak.Tests.PlayMode.ReadableUiTests.PawnNamesStayDistinctAtMapEdgeAndColorsSurviveDraftAndReset",
+  "RimworldTweak.Tests.PlayMode.ReadableUiTests.SevenObjectKindsHaveDifferentSymbolsAndReadableNames",
+  "RimworldTweak.Tests.PlayMode.ReadableUiTests.StockZoneHasFloorAndOnlyOuterEdgesBelowObjects",
+  "RimworldTweak.Tests.PlayMode.ReadableUiTests.BottomPanelShowsRealCargoAndClaimAndCanSelectTarget"
 ]

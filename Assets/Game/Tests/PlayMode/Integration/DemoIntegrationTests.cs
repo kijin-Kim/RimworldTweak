@@ -163,7 +163,8 @@ namespace RimworldTweak.Tests.PlayMode
             {
                 var image = marker.GetComponent<Image>();
                 Assert.That(image, Is.Not.Null);
-                Assert.That(image.enabled, Is.True);
+                if(marker.Kind==ViewKind.Tile) Assert.That(image.enabled, Is.True);
+                else { var symbol=marker.GetComponentInChildren<MapSymbolGraphic>(); Assert.That(symbol, Is.Not.Null); Assert.That(symbol.enabled, Is.True); }
                 Assert.That(marker.gameObject.activeInHierarchy, Is.True);
                 Assert.That(image.color.a, Is.GreaterThan(0f));
                 var rect = marker.GetComponent<RectTransform>();
@@ -187,7 +188,7 @@ namespace RimworldTweak.Tests.PlayMode
                     Assert.That(marker.Amount, Is.EqualTo(resource.Amount));
                     var label = marker.GetComponentInChildren<Text>();
                     Assert.That(label, Is.Not.Null);
-                    Assert.That(label.text, Is.EqualTo(resource.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+                    Assert.That(label.text, Is.EqualTo(SettlementView.ResourceName(resource.Kind) + " ×" + resource.Amount));
                 }
             }
             Assert.That(view.Markers.Where(m => m.Kind == ViewKind.Colonist).Select(m => m.EntityId),

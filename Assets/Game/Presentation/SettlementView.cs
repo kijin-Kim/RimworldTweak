@@ -183,12 +183,13 @@ namespace RimworldTweak.Presentation
             UpdateLivingMarkers(world);
             TickText.text = "TICK  " + world.Tick.ToString(CultureInfo.InvariantCulture);
             statusText.text = (Runner.IsPaused ? "PAUSED" : "RUNNING") + "  /  " + Runner.SpeedMultiplier + "x   /   RESETS " + Runner.Session.ResetCount;
-            pauseLabel.text = Runner.IsPaused ? "Resume" : "Pause";
+            pauseLabel.text = Runner.IsPaused ? "재개" : "일시정지";
             StepButton.interactable = Runner.IsPaused;
             Speed1Button.GetComponent<Image>().color = Runner.SpeedMultiplier == 1 ? new Color(0.30f, 0.44f, 0.42f) : new Color(0.19f, 0.29f, 0.31f);
             Speed3Button.GetComponent<Image>().color = Runner.SpeedMultiplier == 3 ? new Color(0.30f, 0.44f, 0.42f) : new Color(0.19f, 0.29f, 0.31f);
             RefreshSelection(world);
             RefreshWorkUI(world);
+            RefreshInspection(world);
         }
 
         private void BuildUI()
@@ -203,7 +204,7 @@ namespace RimworldTweak.Presentation
             var scaler = uiRoot.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1280, 800);
-            scaler.matchWidthOrHeight = 0.5f;
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.Expand;
             var background = Panel("Background", uiRoot.transform, 0, 0, 1280, 800, new Color(0.055f, 0.085f, 0.10f));
             background.anchorMin = Vector2.zero;
             background.anchorMax = Vector2.one;
@@ -245,6 +246,7 @@ namespace RimworldTweak.Presentation
             destinationOutline = Outline("Active destination", SelectedColor);
             pendingOutline = Outline("Pending destination", PendingColor);
             BuildWorkUI();
+            BuildInspectionLayout();
         }
 
         private RectTransform Outline(string name, Color color)
@@ -269,7 +271,7 @@ namespace RimworldTweak.Presentation
             while (colonistButtons.Count < world.Colonists.Count)
             {
                 var index = colonistButtons.Count;
-                var button = MakeButton("", sidebar, 28 + index * 166, 316, 150);
+                var button = MakeButton("", uiRoot.transform, 32 + index * 158, 750, 150);
                 button.onClick.AddListener(() => {
                     if (Runner != null && index < Runner.Session.World.Colonists.Count)
                         SelectColonist(Runner.Session.World.Colonists[index].Id);
@@ -304,7 +306,7 @@ namespace RimworldTweak.Presentation
             selectedOutline.gameObject.SetActive(false);
             destinationOutline.gameObject.SetActive(false);
             pendingOutline.gameObject.SetActive(false);
-            var cell = 552f / Mathf.Max(world.Width, world.Height);
+            var cell = 480f / Mathf.Max(world.Width, world.Height);
             if (selected == null)
             {
                 SelectionText.text = "NO COLONIST SELECTED\nClick a triangle or a colonist button.";
@@ -403,7 +405,7 @@ namespace RimworldTweak.Presentation
 
         private void UpdateColonistMarkers(WorldState world)
         {
-            var cell = 552f / Mathf.Max(world.Width, world.Height);
+            var cell = 480f / Mathf.Max(world.Width, world.Height);
             var offset = world.Width * world.Height;
             for (var i = 0; i < world.Colonists.Count; i++)
             {
@@ -412,10 +414,8 @@ namespace RimworldTweak.Presentation
                 marker.SetState(ViewKind.Colonist, colonist.Id, colonist.Position, 0, false);
                 var rect = (RectTransform)marker.transform;
                 rect.anchoredPosition = new Vector2((colonist.Position.X + 0.5f) * cell, (colonist.Position.Y + 0.5f) * cell);
-                var sharesResource = false;
-                foreach (var resource in world.Resources)
-                    if (resource.Exists && resource.Amount > 0 && resource.Position == colonist.Position) sharesResource = true;
-                rect.sizeDelta = Vector2.one * cell * (sharesResource ? 0.24f : 0.57f);
+                // Identity rendering offsets the person inside this logical tile when sharing an object.
+                rect.sizeDelta = Vector2.one * cell * 0.57f;
                 rect.SetAsLastSibling();
             }
         }
@@ -463,7 +463,7 @@ namespace RimworldTweak.Presentation
         private void DrawWorld(WorldState world)
         {
             displayedResourceCount = world.Resources.Count;
-            var cell = 552f / Mathf.Max(world.Width, world.Height);
+            var cell = 480f / Mathf.Max(world.Width, world.Height);
             board.sizeDelta = new Vector2(cell * world.Width, cell * world.Height);
             var blocked = new HashSet<GridPosition>(world.BlockedTiles);
             var index = 0;

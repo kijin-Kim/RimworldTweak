@@ -31,7 +31,6 @@ namespace RimworldTweak.Presentation
         private int displayedResourceCount;
         private GridPosition? hoverTile;
 
-        private static string ResourceName(ResourceKind kind) => kind.ToString();
         private void BuildWorkUI()
         {
             LifeTabButton = MakeButton("Life / pawn", uiRoot.transform, 900, 714, 150);
@@ -130,7 +129,7 @@ namespace RimworldTweak.Presentation
         private void RefreshWorkUI(WorldState world)
         {
             if (workPanel == null) return;
-            workPanel.gameObject.SetActive(showWork);
+            workPanel.gameObject.SetActive(true);
             RebuildObjectList(world);
             var detail = new StringBuilder();
             detail.Append(ActiveWorkTool == WorkTool.Gather ? "채집 지정: 나무 또는 식물을 클릭" : ActiveWorkTool == WorkTool.Storage ?
@@ -182,22 +181,27 @@ namespace RimworldTweak.Presentation
             }
             var marker = workMarkers[index]; marker.GetComponent<Image>().color = color;
             marker.GetComponentInChildren<Text>().text = text;
-            PlaceOverlay(marker, position, 552f / Mathf.Max(Runner.Session.World.Width, Runner.Session.World.Height), size);
+            PlaceOverlay(marker, position, 480f / Mathf.Max(Runner.Session.World.Width, Runner.Session.World.Height), size);
             return marker;
         }
         private void DrawWorkMarkers(WorldState world)
         {
             var index = 0;
-            foreach (var zone in world.StorageZones) if (zone.Exists)
-                foreach (var slot in zone.Slots)
-                    WorkMarker(index++, slot.Position, slot.Amount + "/50", new Color(.3f,.65f,.85f), .92f);
+            DrawStorageGround(world);
             foreach (var node in world.Gatherables) if (!node.Depleted)
-                WorkMarker(index++, node.Position, node.Kind + (node.Designated ? " [G]" : "") + (node.OwnerId.HasValue ? " C" + node.OwnerId : ""), new Color(.4f,.72f,.38f), .66f);
+            {
+                var marker=WorkMarker(index++,node.Position,(node.Kind==GatherKind.Tree?"나무":"식용 식물")+(node.Designated?" [채집]":"")+(node.OwnerId.HasValue?" ["+node.OwnerId+"]":""),ColonistColor,.66f);
+                SymbolOn(marker,node.Kind==GatherKind.Tree?MapSymbol.Tree:MapSymbol.Plant,new Color(.40f,.72f,.38f));
+                var label=marker.GetComponentInChildren<Text>(); label.alignment=TextAnchor.MiddleCenter;
+                label.rectTransform.anchorMin=label.rectTransform.anchorMax=new Vector2(.5f,.5f); label.rectTransform.pivot=new Vector2(.5f,0);
+                label.rectTransform.sizeDelta=new Vector2(100,18); label.rectTransform.anchoredPosition=new Vector2(0,2-240f/Mathf.Max(world.Width,world.Height));
+                label.color=node.OwnerId.HasValue?PawnColor(node.OwnerId.Value):Ink;
+            }
             for (var i = index; i < workMarkers.Count; i++) workMarkers[i].gameObject.SetActive(false);
             storagePreview.gameObject.SetActive(StorageFirstCorner.HasValue);
             if (StorageFirstCorner.HasValue)
             {
-                var a = StorageFirstCorner.Value; var b = hoverTile ?? a; var cell = 552f / Mathf.Max(world.Width, world.Height);
+                var a = StorageFirstCorner.Value; var b = hoverTile ?? a; var cell = 480f / Mathf.Max(world.Width, world.Height);
                 storagePreview.pivot = Vector2.zero;
                 storagePreview.anchoredPosition = new Vector2(Mathf.Min(a.X, b.X) * cell, Mathf.Min(a.Y, b.Y) * cell);
                 storagePreview.sizeDelta = new Vector2((Mathf.Abs(a.X - b.X) + 1) * cell, (Mathf.Abs(a.Y - b.Y) + 1) * cell);

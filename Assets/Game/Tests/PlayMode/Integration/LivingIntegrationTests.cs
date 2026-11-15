@@ -54,7 +54,7 @@ namespace RimworldTweak.Tests.PlayMode
             {
                 var resource = runner.Session.World.Resources.Single(r => r.Id == marker.EntityId);
                 Assert.That(marker.Amount, Is.EqualTo(resource.Amount));
-                Assert.That(marker.GetComponentInChildren<Text>().text, Is.EqualTo(resource.Amount.ToString()));
+                Assert.That(marker.GetComponentInChildren<Text>().text, Is.EqualTo(SettlementView.ResourceName(resource.Kind) + " ×" + resource.Amount));
             }
             runner.StepOnce(); view.RefreshNow();
             Assert.That(view.NeedsText.text, Does.Contain("34.90").And.Contain("24.95"));
@@ -176,8 +176,8 @@ namespace RimworldTweak.Tests.PlayMode
         [UnityTest]
         public IEnumerator FoodAndBedFailureReasonsAreDistinctOnActualUi()
         {
-            var messages = new[] { "No usable food", "Food is reserved by other colonists", "No route to food",
-                "No bed; using the floor", "Beds reserved; using the floor", "No route to beds; using the floor", "STARVING" };
+            var messages = new[] { "먹을 수 있는 음식이 없습니다", "음식을 다른 정착민이 점유 중입니다", "음식까지 이동할 수 없습니다",
+                "침대가 없어 바닥에서 쉽니다", "침대를 다른 정착민이 점유 중입니다", "침대까지 이동할 수 없습니다", "기아" };
             for (var kind = 0; kind < messages.Length; kind++)
             {
                 var foodCase = kind < 3 || kind == 6;
@@ -205,13 +205,13 @@ namespace RimworldTweak.Tests.PlayMode
             view.DraftButton.onClick.Invoke();
             Assert.That(runner.IsPaused, Is.True); Assert.That(w.Tick, Is.EqualTo(1));
             Assert.That(w.Colonists[0].IsDrafted, Is.True); Assert.That(w.Resources[0].ReservedAmount, Is.Zero);
-            Assert.That(view.LifeText.text, Does.Contain("DRAFTED")); Assert.That(view.DraftButton.interactable, Is.True);
+            Assert.That(view.LifeText.text, Does.Contain("소집")); Assert.That(view.DraftButton.interactable, Is.True);
             Assert.That(view.MoveSelected(P(2, 1)), Is.True); runner.Session.Step(5);
             Assert.That(w.Colonists[0].Position, Is.EqualTo(P(2, 1)));
             Assert.That(view.ProcessShortcut(UnityEngine.InputSystem.Key.X), Is.False);
             Assert.That(w.Colonists[0].IsDrafted, Is.True);
             Assert.That(view.ProcessShortcut(UnityEngine.InputSystem.Key.R), Is.True);
-            Assert.That(w.Colonists[0].IsDrafted, Is.False); Assert.That(view.DraftButton.GetComponentInChildren<Text>().text, Is.EqualTo("Draft [R]"));
+            Assert.That(w.Colonists[0].IsDrafted, Is.False); Assert.That(view.DraftButton.GetComponentInChildren<Text>().text, Is.EqualTo("소집 [R]"));
             runner.StepOnce(); Assert.That(w.Colonists[0].LifeActivity, Is.EqualTo(LifeActivity.GoingToFood));
             view.DraftButton.onClick.Invoke(); view.ResetButton.onClick.Invoke();
             Assert.That(runner.Session.World.Colonists[0].IsDrafted, Is.False);
@@ -243,7 +243,7 @@ namespace RimworldTweak.Tests.PlayMode
                 UnityEngine.InputSystem.InputSystem.QueueStateEvent(keyboard, new UnityEngine.InputSystem.LowLevel.KeyboardState(UnityEngine.InputSystem.Key.R));
                 pump();
                 Assert.That(runner.Session.World.Colonists[0].IsDrafted, Is.False);
-                Assert.That(view.DraftButton.GetComponentInChildren<Text>().text, Is.EqualTo("Draft [R]"));
+                Assert.That(view.DraftButton.GetComponentInChildren<Text>().text, Is.EqualTo("소집 [R]"));
                 Assert.That(view.TickText.canvas.GetComponentsInChildren<Button>().Any(b => b.name.Contains("Stop") || b.name.Contains("Release")), Is.False);
             }
             finally
@@ -270,7 +270,7 @@ namespace RimworldTweak.Tests.PlayMode
             bedView.DraftButton.onClick.Invoke(); Assert.That(bedView.ReservationText.text, Does.Contain("FREE"));
             bedRunner.StepOnce(); bedView.SelectColonist(2);
             Assert.That(bedView.ReservationText.text, Does.Contain("BED 201  APPROACH C2"));
-            Assert.That(bedView.LifeText.text, Does.Contain("GOING TO BED"));
+            Assert.That(bedView.LifeText.text, Does.Contain("침대로 이동 중"));
             yield return null;
         }
     }

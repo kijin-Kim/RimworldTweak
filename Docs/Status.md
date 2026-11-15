@@ -73,3 +73,7 @@
 ## 기능별 커밋 구성 중: 단계1
 
 2026-11-15 승인된3커밋 중 채집·운반·저장과 기본 작업 UI를 구성했다. 표시 개선과 즉시 명령 처리는 후속 단계다. 중간 상태 EditMode80/PlayMode26 및 Windows 빌드·Player·렌더 검증을 완료했다. [실행 기록](Verification/2026-11-15-feature-commits.md)을 따른다. 최종 파일은 TestResults/commit-split-final에 보존했고 원격 연결·push·Computer Use 없음.
+
+## 기능별 커밋 구성 중: 단계2
+
+단계1은 `5c56268`로 저장했다. 식별·하단 선택 UI 중간 상태의 EditMode80/PlayMode30 및 Windows 빌드·Player·렌더를 검증했다. 설정 즉시 적용과 저장 도구 자동 해제는 아직 다음 단계다.

@@ -121,7 +121,7 @@ namespace RimworldTweak.Tests.PlayMode
             view.RefreshNow(); yield return null;
             Assert.That(runner.Session.World, Is.SameAs(world)); Assert.That(marker.Position, Is.EqualTo(P(2, 1)));
             Assert.That(((RectTransform)marker.transform).anchoredPosition, Is.Not.EqualTo(initialPosition));
-            Assert.That(marker.GetComponent<Image>().enabled, Is.True);
+            Assert.That(marker.GetComponentInChildren<MapSymbolGraphic>().enabled, Is.True);
             Assert.That(view.Markers.Count, Is.EqualTo(69));
             Assert.That(view.SelectionText.text, Does.Contain("1"));
         }
