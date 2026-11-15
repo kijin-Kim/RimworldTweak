@@ -65,7 +65,7 @@ Edit Mode는 Unity 실행기를 사용하며 Unity 없는 독립 테스트가 �
 
 ## 결과 기록 형식
 
-작업 완료 시 Docs/Verification/ 아래에 필요한 결과 요약을 추가한다. 작업 0-A의 [검증 기록](Verification/2026-11-15-0A.md)이 있다. [0-B/0-E1 검증](Verification/2026-11-15-0B-0E1.md)도 완료했다. 나머지 검사는 아직 실행하지 않았다.
+작업 완료 시 Docs/Verification/ 아래에 필요한 결과 요약을 추가한다. 작업 0-A의 [검증 기록](Verification/2026-11-15-0A.md)이 있다. [0-B/0-E1 검증](Verification/2026-11-15-0B-0E1.md)도 완료했다. 현재 데모 검증은 [0-C/D/E2/F 기록](Verification/2026-11-15-demo.md)을 따른다.
 
 ```text
 날짜 / 작업 ID / 검사 ID:
@@ -87,9 +87,45 @@ PowerShell 7에서 프로젝트 루트를 기준으로 실행한다. 동일 프�
 
 ```powershell
 pwsh -NoProfile -File Tools/Test-ResultValidation.ps1
-pwsh -NoProfile -File Tools/Run-Tests.ps1
+pwsh -NoProfile -File Tools/Run-Tests.ps1 -Platform EditMode
+pwsh -NoProfile -File Tools/Run-Tests.ps1 -Platform PlayMode
+pwsh -NoProfile -File Tools/Run-Demo.ps1 -Action Build -TimeoutSeconds 1200
+pwsh -NoProfile -File Tools/Run-Demo.ps1 -Action Smoke
 ```
 
-Run-Tests.ps1은 고정 에디터 버전을 확인하고 전용 파일 핸들 잠금과 기존 Unity 검사로 중복 실행을 거부한다. 제한 시간 기본값은 600초이며 `-TimeoutSeconds`로 지정한다. 타임아웃/예외에는 이 실행기가 시작한 프로세스만 정리한다. 예상 검사 전체 이름은 Tools/expected-editmode-tests.json이며 테스트 추가·변경 시 함께 갱신해야 한다.
+Run-Tests.ps1은 고정 에디터 버전을 확인하고 전용 파일 핸들 잠금과 기존 Unity 검사로 중복 실행을 거부한다. 제한 시간 기본값은 600초이며 `-TimeoutSeconds`로 지정한다. 타임아웃/예외에는 이 실행기가 시작한 프로세스만 정리한다. 예상 검사 전체 이름은 Tools/expected-editmode-tests.json(33개), expected-playmode-tests.json(13개)이며 테스트 추가·변경 시 함께 갱신해야 한다.
 
 매 실행의 TestResults/<run-id>/summary.json, XML과 로그, 전후 입력 해시를 확인한다. Unity의 정상적인 에셋 재직렬화라도 입력이 바뀌면 실패한다. 변경 원인을 검토하고 안정화한 뒤 재실행하며 실패 기록을 통과로 바꾸지 않는다. validator 자체 검사는 Unity를 실행하지 않는 합성 자료 검사다.
+
+
+## 데모 검증 경계
+
+Prepare는 새 장면과 Player 설정을 만드는 의도적 변경 단계다. 이미 제공된 장면이 있으면 반복할 필요가 없으며 검증 전에만 실행한다: `pwsh -NoProfile -File Tools/Run-Demo.ps1 -Action Prepare`.
+
+작업1 기준 EditMode는 초기 상태15개, 시간/초기화6개, 이동12개를 검사했다. 당시 PlayMode13개는 기존 통합5개와 이동·시간·입력8개로 구성되며 실제 Image/Text/RectTransform, 위치·수량·타일 색, 자동 시간과 pause, 반복 Bind/Reset 후 객체 수와 버튼 단일 호출을 검사한다. 테스트 이름 목록에 누락·추가·중복·실패·skip이 있으면 CLI는 실패한다.
+
+Run-Demo는 Prepare/Build/Smoke와 Run-Tests 사이에 동일 runner.lock 독점 핸들을 사용한다. 소유 프로세스가 남아 있으면 거부한다. 종료 후 남은 UnityLockfile은 삭제하지 않고, Unity 프로세스가 없는지 검사한 후 독점 파일 열기가 성공할 때만 Unity가 자체 재열기하도록 한다. 사용자의 에디터를 강제 종료하지 않는다.
+
+Build는 입력 전후 일치를 검사하고 build-provenance.json에 소스와 산출물 SHA256을 기록한다. Smoke는 이를 현재 입력·실행 파일과 대조해 오래된 빌드나 변경된 산출물을 거부한다. 소스·Tools가 바뀌면 다시 빌드해야 한다. Docs 변경은 실행 입력이 아니므로 빌드 해시에 포함하지 않는다. 모든 실행은 고유 TestResults 폴더에 남으며 실패 기록을 덮어쓰지 않는다.
+
+Player smoke는 일반 렌더링을 활성화한 실제 Windows 실행이다. 자동 Tick 진행, 명시 시간 10초→100 Tick, 10회 Reset과 단일 버튼 호출, marker 데이터·객체 수, PNG 저장, 정상 종료를 검사한다. PNG는 종료 후 실제 디코드와 이미지 검토로 보완한다. 사람의 마우스 입력·가독성·일반 종료는 [수동 체크리스트](Demo.md)로 분리한다.
+
+Smoke는 실제 렌더링을 위해 데모 창을 잠시 표시하고 검사 후 종료한다. Editor CLI 프로세스는 숨김 실행한다. 숨긴 Player 창은 렌더 증거로 사용할 수 없다. 최종 render.json은 PNG의 1280×800 크기와 표본 색 수를 검사해 빈 화면을 거부한다. 이는 화면 내용의 의미 검증을 대신하지 않는다.
+
+## 작업 1 상세 검사 계획
+
+기능별 순서, 조작, 시간·경로 규칙과 T1-01~09의 입력·기대 결과는 [이동·시간 조작 계획](Plans/Task1-Movement-Time.md)을 따른다. 사용자가 추천안을 승인해 구현했으며 [실행 결과](Verification/2026-11-15-movement.md)와 계획을 구분한다. 기존 데모 정상 확인을 작업 1의 통과로 사용하지 않는다.
+
+작업 1 Player smoke는 기존 Tick/Reset 검사에 4칸20Tick 도착, 중간/최종 배속 동등성, 통행 차단/재개, Pending/Moving/Blocked Reset10회와 선택/대기열 초기화를 추가했다. 실제 마우스·키보드는 [새 데모 체크리스트](MovementDemo.md)로 사용자가 확인한다.
+
+## 작업 2 상세 계획
+
+식사·수면과 이동 연결, 수량·침대 예약, 실패 복구 및 T2-01~12 검사 조건은 [생활 기능 계획](Plans/Task2-Needs-Food-Sleep.md)을 따른다. 기존 생활 임계값은 유지하고 감소·회복·행동 시간과 우선순위의 세부 추천안을 구분한다. 작업2 구현과 자동 검증을 완료했다. 최종 EditMode56개(기존33+생활23), PlayMode20개(기존13+생활7), Windows2400Tick·배속·Reset·PNG 결과는 [생활 검증](Verification/2026-11-15-living.md)을 따른다. 새 사용자 확인은 [생활 데모](LivingDemo.md)의5단계로 분리한다.
+
+## 소집 우선순위 변경 검증
+
+최신 총계는 EditMode58/58, PlayMode21/21이다. 다섯 생활상태의 즉시 소집·소비 직전 취소·소집중기아/이동·재Stop/Release·Reset을 검사한다. 일시정지 중 소집과 X/R·버튼 연결, 실제 Player의 침대해제/이동도 검사했다. [실행 증거](Verification/2026-11-15-draft.md)를 따른다.
+
+다음 변경은 [R 소집·상호작용 단일 점유 계획](Plans/Interaction-Occupancy-Draft.md)이다. 명령 취소와 점유 해제, 바닥 수면자의 빈 침대 재선택을 포함하며 구현·자동검증했다.
+
+현재R/점유규칙과최종87개검사·Windows결과는 [점유검증](Verification/2026-11-15-occupancy.md)을따른다. 이전검증수치는당시버전의기록이다.

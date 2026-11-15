@@ -1,6 +1,6 @@
 # 구조 설계
 
-0-A 프로젝트 기반, 0-B Simulation 및 Editor 테스트 어셈블리, 0-E1 CLI 실행기를 구현했다. Runtime·Presentation과 Play Mode 통합은 아직 구현 전이다.
+Simulation, Runtime, Presentation, Demo, Editor와 Edit/PlayMode 테스트 어셈블리를 분리했다. 현재 구현 API는 [데모 계약](Contracts/DemoRuntime.md)을 따르며 실제 통과 여부는 Status와 검증 기록을 기준으로 한다.
 
 ## Unity 구성
 
@@ -8,13 +8,15 @@ Unity 6.3 LTS 6000.3.28f1 설치와 ProjectVersion.txt 고정을 확인했다. U
 
 Visible Meta Files와 Force Text를 사용한다. 에디터 버전은 ProjectSettings/ProjectVersion.txt, 패키지는 Packages/manifest.json과 생성된 packages-lock.json이 실제 기준이다. 버전 변경은 검증 후 기록한다.
 
-## 폴더 구성 (Runtime·Presentation·Content·시험 장면·PlayMode는 예정)
+## 폴더 구성 (Content는 예정)
 
 ```text
 Assets/Game/
   Simulation/
   Runtime/
   Presentation/
+  Demo/
+  Editor/
   Content/Scenarios/
   Content/Definitions/
   Scenes/SimulationSandbox.unity
@@ -51,11 +53,11 @@ Tools/Run-Tests.ps1
 
 ## 시간과 수명
 
-일정한 논리 Tick으로 진행한다. 초기 1배속에서는 현실 시간 1초당 10 Tick을 시험한다. 게임 내 하루 길이는 별도 미정이다. Runtime이 경과 시간을 누적해 Tick 수를 계산하고 테스트는 현실 시간을 기다리지 않고 직접 진행한다.
+일정한 논리 Tick으로 진행한다. 초기 1배속에서는 현실 시간 1초당 10 Tick을 시험한다. 게임 내 하루 길이는 별도 미정이다. Runtime은 unscaledDeltaTime에 1배속/3배속을 적용해 전달하고 순수 C# SimulationSession이 decimal 잔여 시간을 누적해 0.1초당 Tick 수를 계산한다. 테스트는 주어진 시간 또는 Step으로 직접 진행한다. 실제 프레임 시간은 float 측정값이므로 현실 시계와 정확히 같은 시각에 Tick이 바뀐다는 보장은 하지 않는다.
 
-Time.timeScale을 유일한 시간 기준으로 삼지 않는다. 이후 일시정지·배속은 전달 Tick 수로 제어한다. 프레임당 처리량 제한이 있더라도 남은 시간은 이월하며 Tick을 조용히 버리지 않는다. 이 정책의 실제 구현·검증은 0-D와 작업 1에서 한다.
+Time.timeScale을 유일한 시간 기준으로 삼지 않는다. 일시정지·배속은 전달 게임 시간으로 제어한다. 프레임당 처리량 제한이 있더라도 남은 시간은 이월하며 Tick을 조용히 버리지 않는다. 일시정지와 단일 Tick, 1/3배속을 구현했다. 이동은 배속과 무관하게 5 Tick/칸이다.
 
-재시작은 월드, 누적 시간, 명령 대기열, 표시 대상, UI 구독을 정리하고 새로 만든다. 월드를 전역 정적 객체로 보관하지 않는 것을 기본으로 한다. Play Mode는 도메인·장면 재로드를 모두 수행하도록 고정했다.
+재시작은 새 World를 만들고 잔여 시간·이동/통행 명령·경로·선택을 초기화하며 pause와 선택 배속은 유지한다. UI는 marker와 경로 dot을 재사용하고 버튼 리스너를 한 번만 등록한다. 명령 대기열은 World가 소유하며 상태 이벤트 구독은 없다. 월드를 전역 정적 객체로 보관하지 않는 것을 기본으로 한다. Play Mode는 도메인·장면 재로드를 모두 수행하도록 고정했다.
 
 ## 시험 장면과 저장 방향
 
@@ -69,4 +71,16 @@ Time.timeScale을 유일한 시간 기준으로 삼지 않는다. 이후 일시�
 
 [ParallelWork.md](ParallelWork.md)의 계약과 소유권을 따른다. B의 초기 데이터·읽기 상태 계약뿐 아니라 Runtime 초기화·Tick·Reset 의미를 정한 뒤 C/D를 나누어 작성한다. D의 Simulation 수정은 B 담당 종료 후 명시적으로 인계한다. Scene·Bootstrap·Content·공유 asmdef는 통합 담당 단독 소유다. 검증 도구는 CLI 방식이며 Computer Use에 의존하지 않는다.
 
-구현된 초기 상태 API와 검증 규칙은 [초기 월드 계약](Contracts/InitialWorld.md)을 따른다. WorldState는 현재 초기 snapshot이며 시간 진행과 mutable 게임 상태는 0-D 이후 범위다.
+구현된 초기 상태 API와 검증 규칙은 [초기 월드 계약](Contracts/InitialWorld.md)을 따른다. 현재 확장은 [이동·시간 계약](Contracts/MovementTime.md)을 따른다. 불변 ColonistSeed와 실행 ColonistState를 분리하고 World마다 위치·경로·진행·명령이 독립이다. Tick마다 통행 변경과 경로 재검사, 이동 명령, ID순 이동을 수행한다. 생활·생산 상태는 후속 범위다.
+
+화면은 같은 World의 이동 위치를 ID로 갱신하며 통행 revision 변경 시 타일을 갱신한다. 선택·목적지·예약 테두리와 경로 dot은 WorldMarker와 분리한다. BFS 경로는 동·북·서·남 순서이며 원점 제외·목적지 포함이다. Presentation의 InputSystem 단축키와 EventSystem 맵 클릭은 같은 Runtime 명령 경로를 사용한다.
+
+## 생활 상태 확장
+
+World는 ResourceState/BedState와 정착민 욕구·생활 상태를 독립 소유한다. seed는 불변이다. Simulation의 외부변경→욕구→기존행동완료→예약/결정→이동/도착 순서를 유지한다. Runtime 기본은 LivingScenario, 이동 회귀는 Sandbox를 명시한다. Presentation은 읽기 조회와 마커 재사용만 수행한다. 상세 API·소유권은 [생활 계약](Contracts/Living.md), 결과는 [생활 검증](Verification/2026-11-15-living.md)을 따른다.
+
+소집 예외: SetDrafted/QueueStop은 사용자 제어 명령으로 즉시 적용하며 Tick을 진행하지 않는다. 정착민별 IsDrafted가 자동 생활 결정을 차단한다. 식사·수면 예약과 이동 명령을 같은 World에서 정리한 뒤 수동 이동만 기존 Tick 큐를 사용한다. Release는 다음Tick 자동 결정을 허용한다.
+
+## 단일 점유와 수면 목적
+
+점유권은World내오브젝트에OwnerId/OwnerActionId로저장한다. Pawn의ActionId는행동취소·교체때증가하고접근→사용때유지한다. 수면목적HasSleepIntent는목표90까지유지하되명시취소/소집에서지운다. 바닥수면은가용대상변경과제한된재시도로대체침대를획득한다. UI는R토글하나와접근/사용단계를표시한다. [계약](Contracts/InteractionOccupancy.md)참조.

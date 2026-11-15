@@ -1,6 +1,7 @@
 #requires -Version 7.0
 [CmdletBinding()]
 param(
+    [ValidateSet("EditMode", "PlayMode")][string] $Platform = "EditMode",
     [string] $EditorPath = 'C:\Program Files\Unity\Hub\Editor\6000.3.28f1\Editor\Unity.exe',
     [ValidateRange(1, 3600)][int] $TimeoutSeconds = 600
 )
@@ -14,7 +15,7 @@ if (-not $versionMatch.Success) { throw 'ProjectVersion.txt has no Editor versio
 $version = $versionMatch.Groups[1].Value
 $editor = Get-Item -LiteralPath $EditorPath
 if ($editor.VersionInfo.ProductVersion.Split('_')[0] -ne $version) { throw 'Installed Editor version differs from ProjectVersion.txt.' }
-$expected = @(Get-Content -LiteralPath (Join-Path $PSScriptRoot 'expected-editmode-tests.json') -Raw | ConvertFrom-Json)
+$expected = @(Get-Content -LiteralPath (Join-Path $PSScriptRoot ("expected-" + $Platform.ToLowerInvariant() + "-tests.json")) -Raw | ConvertFrom-Json)
 if ($expected.Count -eq 0) { throw 'Expected test list is empty.' }
 $resultsRoot = Join-Path $project 'TestResults'
 [IO.Directory]::CreateDirectory($resultsRoot) | Out-Null
@@ -26,9 +27,7 @@ $exit = 1
 try {
     # OpenOrCreate + FileShare.None supplies an exclusive OS lock without deleting a stale file.
     $guard = [IO.File]::Open($guardPath, [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
-    if (Test-Path -LiteralPath (Join-Path $project 'Temp/UnityLockfile')) {
-        throw 'UnityLockfile exists. Close the project normally; this runner never removes Unity locks.'
-    }
+
     $unityProcesses = @(Get-CimInstance Win32_Process -Filter "Name = 'Unity.exe'")
     foreach ($running in $unityProcesses) {
         if ([string]::IsNullOrWhiteSpace($running.CommandLine)) { throw 'Cannot inspect an existing Unity process; refusing to run concurrently.' }
@@ -36,6 +35,11 @@ try {
         if ($normalized.IndexOf($project.Replace('/', '\'), [StringComparison]::OrdinalIgnoreCase) -ge 0) {
             throw "Unity already uses this project (PID $($running.ProcessId)). Close it normally."
         }
+    }
+    $unityLock = Join-Path $project 'Temp/UnityLockfile'
+    if (Test-Path $unityLock) {
+        $probe = [IO.File]::Open($unityLock, 'Open', 'ReadWrite', 'None')
+        $probe.Dispose()
     }
     $runId = [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfffZ') + '-' + [Guid]::NewGuid().ToString('N').Substring(0,8)
     $runDir = Join-Path $resultsRoot $runId
@@ -50,8 +54,9 @@ try {
         }
     }
     $inputs | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $runDir 'inputs-before.json') -Encoding utf8
-    $arguments = @('-batchmode', '-nographics', '-projectPath', $project, '-runTests', '-testPlatform', 'EditMode',
-        '-assemblyNames', 'RimworldTweak.Tests.EditMode', '-testResults', $resultPath, '-logFile', $logPath)
+    $arguments = @('-batchmode', '-nographics', '-projectPath', $project, '-runTests', '-testPlatform', $Platform,
+        '-assemblyNames', ("RimworldTweak.Tests." + $Platform), '-testResults', $resultPath, '-logFile', $logPath)
+    if (@($arguments | Where-Object { $_ -isnot [string] -or [string]::IsNullOrWhiteSpace($_) }).Count -gt 0) { throw "Invalid command argument." }
     $info = [Diagnostics.ProcessStartInfo]::new($editor.FullName)
     $info.UseShellExecute = $false
     $info.CreateNoWindow = $true

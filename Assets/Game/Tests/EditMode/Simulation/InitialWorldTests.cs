@@ -98,8 +98,8 @@ namespace RimworldTweak.Tests.EditMode
             AssertCannotWrite(scenario.Colonists, new ColonistSeed(9, new GridPosition(0, 0)));
             AssertCannotWrite(scenario.Resources, new ResourceSeed(9, ResourceKind.Wood, 1, new GridPosition(0, 0)));
             AssertCannotWrite(world.BlockedTiles, new GridPosition(0, 0));
-            AssertCannotWrite(world.Colonists, new ColonistSeed(9, new GridPosition(0, 0)));
-            AssertCannotWrite(world.Resources, new ResourceSeed(9, ResourceKind.Wood, 1, new GridPosition(0, 0)));
+            AssertCannotWrite(world.Colonists, world.Colonists[0]);
+            AssertCannotWrite(world.Resources, world.Resources[0]);
             Assert.That(world.Resources[0].Amount, Is.EqualTo(40));
         }
 

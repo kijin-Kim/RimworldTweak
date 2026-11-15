@@ -1,0 +1,5 @@
+{
+  "name": "RimworldTweak.Editor",
+  "references": ["RimworldTweak.Runtime", "RimworldTweak.Presentation", "RimworldTweak.Simulation", "RimworldTweak.Demo", "Unity.ugui", "Unity.InputSystem"],
+  "includePlatforms": ["Editor"]
+}

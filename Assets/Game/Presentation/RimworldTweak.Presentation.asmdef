@@ -1,0 +1,9 @@
+{
+  "name": "RimworldTweak.Presentation",
+  "references": [
+    "RimworldTweak.Simulation",
+    "RimworldTweak.Runtime",
+    "Unity.ugui",
+    "Unity.InputSystem"
+  ]
+}

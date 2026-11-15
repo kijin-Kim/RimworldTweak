@@ -113,3 +113,20 @@ P1에서는 시뮬레이션과 검증 작성 2개 축을 사용한다. P2에서�
 ## 다중 에이전트 검토
 
 의존성, 검증, 파일 소유권의 세 관점에서 독립 검토 후 교차 토의했다. 논점과 최종 반영 결과는 [토의 기록](Reviews/2026-11-15-parallel-review.md)을 따른다. 구현과 검증 결과가 아닌 설계 검토 기록이다.
+
+## 0-C/D/E2/F 실제 배정
+
+[DemoRuntime 계약](Contracts/DemoRuntime.md)을 먼저 확정하고 demo_runtime, demo_view, demo_tests가 각각 시간·수명, 표시, 검사를 병렬 작성했다. 소유권은 해당 계약을 따른다. 작성 종료 후 root에게 인계하고 소스 쓰기를 동결했다. root만 Prepare → EditMode → PlayMode → Build → Smoke를 직렬 실행한다. [교차 검토 기록](Reviews/2026-11-15-demo-review.md)과 실제 검증 기록은 구분한다.
+
+## 작업 1 실제 배정
+
+[MovementTime 계약](Contracts/MovementTime.md)을 먼저 고정했다. movement_sim은 Simulation 상태·경로·명령, movement_view는 표시·선택·입력, movement_tests는 검사를 병렬 작성한다. root는 Runtime 시간·명령 전달, Player smoke, 공유 asmdef·설정·문서를 맡는다. 각 담당 파일 소유권은 계약 표에 명시했고 Unity 실행은 root만 직렬 수행한다.
+
+## 작업2 실제 배정
+
+[생활 공통 계약](Contracts/Living.md)을 먼저 확정했다. life_sim은 Simulation 전반과 예약·욕구·생활 상태, life_view는 표시·입력 피드백, life_tests는 상태·통합 검사를 단독 소유한다. root는 Runtime 기본 시나리오와 Player smoke·공유설정·문서를 맡는다. 작성은 병렬, Unity 실행은 쓰기 동결 후 root가 직렬 수행한다.
+
+
+작업2 현재 상태 정정: 최신 요청은 계획 정리만이다. 위 배정으로 작성된 초안은 추가 수정과 실행을 중단했으며 검증되지 않았다. 생활 계약은 승인된 계약이 아닌 초안으로 취급한다. 향후 구현 승인 전 병렬 작업을 재개하지 않는다.
+
+작업2 재개: 사용자가 구현 목표를 active로 전환했다. 기존 소유권을 유지하고 life_sim/life_tests/life_view 교차 검토 후 root 통합 검증을 진행한다. 검토 중 발견한 수면 중 침대 삭제 복구와 테스트 누락을 보완한다.

@@ -39,11 +39,11 @@ Unity Hub에서 Add project from disk로 루트 폴더를 등록하거나 다음
 ```
 
 1. 패키지 해석과 컴파일 완료를 기다린다.
-2. `Assets/Scenes/SampleScene.unity`를 연다.
+2. `Assets/Game/Scenes/SimulationSandbox.unity`를 연다.
 3. Play 버튼 또는 Ctrl+P로 실행하고 Game 탭을 확인한다.
 4. 다시 실행을 중지하고 Console을 확인한다.
 
-현재 장면은 Main Camera와 Global Light 2D만 있는 빈 템플릿이다. Game 탭에 파란 단색 배경이 보이는 것은 정상이며 정착지나 게임플레이 구현을 의미하지 않는다.
+초기 템플릿 SampleScene은 보존했다. 데모의 진입 장면은 SimulationSandbox이며 초기 정착지와 선택·이동·목적지·경로, Tick·Pause·1/3배속·Step·Reset을 표시한다. 실행 파일과 수동 확인 절차는 [MovementDemo.md](MovementDemo.md)를 따른다.
 
 ## 버전과 설정 관리
 
@@ -55,4 +55,6 @@ Unity Hub에서 Add project from disk로 루트 폴더를 등록하거나 다음
 
 ## 검증 범위
 
-프로젝트 생성, 버전 고정, 컴파일, 템플릿 Play Mode 진입·종료, 실제 Game 화면을 확인했다. 현재 0-B 초기 시뮬레이션과 0-E1 Edit Mode 검사 도구가 있다. 실행 방법은 [Testing.md](Testing.md), 결과는 [B/E1 검증 기록](Verification/2026-11-15-0B-0E1.md)을 따른다. Windows 실행 파일 빌드 검증은 0-F 범위이며 이번에 수행하지 않았다. 0-A 당시에는 Git 초기화와 커밋을 하지 않았다. 이후 사용자 승인으로 main 저장소를 초기화하고 최초 기준 커밋을 준비했다. 공유 폴더 유지, 원격 연결·push 금지, 후속 커밋 재승인 정책은 [Status.md](Status.md)를 따른다.
+프로젝트 기반과 초기 월드의 과거 결과는 [0-A](Verification/2026-11-15-0A.md), [0-B/E1](Verification/2026-11-15-0B-0E1.md)에 남아 있다. 현재 Windows 데모 결과는 Status 및 후속 검증 기록을 따른다. 최초 기준 커밋은 784f242이며 이번 후속 변경은 커밋하지 않는다. 공유 폴더 유지, 원격 연결·push 금지, 후속 커밋 재승인 정책을 유지한다.
+
+최신 실행 파일은 자동 식사·수면이 포함된 생활 데모다. [실행 및 사람 확인](LivingDemo.md), [검증 기록](Verification/2026-11-15-living.md)을 따른다.

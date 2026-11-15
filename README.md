@@ -18,6 +18,12 @@
 | [결정 기록](Docs/Decisions.md) | 확정 사항, 선택 근거, 재검토 조건 |
 | [문서 운영](Docs/Workflow.md) | 문서 수정과 작업 보고 규칙 |
 
-현재 작업 0-A를 완료해 Unity 프로젝트 생성과 템플릿 Play Mode 실행을 검증했다. 0-B 초기 월드와 0-E1 CLI 검사를 완료했으며 생활·생산 기능은 아직 구현하지 않았다. 구현 여부는 기획 문서의 설명이 아니라 [현재 상태](Docs/Status.md)와 검증 증거를 기준으로 판단한다. 커밋은 사용자 승인 전까지 하지 않는다.
+정착민 선택·이동·중지와 시간 조작에 더해 자동 식사·수면을 사용할 수 있다. R 한 키/버튼으로 소집·해제한다. 소집하면 현재 명령과 점유를 취소하고 플레이어 이동이 우선한다. 음식 스택과 침대는 한 Pawn만 점유하며, 바닥 수면자는 빈 침대를 다시 선택한다. [생활 데모 실행·확인](Docs/LivingDemo.md), [현재 상태](Docs/Status.md), [최신 점유 검증](Docs/Verification/2026-11-15-occupancy.md)를 참고한다. 생산·건설·전투·저장은 아직 없다.
 
-앞으로 Computer Use는 사용하지 않으며 CLI 기반 검증과 필요한 수동 확인을 구분한다. 병렬 작업 계획은 구현 완료 상태를 뜻하지 않는다.
+공유 폴더 유지, Computer Use·원격 연결·push 금지. 검증된 통합 기준점은 `Add settlement movement, living needs and exclusive interactions`로 저장하며 이후 커밋은 다시 승인받는다.
+
+[생활 계획](Docs/Plans/Task2-Needs-Food-Sleep.md) · [생활 계약/파일 소유권](Docs/Contracts/Living.md) · [기존 이동 검증](Docs/Verification/2026-11-15-movement.md)
+
+이동·시간 조작은 사용자 정상 확인을 받았다. 생활·소집·점유도 자동 검증 및 사용자 정상 확인 보고를 받았다.
+
+[R 토글·단일 점유 계획](Docs/Plans/Interaction-Occupancy-Draft.md)과 [공통 계약](Docs/Contracts/InteractionOccupancy.md)에 따라 구현·자동 검증했다. 2026-11-15 사용자 정상 확인 보고를 받았다.

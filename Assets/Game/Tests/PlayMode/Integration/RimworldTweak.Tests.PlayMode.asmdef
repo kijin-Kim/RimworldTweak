@@ -1,0 +1,13 @@
+{
+  "name": "RimworldTweak.Tests.PlayMode",
+  "references": [
+    "RimworldTweak.Runtime",
+    "RimworldTweak.Presentation",
+    "RimworldTweak.Simulation",
+    "Unity.ugui",
+    "Unity.InputSystem"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

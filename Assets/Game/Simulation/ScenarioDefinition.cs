@@ -10,12 +10,17 @@ namespace RimworldTweak.Simulation
             int height,
             IEnumerable<GridPosition> blockedTiles,
             IEnumerable<ColonistSeed> colonists,
-            IEnumerable<ResourceSeed> resources)
+            IEnumerable<ResourceSeed> resources,
+            IEnumerable<BedSeed> beds = null, bool needsEnabled = false)
         {
             if (blockedTiles == null) throw new ArgumentNullException(nameof(blockedTiles));
             if (colonists == null) throw new ArgumentNullException(nameof(colonists));
             if (resources == null) throw new ArgumentNullException(nameof(resources));
 
+            NeedsEnabled = needsEnabled;
+            var bedCopies = new List<BedSeed>();
+            if (beds != null) foreach (var bed in beds) bedCopies.Add(bed == null ? null : new BedSeed(bed.Id, bed.Position));
+            Beds = bedCopies.AsReadOnly();
             Width = width;
             Height = height;
             BlockedTiles = new List<GridPosition>(blockedTiles).AsReadOnly();
@@ -25,7 +30,7 @@ namespace RimworldTweak.Simulation
             {
                 colonistCopies.Add(colonist == null
                     ? null
-                    : new ColonistSeed(colonist.Id, colonist.Position));
+                    : new ColonistSeed(colonist.Id, colonist.Position, colonist.Nutrition, colonist.Rest));
             }
             Colonists = colonistCopies.AsReadOnly();
 
@@ -39,6 +44,8 @@ namespace RimworldTweak.Simulation
             Resources = resourceCopies.AsReadOnly();
         }
 
+        public bool NeedsEnabled { get; }
+        public IReadOnlyList<BedSeed> Beds { get; }
         public int Width { get; }
         public int Height { get; }
         public IReadOnlyList<GridPosition> BlockedTiles { get; }

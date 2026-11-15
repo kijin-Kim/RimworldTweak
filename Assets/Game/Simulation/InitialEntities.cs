@@ -9,12 +9,16 @@ namespace RimworldTweak.Simulation
 
     public sealed class ColonistSeed
     {
-        public ColonistSeed(int id, GridPosition position)
+        public ColonistSeed(int id, GridPosition position, int nutrition = 10000, int rest = 10000)
         {
             Id = id;
             Position = position;
+            Nutrition = nutrition;
+            Rest = rest;
         }
 
+        public int Nutrition { get; }
+        public int Rest { get; }
         public int Id { get; }
         public GridPosition Position { get; }
     }
@@ -27,6 +31,8 @@ namespace RimworldTweak.Simulation
             Kind = kind;
             Amount = amount;
             Position = position;
+
+
         }
 
         public int Id { get; }
