@@ -1,0 +1,6 @@
+{
+  "name": "RimworldTweak.Simulation",
+  "rootNamespace": "RimworldTweak.Simulation",
+  "references": [],
+  "noEngineReferences": true
+}

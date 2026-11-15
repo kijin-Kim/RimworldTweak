@@ -1,0 +1,17 @@
+[
+  "RimworldTweak.Tests.EditMode.InitialWorldTests.SandboxHasSpecifiedInitialState",
+  "RimworldTweak.Tests.EditMode.InitialWorldTests.RepeatedCreationProducesEquivalentIndependentSnapshots",
+  "RimworldTweak.Tests.EditMode.InitialWorldTests.ChangingInputCollectionsCannotChangeScenarioOrWorlds",
+  "RimworldTweak.Tests.EditMode.InitialWorldTests.ExposedCollectionsRejectMutation",
+  "RimworldTweak.Tests.EditMode.InitialWorldTests.InputOrderDoesNotChangeCanonicalWorldOrder",
+  "RimworldTweak.Tests.EditMode.InitialWorldTests.BoundaryPositionsAndSharedUnblockedTileAreAccepted",
+  "RimworldTweak.Tests.EditMode.InitialWorldTests.InvalidDimensionsAreRejected",
+  "RimworldTweak.Tests.EditMode.InitialWorldTests.InvalidEntityIdsAreRejected",
+  "RimworldTweak.Tests.EditMode.InitialWorldTests.DuplicateIdsAcrossAndWithinEntityTypesAreRejected",
+  "RimworldTweak.Tests.EditMode.InitialWorldTests.OutOfBoundsPositionsAreRejectedForEveryEntityKind",
+  "RimworldTweak.Tests.EditMode.InitialWorldTests.InvalidResourceAmountOrKindIsRejected",
+  "RimworldTweak.Tests.EditMode.InitialWorldTests.NullEntitiesAreRejected",
+  "RimworldTweak.Tests.EditMode.InitialWorldTests.DuplicateBlockedTilesAreRejected",
+  "RimworldTweak.Tests.EditMode.InitialWorldTests.EntitiesOnBlockedTilesAreRejected",
+  "RimworldTweak.Tests.EditMode.InitialWorldTests.NullScenarioAndCollectionsAreRejected"
+]

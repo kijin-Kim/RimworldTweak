@@ -1,0 +1,22 @@
+# Unity generated directories
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Bb]uild/
+/[Bb]uilds/
+/TestResults/
+
+# IDE generated files
+/.vs/
+/.idea/
+*.csproj
+*.sln
+*.slnx
+*.user
+*.pidb
+*.booproj
+
+# Keep Assets and all .meta files, Packages (including packages-lock.json),
+# and ProjectSettings under version control when Git is initialized.

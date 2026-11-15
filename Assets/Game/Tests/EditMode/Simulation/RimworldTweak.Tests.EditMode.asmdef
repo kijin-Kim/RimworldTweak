@@ -1,0 +1,13 @@
+{
+  "name": "RimworldTweak.Tests.EditMode",
+  "rootNamespace": "RimworldTweak.Tests.EditMode",
+  "references": [
+    "RimworldTweak.Simulation"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}
