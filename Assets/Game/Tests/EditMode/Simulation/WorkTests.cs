@@ -68,11 +68,10 @@ namespace RimworldTweak.Tests.EditMode
         {
             var w = World(beds: new[] { new BedSeed(201, P(5, 5)) });
             Assert.That(w.QueueCreateStorage(P(-1, 0), P(0, 0)), Is.False);
-            Assert.That(w.QueueCreateStorage(P(5, 5), P(6, 6)), Is.True);
+            Assert.That(w.QueueCreateStorage(P(5, 5), P(6, 6)), Is.False);
             Assert.That(w.QueueCreateStorage(P(2, 2), P(3, 3)), Is.True);
-            Assert.That(w.QueueCreateStorage(P(2, 2), P(3, 3)), Is.True);
-            Assert.That(w.PendingCommandCount, Is.EqualTo(3)); Assert.That(w.Tick, Is.Zero);
-            w.Step(1);
+            Assert.That(w.QueueCreateStorage(P(2, 2), P(3, 3)), Is.False);
+            Assert.That(w.PendingCommandCount, Is.Zero); Assert.That(w.Tick, Is.Zero);
             Assert.That(w.StorageZones.Count, Is.EqualTo(1));
             Assert.That(w.StorageZones[0].Slots.Count, Is.EqualTo(4));
             Assert.That(w.LastCommandError, Is.EqualTo("InvalidStorageArea"));

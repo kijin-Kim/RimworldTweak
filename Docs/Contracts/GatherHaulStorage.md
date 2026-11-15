@@ -15,9 +15,9 @@
 ## 명령과 조회 API
 
 - `QueueDesignateGather(id, designated)`는 요청을 변경한다. 취소는 현재 담당 행동도 정리한다. R은 이 전역 요청을 제거하지 않는다.
-- `QueueCreateStorage(first, second)`, `QueueStorageFilter(zoneId, kind, allowed)`, `QueueDeleteStorage(zoneId)`는 다음 Tick에 호출 순서대로 적용한다. 유효하지 않은 요청은 오류 코드로 표시하며 부분 생성하지 않는다.
+- `QueueCreateStorage(first, second)`, `QueueStorageFilter(zoneId, kind, allowed)`, `QueueDeleteStorage(zoneId)`는 호출 순서대로 즉시 적용한다. 일시정지 중에도 실제 상태와 무효 행동/점유를 정리한다. 유효하지 않은 요청은 오류 코드로 표시하며 부분 생성하지 않는다.
 - `Gatherables`, `StorageZones`는 읽기 목록이다. 대상의 진행도·소진·지정·권한, 칸의 위치·보관 스택·권한을 공개한다.
-- `PendingCommandCount`에 작업 설정 명령도 포함한다. 취소는 Action ID 검사, 생성 ID는 월드 내 단조 증가/재사용 금지. Reset은 새 World와 빈 명령 큐다.
+- `PendingCommandCount`에 즉시 적용하는 작업 설정 명령은 포함하지 않는다. 적용 시점은 [즉시 명령 계약](ImmediatePlayerCommands.md)을 따른다. 취소는 Action ID 검사, 생성 ID는 월드 내 단조 증가/재사용 금지. Reset은 새 World와 빈 명령 큐다.
 - 새 일반 작업은 운반 우선, 다음 채집이다. 거리/요청순서/대상 ID 동률 처리, Pawn ID 순 배정을 유지한다. 재탐색은 관련 revision 변경 또는 10Tick 후다.
 
 ## 생활·시간 연결

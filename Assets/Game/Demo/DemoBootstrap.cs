@@ -336,8 +336,15 @@ namespace RimworldTweak.Demo
             View.StorageButton.onClick.Invoke();
             Require(View.HandleMapClick(new GridPosition(0, 4), false), "Work first corner");
             Require(View.HandleMapClick(new GridPosition(0, 7), false), "Work second corner");
+            Require(Runner.Session.World.Tick == 0 && Runner.Session.World.StorageZones.Count == 1 &&
+                View.ActiveWorkTool == SettlementView.WorkTool.None, "Paused immediate storage and one-shot tool");
+            View.HandleMapClick(new GridPosition(1, 4), false);
+            View.HandleMapClick(new GridPosition(1, 5), false);
+            Require(Runner.Session.World.StorageZones.Count == 1, "Normal clicks created extra storage");
             View.GatherButton.onClick.Invoke();
             foreach (var node in Runner.Session.World.Gatherables) Require(View.HandleMapClick(node.Position, false), "Gather designation input");
+            Require(Runner.Session.World.Tick == 0 && Runner.Session.World.Gatherables.All(n => n.Designated),
+                "Paused immediate gathering designation");
             View.SetWorkTool(SettlementView.WorkTool.None);
         }
         private void CheckWorkConservation()
@@ -377,7 +384,8 @@ namespace RimworldTweak.Demo
                 report.storedIngredients + report.workConsumedIngredients == 8 && world.ResourceTotal(ResourceKind.Ingredients, false) == 0 &&
                 world.CargoTotal(ResourceKind.Ingredients) == 0, "Work finite production, storage and raw food consumption");
             Require(world.Colonists.All(c => c.MealsEaten > 0 && c.SleepsCompleted > 0 && c.StarvationTicks == 0), "Work living continuity");
-            var zone = world.StorageZones[0]; world.QueueStorageFilter(zone.Id, ResourceKind.Wood, false); Runner.Session.Step(1);
+            var zone = world.StorageZones[0]; var filterTick = world.Tick; world.QueueStorageFilter(zone.Id, ResourceKind.Wood, false);
+            Require(world.Tick == filterTick, "Filter advanced time");
             Require(world.ResourceTotal(ResourceKind.Wood, true) == 0 && world.ResourceTotal(ResourceKind.Wood, false) == 60, "Filter must preserve stored material");
             world.QueueStorageFilter(zone.Id, ResourceKind.Wood, true);
             for (var i = 0; i < 600 && world.ResourceTotal(ResourceKind.Wood, true) != 60; i++) { Runner.Session.Step(1); CheckWorkConservation(); }

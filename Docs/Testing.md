@@ -130,11 +130,15 @@ Smoke는 실제 렌더링을 위해 데모 창을 잠시 표시하고 검사 후
 
 현재R/점유규칙과최종87개검사·Windows결과는 [점유검증](Verification/2026-11-15-occupancy.md)을따른다. 이전검증수치는당시버전의기록이다.
 
+## 작업 3 검사와 결과
 
-## 채집·운반·저장 구현
+[채집·운반·저장 계획](Plans/Task3-Gather-Haul-Storage.md)의 T3-01~12와 생활 통합 시나리오를 따른다. 채집 산출 경계, 목적지 경쟁, 취소 전후 수량 보존, 필터·공간·경로 복구를 EditMode로, 지정·표시·시간·Reset을 PlayMode로 검증했다. Windows 실행·렌더 증거와 사용자 조작 확인을 구분한다. 실제 신규 검사와 기존 회귀 결과는 [작업3 검증 기록](Verification/2026-11-15-work.md)을 따른다. 과거87개 통과 결과만으로 새 기능의 성공을 주장하지 않는다.
 
-[공통 계약](Contracts/GatherHaulStorage.md)과 [작업 계획](Plans/Task3-Gather-Haul-Storage.md)에 따른 채집·운반·저장 및 생활/점유 연계를 구현했다. [검증 기록](Verification/2026-11-15-work.md)을 참고한다.
+## 식별·하단 UI 검증
 
-## 식별·하단 선택 UI
+[UI 검증 기록](Verification/2026-11-15-readable-ui.md)에 UI-1~6과 실행 결과를 기록한다. 기존 명령·좌표·수량·생활/점유 회귀는 유지하고, 변경된 벡터 렌더와 이름 라벨 기준으로 표시 검사를 갱신한다. 신규 검사는 고정색·이름 겹침/Reset, 7종 심볼·한글, 저장 외곽선/표시 순서, 실제 운반/목적지/점유와 대상 선택을 다룬다. 사람 확인은 [UI 안내](ReadableUiDemo.md)의5단계로 분리한다.
 
-[표시 계약](Contracts/ReadableSettlementUI.md)에 따라 고정색/상시 이름, 종류별 모양, 저장 바닥/경계, 행동·운반·목적지·점유 패널을 추가했다. [검증 기록](Verification/2026-11-15-readable-ui.md) 및 [조작 안내](ReadableUiDemo.md)를 따른다.
+
+## 일시정지 명령 갱신 (2026-11-15)
+
+[즉시 명령 계약](Contracts/ImmediatePlayerCommands.md)에 따라 플레이어 설정·취소를 Tick과 분리한다. 자동 행동 선택과 진행은 Tick에서만 수행한다. [검증 기록](Verification/2026-11-15-immediate-commands.md)은 무시간 상태/표시 검사와 Windows 실행을 구분한다.

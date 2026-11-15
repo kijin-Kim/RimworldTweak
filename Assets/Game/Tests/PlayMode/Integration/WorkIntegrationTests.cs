@@ -32,10 +32,10 @@ namespace RimworldTweak.Tests.PlayMode
         {
             Setup(); view.GatherButton.onClick.Invoke(); Assert.That(view.ActiveWorkTool, Is.EqualTo(SettlementView.WorkTool.Gather));
             view.HandleMapClick(P(1, 1), false);
-            Assert.That(runner.Session.World.Gatherables[0].Designated, Is.False);
-            Assert.That(view.WorkInfoText.text, Does.Contain("적용 대기"));
+            Assert.That(runner.Session.World.Gatherables[0].Designated, Is.True);
+            Assert.That(view.WorkInfoText.text, Does.Contain("설정 즉시 적용"));
             view.StorageButton.onClick.Invoke(); view.HandleMapClick(P(3, 1), false);
-            Assert.That(runner.Session.World.PendingCommandCount, Is.EqualTo(1));
+            Assert.That(runner.Session.World.PendingCommandCount, Is.Zero);
             view.HandleMapHover(P(4, 1)); view.HandleMapClick(P(4, 1), false);
             runner.StepOnce(); view.RefreshNow();
             Assert.That(runner.Session.World.StorageZones[0].Slots.Count, Is.EqualTo(2));

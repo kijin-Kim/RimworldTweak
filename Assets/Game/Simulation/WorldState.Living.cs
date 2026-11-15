@@ -49,8 +49,14 @@ namespace RimworldTweak.Simulation
         }
         public bool QueueCancelLife(int id, long expectedActionId)
         {
-            if (!colonistsById.ContainsKey(id)) return Reject("InvalidColonist");
-            return EnqueueLife(new LifeCommand(LifeCommandKind.Cancel, id, actionId: expectedActionId));
+            if (!colonistsById.TryGetValue(id, out var pawn)) return Reject("InvalidColonist");
+            if (pawn.ActionId == expectedActionId)
+            {
+                pawn.HasSleepIntent = false;
+                EndLife(pawn);
+                pawn.SetFoodReason(string.Empty); pawn.SetSleepReason(string.Empty);
+            }
+            LastCommandError = string.Empty; return true;
         }
         private void ApplyLifeCommands()
         {

@@ -28,5 +28,11 @@
   "RimworldTweak.Tests.PlayMode.ReadableUiTests.PawnNamesStayDistinctAtMapEdgeAndColorsSurviveDraftAndReset",
   "RimworldTweak.Tests.PlayMode.ReadableUiTests.SevenObjectKindsHaveDifferentSymbolsAndReadableNames",
   "RimworldTweak.Tests.PlayMode.ReadableUiTests.StockZoneHasFloorAndOnlyOuterEdgesBelowObjects",
-  "RimworldTweak.Tests.PlayMode.ReadableUiTests.BottomPanelShowsRealCargoAndClaimAndCanSelectTarget"
+  "RimworldTweak.Tests.PlayMode.ReadableUiTests.BottomPanelShowsRealCargoAndClaimAndCanSelectTarget",
+  "RimworldTweak.Tests.PlayMode.PausedCommandTests.SleepingDraftUpdatesAllViewsWithoutTickAndBedReassignsOnlyOnStep",
+  "RimworldTweak.Tests.PlayMode.PausedCommandTests.StorageToolIsOneShotAndFiltersApplyWithoutAdvancingClock",
+  "RimworldTweak.Tests.PlayMode.PausedCommandTests.FilterCancelsCarriedGoodsImmediatelyAndPreservesMaterialOnce",
+  "RimworldTweak.Tests.PlayMode.PausedCommandTests.GatheringAndEatingCancellationAreImmediateAndStaleActionIsHarmless",
+  "RimworldTweak.Tests.PlayMode.PausedCommandTests.PickupClaimIsReleasedImmediatelyWhenLastStorageDisappears",
+  "RimworldTweak.Tests.PlayMode.PausedCommandTests.ExplicitCargoCancellationDropsOnceWithoutAdvancingClock"
 ]

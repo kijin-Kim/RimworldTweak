@@ -10,8 +10,6 @@ namespace RimworldTweak.Simulation
         private List<ResourceState> mutableResources;
         private int nextEntityId;
         private long requestSequence;
-        private readonly List<Action> workCommands = new List<Action>();
-        private void ApplyWorkCommands() { foreach (var command in workCommands) command(); workCommands.Clear(); }
         public IReadOnlyList<GatherState> Gatherables => gatherables.AsReadOnly();
         public IReadOnlyList<StorageZoneState> StorageZones => storageZones.AsReadOnly();
         private readonly Dictionary<ResourceKind, int> produced = new Dictionary<ResourceKind, int>();
@@ -37,33 +35,25 @@ namespace RimworldTweak.Simulation
         }
         public bool QueueDesignateGather(int id, bool designated)
         {
-            if (Gather(id) == null || Gather(id).Depleted) return Reject("InvalidGatherTarget");
-            workCommands.Add(() =>
-            {
-                var target = Gather(id);
-                if (target == null || target.Depleted) return;
-                if (target.Designated == designated) return;
-                target.Designated = designated;
-                if (designated) target.RequestOrder = ++requestSequence;
-                else foreach (var pawn in Colonists)
-                    if ((pawn.WorkActivity == WorkActivity.GoingToGather || pawn.WorkActivity == WorkActivity.Gathering) && pawn.WorkTargetId == id)
-                    { EndLife(pawn); cancelledThisTick.Add(pawn.Id); }
-                availabilityRevision++;
-            });
+            var target = Gather(id);
+            if (target == null || target.Depleted) return Reject("InvalidGatherTarget");
+            if (target.Designated == designated) { LastCommandError = string.Empty; return true; }
+            target.Designated = designated;
+            if (designated) target.RequestOrder = ++requestSequence;
+            else foreach (var pawn in Colonists)
+                if ((pawn.WorkActivity == WorkActivity.GoingToGather || pawn.WorkActivity == WorkActivity.Gathering) && pawn.WorkTargetId == id)
+                { EndLife(pawn); cancelledThisTick.Add(pawn.Id); }
+            availabilityRevision++;
             LastCommandError = string.Empty; return true;
         }
         public bool QueueCreateStorage(GridPosition first, GridPosition second)
         {
-            if (!InBounds(first) || !InBounds(second)) return Reject("InvalidStorageArea");
-            workCommands.Add(() =>
-            {
-                if (!ValidStorageRectangle(first, second)) { Reject("InvalidStorageArea"); return; }
-                var zoneId = NewId(); var slots = new List<StorageSlotState>();
-                for (var y = Math.Min(first.Y, second.Y); y <= Math.Max(first.Y, second.Y); y++)
-                    for (var x = Math.Min(first.X, second.X); x <= Math.Max(first.X, second.X); x++)
-                        slots.Add(new StorageSlotState(NewId(), zoneId, new GridPosition(x, y)));
-                storageZones.Add(new StorageZoneState(zoneId, slots)); availabilityRevision++;
-            });
+            if (!ValidStorageRectangle(first, second)) return Reject("InvalidStorageArea");
+            var zoneId = NewId(); var slots = new List<StorageSlotState>();
+            for (var y = Math.Min(first.Y, second.Y); y <= Math.Max(first.Y, second.Y); y++)
+                for (var x = Math.Min(first.X, second.X); x <= Math.Max(first.X, second.X); x++)
+                    slots.Add(new StorageSlotState(NewId(), zoneId, new GridPosition(x, y)));
+            storageZones.Add(new StorageZoneState(zoneId, slots)); availabilityRevision++;
             LastCommandError = string.Empty; return true;
         }
         private bool ValidStorageRectangle(GridPosition first, GridPosition second)
@@ -84,22 +74,17 @@ namespace RimworldTweak.Simulation
         public bool QueueStorageFilter(int zoneId, ResourceKind kind, bool allowed)
         {
             if (Zone(zoneId) == null || !Enum.IsDefined(typeof(ResourceKind), kind)) return Reject("InvalidStorageFilter");
-            workCommands.Add(() =>
-            {
-                var zone = Zone(zoneId); if (zone == null) return;
-                zone.SetFilter(kind, allowed); RefreshStorage(zone); availabilityRevision++;
-            });
+            var zone = Zone(zoneId);
+            zone.SetFilter(kind, allowed); RefreshStorage(zone); CancelUnavailablePickups(); availabilityRevision++;
             LastCommandError = string.Empty; return true;
         }
         public bool QueueDeleteStorage(int zoneId)
         {
             if (Zone(zoneId) == null) return Reject("InvalidStorageZone");
-            workCommands.Add(() =>
-            {
-                var zone = Zone(zoneId); if (zone == null) return;
-                foreach (var slot in zone.Slots) CancelSlotOwners(slot);
-                zone.Exists = false; RefreshStorage(zone); availabilityRevision++;
-            });
+            var zone = Zone(zoneId);
+            // Keep the zone discoverable until all active owners have been cancelled.
+            foreach (var slot in zone.Slots) CancelSlotOwners(slot);
+            zone.Exists = false; RefreshStorage(zone); CancelUnavailablePickups(); availabilityRevision++;
             LastCommandError = string.Empty; return true;
         }
         private void CancelSlotOwners(StorageSlotState slot)
@@ -123,7 +108,7 @@ namespace RimworldTweak.Simulation
         private ResourceState SpawnResource(ResourceKind kind, int amount, GridPosition position)
         {
             var item = new ResourceState(new ResourceSeed(NewId(), kind, amount, position));
-            item.CreatedTick = Tick;
+            item.CreatedTick = advancingTick ? Tick : Tick - 1;
             mutableResources.Add(item); resourcesById.Add(item.Id, item); availabilityRevision++; return item;
         }
         private void ClearWork(ColonistState pawn)
@@ -135,10 +120,19 @@ namespace RimworldTweak.Simulation
                 SpawnResource(pawn.CargoKind, pawn.CargoAmount, pawn.Position); pawn.CargoAmount = 0;
             }
             if (pawn.IsWorking) availabilityRevision++;
-            pawn.WorkActivity = WorkActivity.Idle; pawn.WorkTargetId = null;
+            pawn.WorkActivity = WorkActivity.Idle; pawn.WorkTargetId = null; pawn.WorkReason = string.Empty;
             pawn.LastWorkRevision = -1; pawn.NextWorkSearchTick = 0;
         }
 
+        private void CancelUnavailablePickups()
+        {
+            foreach (var pawn in Colonists)
+                if (pawn.WorkActivity == WorkActivity.GoingToPickup || pawn.WorkActivity == WorkActivity.PickingUp)
+                {
+                    var source = resourcesById[pawn.WorkTargetId.Value];
+                    if (ChooseStorage(source.Kind, source.Position, out _) == null) EndLife(pawn);
+                }
+        }
         private void ValidateWork()
         {
             foreach (var pawn in Colonists)

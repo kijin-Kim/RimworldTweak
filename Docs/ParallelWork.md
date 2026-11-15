@@ -131,11 +131,10 @@ P1에서는 시뮬레이션과 검증 작성 2개 축을 사용한다. P2에서�
 
 작업2 재개: 사용자가 구현 목표를 active로 전환했다. 기존 소유권을 유지하고 life_sim/life_tests/life_view 교차 검토 후 root 통합 검증을 진행한다. 검토 중 발견한 수면 중 침대 삭제 복구와 테스트 누락을 보완한다.
 
+## 작업3 실제 소유권
 
-## 채집·운반·저장 구현
+이번 요청은 병렬 에이전트 배정을 요구하지 않는다. root가 [채집·운반·저장 계약](Contracts/GatherHaulStorage.md)의 모든 파일을 순차 소유하며 기존 휴면 에이전트에는 배정하지 않는다. Unity 실행은 입력 동결 후 직렬 수행한다.
 
-[공통 계약](Contracts/GatherHaulStorage.md)과 [작업 계획](Plans/Task3-Gather-Haul-Storage.md)에 따른 채집·운반·저장 및 생활/점유 연계를 구현했다. [검증 기록](Verification/2026-11-15-work.md)을 참고한다.
+## 식별·하단 UI 실제 소유권
 
-## 식별·하단 선택 UI
-
-[표시 계약](Contracts/ReadableSettlementUI.md)에 따라 고정색/상시 이름, 종류별 모양, 저장 바닥/경계, 행동·운반·목적지·점유 패널을 추가했다. [검증 기록](Verification/2026-11-15-readable-ui.md) 및 [조작 안내](ReadableUiDemo.md)를 따른다.
+[ReadableSettlementUI](Contracts/ReadableSettlementUI.md)에 root 단독 파일 범위를 확정했다. 기존 미커밋 물류 기능은 보존하고 Presentation 및 관련 검증·문서를 순차 수정한다. 에이전트 추가 배정이나 병렬 Unity 실행은 하지 않는다.

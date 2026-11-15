@@ -132,7 +132,7 @@ namespace RimworldTweak.Tests.EditMode
         public void CancelledOrDeletedFoodReleasesReservationWithoutConsumption()
         {
             var w = World(); w.Step(10); Assert.That(w.Resources[0].ReservedAmount, Is.EqualTo(1));
-            Assert.That(w.QueueCancelLife(1), Is.True); w.Step(1);
+            Assert.That(w.QueueCancelLife(1), Is.True);
             Assert.That(w.Resources[0].Amount, Is.EqualTo(1)); Assert.That(w.Resources[0].ReservedAmount, Is.Zero); Assert.That(w.Colonists[0].ActionProgress, Is.Zero);
             Assert.That(w.Colonists[0].MealsEaten, Is.Zero); w.Step(1); Assert.That(w.Resources[0].ReservedAmount, Is.EqualTo(1));
             Assert.That(w.QueueRemoveResource(101), Is.True); w.Step(1);

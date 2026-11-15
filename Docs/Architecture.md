@@ -85,11 +85,15 @@ World는 ResourceState/BedState와 정착민 욕구·생활 상태를 독립 소
 
 점유권은World내오브젝트에OwnerId/OwnerActionId로저장한다. Pawn의ActionId는행동취소·교체때증가하고접근→사용때유지한다. 수면목적HasSleepIntent는목표90까지유지하되명시취소/소집에서지운다. 바닥수면은가용대상변경과제한된재시도로대체침대를획득한다. UI는R토글하나와접근/사용단계를표시한다. [계약](Contracts/InteractionOccupancy.md)참조.
 
+## 작업 3 채집·운반·저장 구현
 
-## 채집·운반·저장 구현
+[채집·운반·저장 계획](Plans/Task3-Gather-Haul-Storage.md)에 공통 행동 취소, 운반물·저장 칸 상태, 출발/도착 점유 전환, 수량 집계와 Tick 순서의 확장안을 정리했다. 상태 변경은 Simulation에 두고 Runtime은 명령 전달, Presentation은 선택·미리보기·표시를 맡는다. API·파일 소유권은 [작업3 계약](Contracts/GatherHaulStorage.md)으로 확정했다. 생활/노동 공통 정리, 저장 칸과 보관 스택의 공유 권한, 물자 이전과 소비의 별도 집계를 구현했다. 기존 시나리오는 유지하고 기본 실행에 WorkScenario를 사용한다.
 
-[공통 계약](Contracts/GatherHaulStorage.md)과 [작업 계획](Plans/Task3-Gather-Haul-Storage.md)에 따른 채집·운반·저장 및 생활/점유 연계를 구현했다. [검증 기록](Verification/2026-11-15-work.md)을 참고한다.
+## 식별과 하단 선택 패널
 
-## 식별·하단 선택 UI
+[표시 계약](Contracts/ReadableSettlementUI.md)에 따라 Presentation만 월드 읽기 상태를 시각화한다. MapSymbolGraphic은 종류별 벡터 메시, SettlementView.Inspection은 ID 색상/상시 이름/하단 정보/점유 대상 연결, Work 부분은 도구와 저장 바닥·외곽선을 담당한다. Simulation·Runtime의 규칙은 변경하지 않는다. 한글은 Windows 시스템 글꼴로 표시하고 글꼴 파일을 배포하지 않는다.
 
-[표시 계약](Contracts/ReadableSettlementUI.md)에 따라 고정색/상시 이름, 종류별 모양, 저장 바닥/경계, 행동·운반·목적지·점유 패널을 추가했다. [검증 기록](Verification/2026-11-15-readable-ui.md) 및 [조작 안내](ReadableUiDemo.md)를 따른다.
+
+## 일시정지 명령 갱신 (2026-11-15)
+
+[즉시 명령 계약](Contracts/ImmediatePlayerCommands.md)에 따라 플레이어 설정·취소를 Tick과 분리한다. 자동 행동 선택과 진행은 Tick에서만 수행한다. [검증 기록](Verification/2026-11-15-immediate-commands.md)은 무시간 상태/표시 검사와 Windows 실행을 구분한다.

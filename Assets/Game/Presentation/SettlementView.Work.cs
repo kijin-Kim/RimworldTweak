@@ -93,6 +93,7 @@ namespace RimworldTweak.Presentation
             {
                 result = Runner.CreateStorage(StorageFirstCorner.Value, position);
                 StorageFirstCorner = null;
+                if (result) { ActiveWorkTool = WorkTool.None; hoverTile = null; SelectWorldObject(position); }
             }
             RefreshNow(); return true;
         }
@@ -134,7 +135,7 @@ namespace RimworldTweak.Presentation
             var detail = new StringBuilder();
             detail.Append(ActiveWorkTool == WorkTool.Gather ? "채집 지정: 나무 또는 식물을 클릭" : ActiveWorkTool == WorkTool.Storage ?
                 StorageFirstCorner.HasValue ? "저장 구역: 반대쪽 모서리를 클릭" : "저장 구역: 첫 모서리를 클릭" : "오브젝트 선택: 맵 클릭 / 다음 오브젝트");
-            detail.Append("\n적용 대기 ").Append(world.PendingCommandCount);
+            detail.Append("\n설정 즉시 적용 · 이동 대기 ").Append(world.PendingCommandCount);
             detail.Append("\n같은 칸의 대상 "); foreach (var id in objectIds) detail.Append(id == SelectedObjectId ? ">" : " ").Append(id).Append(' ');
             GatherState selectedNode = null; StorageZoneState selectedZone = null;
             foreach (var node in world.Gatherables) if (node.Id == SelectedObjectId) selectedNode = node;

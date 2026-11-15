@@ -5,6 +5,7 @@ namespace RimworldTweak.Simulation
 {
     public sealed partial class WorldState
     {
+        private bool advancingTick;
         private readonly List<GridPosition> blockedTiles;
         private readonly HashSet<GridPosition> blockedSet;
         private readonly Dictionary<int, ColonistState> colonistsById = new Dictionary<int, ColonistState>();
@@ -55,7 +56,7 @@ namespace RimworldTweak.Simulation
         public IReadOnlyList<ResourceState> Resources { get; }
         public long MapRevision { get; private set; }
         public long PathSearchCount { get; private set; }
-        public int PendingCommandCount => moveCommands.Count + topologyCommands.Count + lifeCommands.Count + workCommands.Count;
+        public int PendingCommandCount => moveCommands.Count + topologyCommands.Count + lifeCommands.Count;
         public string LastCommandError { get; private set; } = string.Empty;
 
         public bool QueueMove(int colonistId, GridPosition destination)
@@ -161,20 +162,24 @@ namespace RimworldTweak.Simulation
             _ = checked(Tick + count);
             for (long i = 0; i < count; i++)
             {
-                cancelledThisTick.Clear();
-                ApplyLifeCommands();
-                ApplyWorkCommands();
-                ApplyTopologyCommands();
-                ValidateWork();
-                if (NeedsEnabled) { ValidateLifeTargets(); UpdateNeedsAndActions(); }
-                if (NeedsEnabled) DecideLife();
-                ProgressWork();
-                DecideWork();
-                ApplyMoveCommands();
-                foreach (var colonist in Colonists) colonist.AdvanceMovement(NeedsEnabled && colonist.Nutrition == 0);
-                if (NeedsEnabled) HandleLifeArrivals();
-                HandleWorkArrivals();
-                Tick++;
+                advancingTick = true;
+                try
+                {
+                    cancelledThisTick.Clear();
+                    ApplyLifeCommands();
+                    ApplyTopologyCommands();
+                    ValidateWork();
+                    if (NeedsEnabled) { ValidateLifeTargets(); UpdateNeedsAndActions(); }
+                    if (NeedsEnabled) DecideLife();
+                    ProgressWork();
+                    DecideWork();
+                    ApplyMoveCommands();
+                    foreach (var colonist in Colonists) colonist.AdvanceMovement(NeedsEnabled && colonist.Nutrition == 0);
+                    if (NeedsEnabled) HandleLifeArrivals();
+                    HandleWorkArrivals();
+                    Tick++;
+                }
+                finally { advancingTick = false; }
             }
         }
 
