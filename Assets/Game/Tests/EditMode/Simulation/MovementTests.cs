@@ -16,6 +16,12 @@ namespace RimworldTweak.Tests.EditMode
                 new[] { new ResourceSeed(101, ResourceKind.Wood, 40, P(4, 1)) });
         }
         private static WorldState World(IEnumerable<GridPosition> blocked = null) => WorldState.Create(Scenario(blocked));
+        private static bool Move(WorldState world,int id,GridPosition target)
+        {
+            var pawn=world.Colonists.FirstOrDefault(p=>p.Id==id);
+            if(pawn!=null&&!pawn.IsDrafted) world.SetDrafted(id,true);
+            return world.QueueMove(id,target);
+        }
         private static void SameState(WorldState a, WorldState b)
         {
             Assert.That(a.Tick, Is.EqualTo(b.Tick));
@@ -35,7 +41,7 @@ namespace RimworldTweak.Tests.EditMode
         public void StraightMovementArrivesAtTwentyTicksAndLeavesResourcesUnchanged()
         {
             var w = World(); var c = w.Colonists[0];
-            Assert.That(w.QueueMove(1, P(5, 1)), Is.True);
+            Assert.That(Move(w, 1, P(5, 1)), Is.True);
             Assert.That(c.HasPendingCommand, Is.True);
             Assert.That(c.PendingDestination, Is.EqualTo(P(5, 1)));
             w.Step(0);
@@ -60,7 +66,7 @@ namespace RimworldTweak.Tests.EditMode
             var expected = new[] { P(2, 1), P(2, 2), P(3, 2), P(4, 2), P(5, 2), P(5, 1) };
             Assert.That(w.FindPath(P(1, 1), P(5, 1)), Is.EqualTo(expected));
             Assert.That(w.FindPath(P(1, 1), P(5, 1)), Is.EqualTo(expected));
-            w.QueueMove(1, P(5, 1));
+            Move(w, 1, P(5, 1));
             for (var i = 0; i < 29; i++) { w.Step(1); Assert.That(w.Colonists[0].Position, Is.Not.EqualTo(P(3, 1))); }
             Assert.That(w.Colonists[0].Position, Is.Not.EqualTo(P(5, 1)));
             w.Step(1); Assert.That(w.Colonists[0].Position, Is.EqualTo(P(5, 1)));
@@ -75,7 +81,7 @@ namespace RimworldTweak.Tests.EditMode
             Assert.That(w.FindPath(P(1, 1), P(3, 1)), Is.Null);
             Assert.That(w.FindPath(P(-1, 1), P(2, 1)), Is.Null);
             Assert.That(w.FindPath(P(1, 1), P(8, 1)), Is.Null);
-            w.QueueMove(1, P(1, 1)); w.Step(1);
+            Move(w, 1, P(1, 1)); w.Step(1);
             Assert.That(w.Colonists[0].Status, Is.EqualTo(MovementStatus.Arrived));
             Assert.That(w.Colonists[0].MovementProgress, Is.Zero);
         }
@@ -84,10 +90,10 @@ namespace RimworldTweak.Tests.EditMode
         public void InvalidCommandsDoNotOverwriteAValidPendingMove()
         {
             var w = World(new[] { P(3, 3) });
-            Assert.That(w.QueueMove(1, P(5, 1)), Is.True);
-            Assert.That(w.QueueMove(99, P(2, 1)), Is.False); Assert.That(w.LastCommandError, Is.EqualTo("InvalidColonist"));
-            Assert.That(w.QueueMove(1, P(-1, 1)), Is.False); Assert.That(w.LastCommandError, Is.EqualTo("OutOfBounds"));
-            Assert.That(w.QueueMove(1, P(3, 3)), Is.False); Assert.That(w.LastCommandError, Is.EqualTo("BlockedDestination"));
+            Assert.That(Move(w, 1, P(5, 1)), Is.True);
+            Assert.That(Move(w, 99, P(2, 1)), Is.False); Assert.That(w.LastCommandError, Is.EqualTo("InvalidColonist"));
+            Assert.That(Move(w, 1, P(-1, 1)), Is.False); Assert.That(w.LastCommandError, Is.EqualTo("OutOfBounds"));
+            Assert.That(Move(w, 1, P(3, 3)), Is.False); Assert.That(w.LastCommandError, Is.EqualTo("BlockedDestination"));
             Assert.That(w.QueueStop(99), Is.False);
             Assert.That(w.PendingCommandCount, Is.EqualTo(1));
             w.Step(20); Assert.That(w.Colonists[0].Position, Is.EqualTo(P(5, 1)));
@@ -97,13 +103,13 @@ namespace RimworldTweak.Tests.EditMode
         public void LastReachableCommandWinsAndUnreachablePreservesPreviousMove()
         {
             var w = World(Enumerable.Range(0, 8).Select(y => P(3, y)));
-            w.QueueMove(1, P(2, 1)); w.QueueMove(1, P(2, 3)); w.QueueMove(1, P(5, 1));
+            Move(w, 1, P(2, 1)); Move(w, 1, P(2, 3)); Move(w, 1, P(5, 1));
             w.Step(1);
             Assert.That(w.Colonists[0].Destination, Is.EqualTo(P(2, 3)));
             Assert.That(w.LastCommandError, Is.EqualTo("Unreachable"));
             Assert.That(w.Colonists[0].MovementProgress, Is.EqualTo(1));
             Assert.That(w.Colonists[0].Position, Is.EqualTo(P(1, 1)));
-            w.QueueMove(1, P(5, 1)); w.Step(1);
+            Move(w, 1, P(5, 1)); w.Step(1);
             Assert.That(w.Colonists[0].Destination, Is.EqualTo(P(2, 3)));
             Assert.That(w.Colonists[0].MovementProgress, Is.EqualTo(2));
             w.Step(13); Assert.That(w.Colonists[0].Position, Is.EqualTo(P(2, 3)));
@@ -113,11 +119,11 @@ namespace RimworldTweak.Tests.EditMode
         public void RepeatingTargetPreservesProgressRetargetRestartsAndStopConsumesNoMovement()
         {
             var w = World(); var c = w.Colonists[0];
-            w.QueueMove(1, P(5, 1)); w.Step(2);
+            Move(w, 1, P(5, 1)); w.Step(2);
             var searches = w.PathSearchCount;
-            w.QueueMove(1, P(5, 1)); w.Step(1);
+            Move(w, 1, P(5, 1)); w.Step(1);
             Assert.That(c.MovementProgress, Is.EqualTo(3)); Assert.That(w.PathSearchCount, Is.EqualTo(searches));
-            w.QueueMove(1, P(1, 5)); w.Step(1);
+            Move(w, 1, P(1, 5)); w.Step(1);
             Assert.That(c.MovementProgress, Is.EqualTo(1)); Assert.That(c.Position, Is.EqualTo(P(1, 1)));
             w.Step(3); Assert.That(c.MovementProgress, Is.EqualTo(4));
             w.QueueStop(1); Assert.That(c.PendingDestination, Is.Null); Assert.That(c.HasPendingCommand, Is.False);
@@ -131,9 +137,9 @@ namespace RimworldTweak.Tests.EditMode
         public void BatchAndPartitionedTicksProduceIdenticalFullMovementState()
         {
             var a = World(new[] { P(3, 1) }); var b = World(new[] { P(3, 1) });
-            foreach (var w in new[] { a, b }) { w.QueueMove(1, P(5, 1)); w.QueueMove(2, P(5, 5)); }
+            foreach (var w in new[] { a, b }) { Move(w, 1, P(5, 1)); Move(w, 2, P(5, 5)); }
             a.Step(13); for (var i = 0; i < 13; i++) b.Step(1); SameState(a, b);
-            foreach (var w in new[] { a, b }) w.QueueMove(1, P(6, 6));
+            foreach (var w in new[] { a, b }) Move(w, 1, P(6, 6));
             a.Step(87); for (var i = 0; i < 87; i++) b.Step(1); SameState(a, b);
         }
 
@@ -141,7 +147,7 @@ namespace RimworldTweak.Tests.EditMode
         public void BlockingCorridorWaitsWithoutRepeatedSearchAndOpeningResumes()
         {
             var w = World(); var c = w.Colonists[0];
-            w.QueueMove(1, P(5, 1)); w.Step(2);
+            Move(w, 1, P(5, 1)); w.Step(2);
             foreach (var y in Enumerable.Range(0, 8)) Assert.That(w.QueueSetBlocked(P(3, y), true), Is.True);
             Assert.That(w.BlockedTiles, Is.Empty);
             w.Step(1);
@@ -158,7 +164,7 @@ namespace RimworldTweak.Tests.EditMode
         public void MapChangeDetoursBeforeEnteringNewObstacleAndNoOpDoesNotDelay()
         {
             var w = World(); var c = w.Colonists[0];
-            w.QueueMove(1, P(5, 1)); w.Step(4);
+            Move(w, 1, P(5, 1)); w.Step(4);
             w.QueueSetBlocked(P(2, 1), true); w.Step(1);
             Assert.That(c.Position, Is.EqualTo(P(1, 1))); Assert.That(c.Status, Is.EqualTo(MovementStatus.Moving));
             Assert.That(c.Path, Has.No.Member(P(2, 1)));
@@ -175,7 +181,7 @@ namespace RimworldTweak.Tests.EditMode
             var w = World();
             Assert.That(w.QueueSetBlocked(P(1, 1), true), Is.False); Assert.That(w.LastCommandError, Is.EqualTo("OccupiedTile"));
             Assert.That(w.QueueSetBlocked(P(8, 1), true), Is.False);
-            w.QueueMove(1, P(5, 1)); w.QueueSetBlocked(P(5, 1), true); w.Step(1);
+            Move(w, 1, P(5, 1)); w.QueueSetBlocked(P(5, 1), true); w.Step(1);
             Assert.That(w.Colonists[0].Position, Is.EqualTo(P(1, 1)));
             Assert.That(w.Colonists[0].Status, Is.Not.EqualTo(MovementStatus.Moving));
             Assert.That(w.PendingCommandCount, Is.Zero);
@@ -186,7 +192,7 @@ namespace RimworldTweak.Tests.EditMode
         {
             var scenario = Scenario(); var a = WorldState.Create(scenario); var b = WorldState.Create(scenario);
             Assert.That(a.Colonists[0], Is.Not.SameAs(b.Colonists[0]));
-            a.QueueMove(1, P(5, 1)); a.Step(5);
+            Move(a, 1, P(5, 1)); a.Step(5);
             Assert.That(a.Colonists[0].Position, Is.EqualTo(P(2, 1)));
             Assert.That(b.Colonists[0].Position, Is.EqualTo(P(1, 1))); Assert.That(b.PendingCommandCount, Is.Zero);
             Assert.That(scenario.Colonists[0].Position, Is.EqualTo(P(1, 1)));
@@ -206,7 +212,7 @@ namespace RimworldTweak.Tests.EditMode
             var session = new SimulationSession(Scenario());
             for (var i = 0; i < 10; i++)
             {
-                var old = session.World; old.QueueMove(1, P(5, 1));
+                var old = session.World; Move(old, 1, P(5, 1));
                 if (i % 3 != 0) { session.AdvanceTime(0.25m); if (i % 3 == 2) { foreach (var y in Enumerable.Range(0, 8)) old.QueueSetBlocked(P(3, y), true); old.Step(1); } }
                 var oldTick = old.Tick; var oldPosition = old.Colonists[0].Position;
                 session.Reset(); var fresh = session.World;

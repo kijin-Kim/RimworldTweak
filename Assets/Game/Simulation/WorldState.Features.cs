@@ -40,6 +40,9 @@ namespace RimworldTweak.Simulation
                     candidates.Add(new WorkCandidate(context, WorkCategory.Gather, WorkStep.Gather,
                         node.Id, null, node.Position, node.RequestOrder, approach));
                 }
+            PrepareProductionOptions(context, pawn);
+            candidates.AddRange(ConstructionRules.GetCandidates(context, pawn.Id));
+            candidates.AddRange(FarmingRules.GetCandidates(context, pawn.Id));
             candidates.Sort((a, b) => {
                 var result = a.PathLength.CompareTo(b.PathLength);
                 if (result == 0) result = a.RequestOrder.CompareTo(b.RequestOrder);
@@ -75,7 +78,7 @@ namespace RimworldTweak.Simulation
                 source.Reserve(pawn.Id, pawn.ActionId, Math.Min(10, source.Amount));
                 pawn.WorkActivity = WorkActivity.GoingToPickup;
             }
-            else return false;
+            else return StartProductionWork(pawn, candidate);
             pawn.WorkTargetId = candidate.TargetId; pawn.SetRoute(candidate.WorkCell, candidate.Route);
             pawn.WorkReason = string.Empty; availabilityRevision++; return true;
         }

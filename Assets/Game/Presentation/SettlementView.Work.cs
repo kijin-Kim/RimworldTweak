@@ -8,7 +8,7 @@ namespace RimworldTweak.Presentation
 {
     public sealed partial class SettlementView
     {
-        public enum WorkTool { None, Gather, Storage }
+        public enum WorkTool { None, Gather, Storage, Building, Growing }
         public WorkTool ActiveWorkTool { get; private set; }
         public GridPosition? StorageFirstCorner { get; private set; }
         public GridPosition? SelectedWorldTile { get; private set; }
@@ -28,7 +28,7 @@ namespace RimworldTweak.Presentation
         private readonly List<int> objectIds = new List<int>();
         private RectTransform workPanel, storagePreview;
         private bool showWork;
-        private int displayedResourceCount;
+        private int displayedResourceCount, displayedBedCount;
         private GridPosition? hoverTile;
 
         private void BuildWorkUI()
@@ -67,7 +67,7 @@ namespace RimworldTweak.Presentation
         }
         public void SetWorkTool(WorkTool tool)
         {
-            ActiveWorkTool = tool; StorageFirstCorner = null; showWork = true; RefreshNow();
+            ActiveWorkTool = tool; StorageFirstCorner = null; showWork = true; showProduction=tool==WorkTool.Building||tool==WorkTool.Growing; RefreshNow();
         }
         private bool CancelWorkTool()
         {
@@ -88,10 +88,15 @@ namespace RimworldTweak.Presentation
                     if (!node.Depleted && node.Position == position)
                     { result = Runner.DesignateGather(node.Id, true); SelectWorldObject(position); break; }
             }
+            else if(ActiveWorkTool==WorkTool.Building)
+            {
+                result=Runner.PlaceBlueprint(blueprintKind,position);
+                if(result) {ActiveWorkTool=WorkTool.None;hoverTile=null;SelectWorldObject(position);}
+            }
             else if (!StorageFirstCorner.HasValue) { StorageFirstCorner = position; hoverTile = position; result = true; }
             else
             {
-                result = Runner.CreateStorage(StorageFirstCorner.Value, position);
+                result = ActiveWorkTool==WorkTool.Growing?Runner.CreateGrowingZone(StorageFirstCorner.Value,position):Runner.CreateStorage(StorageFirstCorner.Value, position);
                 StorageFirstCorner = null;
                 if (result) { ActiveWorkTool = WorkTool.None; hoverTile = null; SelectWorldObject(position); }
             }
@@ -101,7 +106,7 @@ namespace RimworldTweak.Presentation
         private void SelectWorldObject(GridPosition position)
         {
             SelectedWorldTile = position; SelectedObjectId = null; RebuildObjectList(Runner.Session.World);
-            if (objectIds.Count > 0) { SelectedObjectId = objectIds[0]; showWork = true; }
+            if (objectIds.Count > 0) { SelectedObjectId = objectIds[0]; showWork = true; showProduction=IsProductionObject(Runner.Session.World,SelectedObjectId); }
         }
         private void RebuildObjectList(WorldState world)
         {
@@ -111,13 +116,14 @@ namespace RimworldTweak.Presentation
             foreach (var item in world.Resources) if (item.Position == SelectedWorldTile.Value && item.Exists && item.Amount > 0) objectIds.Add(item.Id);
             foreach (var zone in world.StorageZones) if (zone.Exists)
                 foreach (var slot in zone.Slots) if (slot.Position == SelectedWorldTile.Value) { objectIds.Add(zone.Id); break; }
+            AddProductionObjects(world);
             if (!objectIds.Contains(SelectedObjectId ?? -1)) SelectedObjectId = objectIds.Count > 0 ? objectIds[0] : (int?)null;
         }
         private void ResetWorkView(WorldState world)
         {
             ActiveWorkTool = WorkTool.None; StorageFirstCorner = null; hoverTile = null;
             SelectedWorldTile = null; SelectedObjectId = null; objectIds.Clear();
-            showWork = world.Gatherables.Count > 0;
+            showWork = world.Gatherables.Count > 0; showProduction=false;
         }
         public bool ToggleStorageFilter(ResourceKind kind)
         {
@@ -164,7 +170,10 @@ namespace RimworldTweak.Presentation
             foreach (var kind in new[] { ResourceKind.Wood, ResourceKind.Ingredients, ResourceKind.Meal })
             {
                 var loose = world.ResourceTotal(kind, false); var stored = world.ResourceTotal(kind, true); var cargo = world.CargoTotal(kind);
-                totals.Append(ResourceName(kind)).Append("  미보관 ").Append(loose).Append(" / 운반 ").Append(cargo).Append(" / 보관 ").Append(stored).Append(" / 총량 ").Append(loose + stored + cargo).Append('\n');
+                var onSite = kind == ResourceKind.Wood ? world.ConstructionWood : 0;
+                totals.Append(ResourceName(kind)).Append("  미보관 ").Append(loose).Append(" / 운반 ").Append(cargo).Append(" / 보관 ").Append(stored);
+                if(onSite > 0) totals.Append(" / 현장 ").Append(onSite);
+                totals.Append(" / 총량 ").Append(loose + stored + cargo + onSite).Append('\n');
             }
             StockTotalsText.text = totals.ToString();
             DrawWorkMarkers(world);

@@ -17,7 +17,7 @@ namespace RimworldTweak.Simulation
         public void Clear() { OwnerId = null; ActionId = 0; }
     }
 
-    public enum WorkActivity { Idle, GoingToGather, Gathering, GoingToPickup, PickingUp, GoingToStore, Storing }
+    public enum WorkActivity { Idle, GoingToGather, Gathering, GoingToPickup, PickingUp, GoingToStore, Storing, GoingToFeature, WorkingFeature, GoingToBuildPickup, PickingUpBuild, GoingToBuildDelivery, DeliveringBuild }
     public enum GatherKind { Tree, EdiblePlant }
 
     public sealed class GatherSeed

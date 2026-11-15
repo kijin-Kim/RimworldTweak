@@ -15,7 +15,11 @@ namespace RimworldTweak.Runtime
             if (Session == null) Initialize(WorkScenario.Create());
         }
 
-        private void Update() => AdvanceTime((decimal)Time.unscaledDeltaTime);
+        private void Update()
+        {
+            // Synchronous file I/O must not become catch-up simulation time in the next frame.
+            AdvanceTime((decimal)Time.unscaledDeltaTime);
+        }
 
         public void Initialize(ScenarioDefinition scenario)
         {
@@ -44,11 +48,22 @@ namespace RimworldTweak.Runtime
             if (IsPaused) Session.Step(1);
         }
 
-        public bool MoveColonist(int id, GridPosition target) => Session.World.QueueMove(id, target);
-        public bool DesignateGather(int id, bool designated) => Session.World.QueueDesignateGather(id, designated);
-        public bool CreateStorage(GridPosition first, GridPosition second) => Session.World.QueueCreateStorage(first, second);
-        public bool SetStorageFilter(int id, ResourceKind kind, bool allowed) => Session.World.QueueStorageFilter(id, kind, allowed);
-        public bool DeleteStorage(int id) => Session.World.QueueDeleteStorage(id);
-        public bool ToggleDraft(int id) => Session.World.ToggleDraft(id);
+        private bool PlayerCommand(Func<bool> command)
+        {
+            return command();
+        }
+
+        public bool MoveColonist(int id, GridPosition target) => PlayerCommand(() => Session.World.QueueMove(id, target));
+        public bool DesignateGather(int id, bool designated) => PlayerCommand(() => Session.World.QueueDesignateGather(id, designated));
+        public bool CreateStorage(GridPosition first, GridPosition second) => PlayerCommand(() => Session.World.QueueCreateStorage(first, second));
+        public bool SetStorageFilter(int id, ResourceKind kind, bool allowed) => PlayerCommand(() => Session.World.QueueStorageFilter(id, kind, allowed));
+        public bool DeleteStorage(int id) => PlayerCommand(() => Session.World.QueueDeleteStorage(id));
+        public bool PlaceBlueprint(BuildingKind kind, GridPosition position) => PlayerCommand(() => Session.World.PlaceBlueprint(kind,position));
+        public bool CancelBlueprint(int id) => PlayerCommand(() => Session.World.CancelBlueprint(id));
+        public bool SetDemolition(int id,bool enabled) => PlayerCommand(() => Session.World.SetDemolition(id,enabled));
+        public bool CreateGrowingZone(GridPosition first,GridPosition second) => PlayerCommand(() => Session.World.CreateGrowingZone(first,second));
+        public bool SetSowingEnabled(int id,bool enabled) => PlayerCommand(() => Session.World.SetSowingEnabled(id,enabled));
+        public bool DeleteGrowingZone(int id) => PlayerCommand(() => Session.World.DeleteGrowingZone(id));
+        public bool ToggleDraft(int id) => PlayerCommand(() => Session.World.ToggleDraft(id));
     }
 }

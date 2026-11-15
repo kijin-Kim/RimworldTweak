@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 namespace RimworldTweak.Presentation
 {
-    public enum MapSymbol { Person, Tree, Plant, Meal, Ingredients, Wood, Bed }
+    public enum MapSymbol { Person, Tree, Plant, Meal, Ingredients, Wood, Bed, Wall, Door, Stove, Crop }
 
     /// <summary>Resolution independent, distinct silhouettes; no downloaded art or font icons.</summary>
     public sealed class MapSymbolGraphic : MaskableGraphic
@@ -21,6 +21,17 @@ namespace RimworldTweak.Presentation
             var light = Color.Lerp(color, Color.white, 0.4f);
             switch (Symbol)
             {
+                case MapSymbol.Wall:
+                    Quad(mesh,.05f,.05f,.95f,.95f,dark);Quad(mesh,.10f,.55f,.48f,.90f,color);Quad(mesh,.52f,.55f,.90f,.90f,light);
+                    Quad(mesh,.10f,.10f,.30f,.50f,light);Quad(mesh,.34f,.10f,.70f,.50f,color);Quad(mesh,.74f,.10f,.90f,.50f,light);break;
+                case MapSymbol.Door:
+                    Quad(mesh,.15f,.02f,.85f,.98f,dark);Quad(mesh,.25f,.05f,.75f,.90f,color);Ellipse(mesh,.66f,.48f,.04f,.04f,light);break;
+                case MapSymbol.Stove:
+                    Quad(mesh,.08f,.08f,.92f,.85f,dark);Quad(mesh,.08f,.65f,.92f,.88f,color);
+                    Ellipse(mesh,.32f,.78f,.16f,.09f,light);Ellipse(mesh,.69f,.78f,.13f,.09f,light);Quad(mesh,.22f,.22f,.78f,.53f,color);break;
+                case MapSymbol.Crop:
+                    Quad(mesh,.46f,.05f,.54f,.94f,dark);Ellipse(mesh,.30f,.36f,.20f,.10f,color);Ellipse(mesh,.70f,.55f,.20f,.10f,color);
+                    Ellipse(mesh,.40f,.74f,.13f,.16f,light);Ellipse(mesh,.65f,.87f,.13f,.10f,light);break;
                 case MapSymbol.Person:
                     Ellipse(mesh, .5f, .75f, .16f, .16f, light);
                     Quad(mesh, .30f, .22f, .70f, .57f, color);

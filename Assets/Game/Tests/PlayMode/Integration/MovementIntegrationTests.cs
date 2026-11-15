@@ -21,8 +21,10 @@ namespace RimworldTweak.Tests.PlayMode
         private SimulationRunner Runner()
         {
             var go = new GameObject("Movement test runner"); owned.Add(go);
-            var runner = go.AddComponent<SimulationRunner>(); runner.Initialize(SandboxScenario.Create()); runner.enabled = false; runner.SetPaused(true); return runner;
+            var runner = go.AddComponent<SimulationRunner>(); runner.Initialize(SandboxScenario.Create()); runner.enabled = false; runner.SetPaused(true); DraftMovementPawns(runner); return runner;
         }
+        private static void DraftMovementPawns(SimulationRunner runner)
+        { foreach(var pawn in runner.Session.World.Colonists) runner.Session.World.SetDrafted(pawn.Id,true); }
         private SettlementView View(SimulationRunner runner)
         {
             var go = new GameObject("Movement test view"); owned.Add(go);
@@ -96,7 +98,7 @@ namespace RimworldTweak.Tests.PlayMode
             Assert.That(runner.SpeedMultiplier, Is.EqualTo(3));
             Assert.Throws<ArgumentOutOfRangeException>(() => runner.SetSpeed(2));
             Assert.Throws<ArgumentOutOfRangeException>(() => runner.AdvanceTime(-1m));
-            runner.ResetWorld();
+            runner.ResetWorld(); DraftMovementPawns(runner);
             Assert.That(runner.IsPaused, Is.True); Assert.That(runner.SpeedMultiplier, Is.EqualTo(3));
             Assert.That(runner.Session.World.Tick, Is.Zero); Assert.That(runner.Session.PendingSeconds, Is.Zero);
             Assert.That(runner.Session.World.PendingCommandCount, Is.Zero);
@@ -175,7 +177,9 @@ namespace RimworldTweak.Tests.PlayMode
             view.ProcessShortcut(Key.Space); Assert.That(runner.IsPaused, Is.True);
             view.ProcessShortcut(Key.Period); Assert.That(runner.Session.World.Tick, Is.EqualTo(1));
             view.SelectColonist(2); Assert.That(view.ProcessShortcut(Key.X), Is.False); view.ProcessShortcut(Key.R); runner.StepOnce();
-            Assert.That(runner.Session.World.Colonists[1].IsDrafted, Is.True);
+            Assert.That(runner.Session.World.Colonists[1].IsDrafted, Is.False);
+            Assert.That(runner.Session.World.PendingCommandCount, Is.Zero);
+            view.ProcessShortcut(Key.R); Assert.That(runner.Session.World.Colonists[1].IsDrafted, Is.True);
             Assert.That(runner.Session.World.Colonists[1].Status, Is.EqualTo(MovementStatus.Idle));
             view.ProcessShortcut(Key.Digit1); Assert.That(runner.SpeedMultiplier, Is.EqualTo(1)); Assert.That(runner.IsPaused, Is.False);
             var inputGo = new GameObject("Text focus", typeof(RectTransform), typeof(InputField)); owned.Add(inputGo);

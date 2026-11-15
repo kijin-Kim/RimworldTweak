@@ -63,7 +63,7 @@ namespace RimworldTweak.Simulation
                 for (var x = Math.Min(first.X, second.X); x <= Math.Max(first.X, second.X); x++)
                 {
                     var position = new GridPosition(x, y);
-                    if (blockedSet.Contains(position)) return false;
+                    if (blockedSet.Contains(position) || ProductionOccupies(position)) return false;
                     foreach (var bed in Beds) if (bed.Exists && bed.Position == position) return false;
                     foreach (var node in gatherables) if (!node.Depleted && node.Position == position) return false;
                     foreach (var zone in storageZones) if (zone.Exists)
@@ -113,6 +113,7 @@ namespace RimworldTweak.Simulation
         }
         private void ClearWork(ColonistState pawn)
         {
+            ClearProductionWork(pawn);
             foreach (var node in gatherables) node.Claim.Release(pawn.Id, pawn.ActionId);
             foreach (var zone in storageZones) foreach (var slot in zone.Slots) slot.Claim.Release(pawn.Id, pawn.ActionId);
             if (pawn.CargoAmount > 0)
@@ -139,7 +140,8 @@ namespace RimworldTweak.Simulation
             {
                 if (!pawn.IsWorking) continue;
                 var valid = !pawn.IsDrafted && pawn.Status != MovementStatus.Blocked;
-                if (pawn.WorkActivity == WorkActivity.GoingToGather || pawn.WorkActivity == WorkActivity.Gathering)
+                if (pawn.FeatureStep.HasValue) valid &= ValidProductionWork(pawn);
+                else if (pawn.WorkActivity == WorkActivity.GoingToGather || pawn.WorkActivity == WorkActivity.Gathering)
                 {
                     var node = Gather(pawn.WorkTargetId.Value);
                     valid &= node != null && node.Designated && !node.Depleted && node.Claim.Matches(pawn.Id, pawn.ActionId) && !blockedSet.Contains(node.Position);
@@ -190,7 +192,7 @@ namespace RimworldTweak.Simulation
         }
         private void DecideWork()
         {
-            if (gatherables.Count == 0 && storageZones.Count == 0) return;
+            if (gatherables.Count == 0 && storageZones.Count == 0 && blueprints.Count == 0 && buildings.Count == 0 && crops.Count == 0) return;
             foreach (var pawn in Colonists)
             {
                 if (!CanSelectWork(pawn)) continue;
@@ -214,11 +216,12 @@ namespace RimworldTweak.Simulation
             }
             return !allowed ? "NoAllowedStorage" : free ? "Unreachable" : "StorageFull";
         }
-        private void ProgressWork()
+        private void ProgressFeatureWork()
         {
             foreach (var pawn in Colonists)
             {
                 if (!pawn.IsWorking || Tick < pawn.WorkReadyTick) continue;
+                if (pawn.FeatureStep.HasValue) { ProgressProductionWork(pawn); continue; }
                 switch (pawn.WorkActivity)
                 {
                     case WorkActivity.Gathering:
@@ -255,13 +258,16 @@ namespace RimworldTweak.Simulation
                 }
             }
         }
-        private void HandleWorkArrivals()
+        private void HandleFeatureArrivals()
         {
             foreach (var pawn in Colonists)
             {
                 if (pawn.Status != MovementStatus.Arrived) continue;
                 switch (pawn.WorkActivity)
                 {
+                    case WorkActivity.GoingToFeature: pawn.WorkActivity = WorkActivity.WorkingFeature; break;
+                    case WorkActivity.GoingToBuildPickup: pawn.WorkActivity = WorkActivity.PickingUpBuild; break;
+                    case WorkActivity.GoingToBuildDelivery: pawn.WorkActivity = WorkActivity.DeliveringBuild; break;
                     case WorkActivity.GoingToGather: pawn.WorkActivity = WorkActivity.Gathering; break;
                     case WorkActivity.GoingToPickup: pawn.WorkActivity = WorkActivity.PickingUp; break;
                     case WorkActivity.GoingToStore: pawn.WorkActivity = WorkActivity.Storing; break;

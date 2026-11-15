@@ -70,6 +70,7 @@ namespace RimworldTweak.Tests.EditMode
             var tickField = typeof(WorldState).GetField("<Tick>k__BackingField", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
             Assert.That(tickField, Is.Not.Null);
             tickField.SetValue(session.World, long.MaxValue);
+            session.World.SetDrafted(1,true);
             session.World.QueueMove(1, new GridPosition(5, 1));
             Assert.Throws<OverflowException>(() => session.Step(1));
             Assert.That(session.World.PendingCommandCount, Is.EqualTo(1));

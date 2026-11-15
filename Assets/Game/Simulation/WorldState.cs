@@ -34,7 +34,7 @@ namespace RimworldTweak.Simulation
             List<ColonistState> colonists, List<ResourceState> resources, List<BedState> beds, bool needsEnabled)
         {
             NeedsEnabled = needsEnabled;
-            Beds = beds.AsReadOnly();
+            mutableBeds = beds; Beds = beds.AsReadOnly();
             foreach (var resource in resources) resourcesById.Add(resource.Id, resource);
             foreach (var bed in beds) bedsById.Add(bed.Id, bed);
             Width = width;
@@ -45,7 +45,7 @@ namespace RimworldTweak.Simulation
             Colonists = colonists.AsReadOnly();
             Resources = resources.AsReadOnly();
             mutableResources = resources;
-            foreach (var colonist in colonists) colonistsById.Add(colonist.Id, colonist);
+            foreach (var colonist in colonists) { colonistsById.Add(colonist.Id, colonist); }
         }
 
         public int Width { get; }
@@ -64,6 +64,7 @@ namespace RimworldTweak.Simulation
             if (!colonistsById.TryGetValue(colonistId, out var colonist)) return Reject("InvalidColonist");
             if (colonist.IsWorking) return Reject("WorkBusy");
             if (NeedsEnabled && colonist.IsLifeBusy) return Reject("LifeBusy");
+            if (!colonist.IsDrafted) return Reject("NotDrafted");
             if (!InBounds(destination)) return Reject("OutOfBounds");
             if (blockedSet.Contains(destination)) return Reject("BlockedDestination");
             moveCommands.Add(new MoveCommand(colonistId, destination));
@@ -127,6 +128,10 @@ namespace RimworldTweak.Simulation
         public IReadOnlyList<GridPosition> FindPath(GridPosition start, GridPosition destination)
         {
             PathSearchCount++;
+            return ReadPath(start,destination);
+        }
+        private IReadOnlyList<GridPosition> ReadPath(GridPosition start,GridPosition destination)
+        {
             if (!InBounds(start) || !InBounds(destination) || blockedSet.Contains(start) || blockedSet.Contains(destination))
                 return null;
             if (start == destination) return new List<GridPosition>().AsReadOnly();
@@ -168,15 +173,16 @@ namespace RimworldTweak.Simulation
                     cancelledThisTick.Clear();
                     ApplyLifeCommands();
                     ApplyTopologyCommands();
+                    GrowCrops();
                     ValidateWork();
                     if (NeedsEnabled) { ValidateLifeTargets(); UpdateNeedsAndActions(); }
                     if (NeedsEnabled) DecideLife();
-                    ProgressWork();
+                    ProgressFeatureWork();
                     DecideWork();
                     ApplyMoveCommands();
                     foreach (var colonist in Colonists) colonist.AdvanceMovement(NeedsEnabled && colonist.Nutrition == 0);
                     if (NeedsEnabled) HandleLifeArrivals();
-                    HandleWorkArrivals();
+                    HandleFeatureArrivals();
                     Tick++;
                 }
                 finally { advancingTick = false; }
@@ -222,6 +228,7 @@ namespace RimworldTweak.Simulation
             foreach (var command in moveCommands)
             {
                 var colonist = colonistsById[command.Id];
+                if (!colonist.IsDrafted) { Reject("NotDrafted"); continue; }
                 if (colonist.IsWorking) { Reject("WorkBusy"); continue; }
                 if (NeedsEnabled && colonist.IsLifeBusy) { Reject("LifeBusy"); continue; }
                 if (!command.Destination.HasValue)

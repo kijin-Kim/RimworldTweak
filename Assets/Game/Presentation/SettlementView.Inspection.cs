@@ -139,6 +139,7 @@ namespace RimworldTweak.Presentation
                 foreach(var zone in world.StorageZones) if(zone.Exists) foreach(var slot in zone.Slots)
                     if(slot.OwnerId==pawn.Id && slot.OwnerActionId==pawn.ActionId && pawn.CargoAmount>0)
                     { claim="저장 구역 "+zone.Id+" / 칸 "+slot.Position+" · 입고 예정"; inspectedTarget=slot.Position; inspectedTargetId=zone.Id; }
+                InspectProduction(pawn,world,ref claim);
                 ClaimText.text="점유 대상  "+claim;
                 if(inspectedTarget.HasValue)
                 { claimOutline.GetComponent<Image>().color=PawnColor(pawn.Id); PlaceOverlay(claimOutline,inspectedTarget.Value,480f/Mathf.Max(world.Width,world.Height),.96f); }
@@ -177,6 +178,9 @@ namespace RimworldTweak.Presentation
             foreach(var node in world.Gatherables) if(node.Id==id)
                 return (node.Kind==GatherKind.Tree?"나무":"식용 식물")+" · 진행 "+node.Progress+" / "+node.Duration+"\n"+(node.Designated?"채집 지정됨":"지정 없음")+" · 점유자 "+(node.OwnerId.HasValue?PawnName(node.OwnerId.Value):"없음");
             foreach(var zone in world.StorageZones) if(zone.Id==id) return "저장 구역 "+id+"\n오른쪽 필터에서 허용 자원을 선택합니다";
+            foreach(var b in world.Blueprints) if(b.Exists&&b.Id==id) return RimworldTweak.Presentation.ConstructionPanel.Name(b.Kind)+" 설계도 · 목재 "+b.DeliveredWood+"/"+b.Cost+" · 진행 "+b.Progress+"/"+b.Duration;
+            foreach(var b in world.Buildings) if(b.Exists&&b.Id==id) return RimworldTweak.Presentation.ConstructionPanel.Name(b.Kind)+(b.DemolitionDesignated?" · 철거 "+b.DemolitionProgress+"/30":" · 완공");
+            foreach(var c in world.Crops) if(c.Exists&&c.Id==id) return "재배 칸 · "+(c.Stage==CropStage.Empty?"파종 "+c.SowProgress+"/20":c.Stage==CropStage.Growing?"성장 "+c.GrowthTicks+"/2400":"수확 "+c.HarvestProgress+"/30");
             return "대상이 더 이상 존재하지 않습니다";
         }
         private static string ReadableReason(string code)
@@ -243,6 +247,12 @@ namespace RimworldTweak.Presentation
             }
             switch(pawn.WorkActivity)
             {
+                case WorkActivity.GoingToBuildPickup:return pawn.FeatureStep==WorkStep.DeliverCook?"조리 식재료로 이동 중":"건설 목재로 이동 중";
+                case WorkActivity.PickingUpBuild:return pawn.FeatureStep==WorkStep.DeliverCook?"조리 식재료 집기":"건설 목재 집기";
+                case WorkActivity.GoingToBuildDelivery:return pawn.FeatureStep==WorkStep.DeliverCook?"조리대로 반입 중":"건설 현장으로 반입 중";
+                case WorkActivity.DeliveringBuild:return pawn.FeatureStep==WorkStep.DeliverCook?"조리 식재료 투입":"건설 자재 내려놓기";
+                case WorkActivity.GoingToFeature:return "작업 현장으로 이동 중";
+                case WorkActivity.WorkingFeature:return pawn.FeatureStep==WorkStep.Cook?"조리 중":pawn.FeatureStep==WorkStep.Construct?"시공 중":pawn.FeatureStep==WorkStep.Demolish?"철거 중":pawn.FeatureStep==WorkStep.Sow?"파종 중":"수확 중";
                 case WorkActivity.GoingToGather:return "채집 대상으로 이동 중";
                 case WorkActivity.Gathering:return "채집 중";
                 case WorkActivity.GoingToPickup:return "물자를 가지러 이동 중";

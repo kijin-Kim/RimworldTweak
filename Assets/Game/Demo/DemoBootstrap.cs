@@ -20,6 +20,13 @@ namespace RimworldTweak.Demo
         private sealed class SmokeReport
         {
             public bool passed;
+            public bool playerControlGuardPassed, constructionInspectionPassed;
+            public bool constructionPassed, farmingPassed;
+            public bool cookingPassed, workPolicyPassed, saveLoadPassed;
+            public string defaultSavePath;
+            public long restoredSaveTick;
+            public int cookedMeals, cookingIngredientsConsumed;
+            public int builtFacilities, constructionWoodConsumed, harvestedIngredients, storedHarvest;
             public bool workPassed, workDraftDropPassed, workFilterRecoveryPassed, workSpeedEquivalent;
             public int producedWood, producedIngredients, storedWood, storedIngredients, workConsumedIngredients;
             public long workStarvationTicks;
@@ -129,6 +136,7 @@ namespace RimworldTweak.Demo
                 View.PauseButton.onClick.Invoke();
                 Require(Runner.IsPaused, "Resume listener duplicated");
                 View.SelectColonist(1);
+                Runner.Session.World.SetDrafted(1,true);
                 Require(View.MoveSelected(new GridPosition(5, 1)), "Final movement command");
                 Runner.Session.Step(10);
                 View.RefreshNow();
@@ -138,6 +146,8 @@ namespace RimworldTweak.Demo
             })) yield break;
             if (!Check(CheckLiving)) yield break;
             if (!Check(CheckWork)) yield break;
+            if (!Check(CheckProduction)) yield break;
+            if (!Check(CheckPlayerControlsAndInspection)) yield break;
             yield return null;
             yield return new WaitForEndOfFrame();
             if (!Check(() => ScreenCapture.CaptureScreenshot(report.screenshot))) yield break;
@@ -145,6 +155,55 @@ namespace RimworldTweak.Demo
             while (!File.Exists(report.screenshot) && Time.realtimeSinceStartup < deadline) yield return null;
             if (!Check(() => Require(File.Exists(report.screenshot) && new FileInfo(report.screenshot).Length > 0, "Screenshot missing"))) yield break;
             Finish(true);
+        }
+
+        private void CheckPlayerControlsAndInspection()
+        {
+            Runner.Initialize(new ScenarioDefinition(8,8,Array.Empty<GridPosition>(),new[]{new ColonistSeed(1,new GridPosition(1,1))},
+                new[]{new ResourceSeed(101,ResourceKind.Wood,12,new GridPosition(2,1))},needsEnabled:false));
+            Runner.SetPaused(true);View.RefreshNow();View.SelectColonist(1);var w=Runner.Session.World;
+            Require(!View.MoveSelected(new GridPosition(4,1))&&w.PendingCommandCount==0,"Undrafted player move accepted");
+            Require(View.CommandFeedbackText.text.Contains("R로 소집"),"Missing draft guidance");
+            Runner.ToggleDraft(1);Require(View.MoveSelected(new GridPosition(4,1)),"Drafted move rejected");
+            Runner.ToggleDraft(1);Require(w.PendingCommandCount==0,"Undraft retained move");report.playerControlGuardPassed=true;
+            Require(Runner.PlaceBlueprint(BuildingKind.Bed,new GridPosition(5,4)),"Inspection blueprint");
+            for(var i=0;i<400&&w.Blueprints[0].Progress<7;i++)w.Step(1);
+            Require(w.Blueprints[0].Progress==7,"Construction inspection stage missing");
+            View.SelectColonist(1);View.RefreshNow();
+            Require(View.ConstructionPanel.Root.gameObject.activeInHierarchy&&View.ConstructionPanel.DetailText.text.Contains("시공 7/100"),"Builder panel missing progress");
+            Require(View.LifeText.text.Contains("침대 현장")&&View.ClaimText.text.Contains("설계도"),"Builder action/claim missing");
+            report.constructionInspectionPassed=true;report.renderTick=w.Tick;
+        }
+
+        private void CheckProduction()
+        {
+            Runner.Initialize(new ScenarioDefinition(8,8,Array.Empty<GridPosition>(),
+                new[] { new ColonistSeed(1,new GridPosition(1,1)),new ColonistSeed(2,new GridPosition(2,1)),new ColonistSeed(3,new GridPosition(3,1)) },
+                new[] { new ResourceSeed(101,ResourceKind.Wood,80,new GridPosition(2,1)) }, needsEnabled:false));
+            Runner.SetPaused(true);View.RefreshNow();var w=Runner.Session.World;
+            Require(Runner.CreateStorage(new GridPosition(0,0),new GridPosition(0,1)),"Production storage");
+            Require(Runner.PlaceBlueprint(BuildingKind.Wall,new GridPosition(5,5)),"Wall blueprint");
+            Require(Runner.PlaceBlueprint(BuildingKind.Door,new GridPosition(6,5)),"Door blueprint");
+            Require(Runner.PlaceBlueprint(BuildingKind.Bed,new GridPosition(5,3)),"Bed blueprint");
+            Require(Runner.PlaceBlueprint(BuildingKind.Stove,new GridPosition(6,3)),"Stove blueprint");
+            Require(Runner.CreateGrowingZone(new GridPosition(1,4),new GridPosition(2,4)),"Growing area");
+            for(var i=0;i<4000 && (w.Buildings.Count(b=>b.Exists)<4 || w.ResourceTotal(ResourceKind.Ingredients,true)<12);i++) w.Step(1);
+            report.builtFacilities=w.Buildings.Count(b=>b.Exists);report.constructionWoodConsumed=w.ConstructionConsumedWood;
+            report.harvestedIngredients=w.ProducedAmount(ResourceKind.Ingredients);report.storedHarvest=w.ResourceTotal(ResourceKind.Ingredients,true);
+            Require(report.builtFacilities==4 && report.constructionWoodConsumed==31,"Real material construction");
+            Require(w.Beds.Any(b=>b.Exists && w.Buildings.Any(f=>f.Id==b.Id)),"Constructed bed registration");
+            Require(w.ResourceTotal(ResourceKind.Wood,false)+w.ResourceTotal(ResourceKind.Wood,true)+w.CargoTotal(ResourceKind.Wood)+w.ConstructionWood==49,"Construction wood ledger");
+            Require(report.harvestedIngredients==12 && report.storedHarvest==0,"Harvest waits while storage contains wood");
+            Require(w.StorageZones[0].Slots.All(slot=>slot.Amount>0 && slot.Stack.Kind==ResourceKind.Wood),"Existing storage slots contain wood");
+            Require(Runner.CreateStorage(new GridPosition(0,2),new GridPosition(0,2)),"Add crop storage without advancing time");
+            for(var i=0;i<300 && w.ResourceTotal(ResourceKind.Ingredients,true)<12;i++) w.Step(1);
+            report.storedHarvest=w.ResourceTotal(ResourceKind.Ingredients,true);
+            Require(report.storedHarvest==12 && w.ProducedAmount(ResourceKind.Ingredients)==12,"Actual crop harvest resumes into new storage");
+            report.constructionPassed=report.farmingPassed=true;
+            View.RefreshNow(); View.HandleMapClick(new GridPosition(1,4),false);View.RefreshNow();
+            Require(View.FarmingPanel.InfoText.text.Contains("재배 구역"),"Farming UI");
+            var tick=w.Tick;Runner.AdvanceTime(1m);Require(w.Tick==tick,"Production pause");
+            report.renderTick=w.Tick;
         }
 
         private string MovementSignature()
@@ -156,7 +215,7 @@ namespace RimworldTweak.Demo
 
         private void CheckMovement()
         {
-            Runner.ResetWorld();
+            Runner.ResetWorld(); Runner.Session.World.SetDrafted(1,true);
             View.RefreshNow();
             View.SelectColonist(1);
             Require(View.MoveSelected(new GridPosition(5, 1)), "Move command rejected");
@@ -171,14 +230,14 @@ namespace RimworldTweak.Demo
             View.RefreshNow();
             CheckMarkers();
 
-            Runner.ResetWorld();
+            Runner.ResetWorld(); Runner.Session.World.SetDrafted(1,true);
             Runner.MoveColonist(1, new GridPosition(5, 1));
             View.Speed1Button.onClick.Invoke();
             Runner.AdvanceTime(0.6m);
             var partial = MovementSignature();
             Runner.AdvanceTime(2.4m);
             var whole = MovementSignature();
-            Runner.ResetWorld();
+            Runner.ResetWorld(); Runner.Session.World.SetDrafted(1,true);
             Runner.MoveColonist(1, new GridPosition(5, 1));
             View.Speed3Button.onClick.Invoke();
             Runner.AdvanceTime(0.2m);
@@ -188,7 +247,7 @@ namespace RimworldTweak.Demo
             report.speedEquivalent = true;
             Runner.SetPaused(true);
 
-            Runner.ResetWorld();
+            Runner.ResetWorld(); Runner.Session.World.SetDrafted(1,true);
             Runner.MoveColonist(1, new GridPosition(5, 1));
             Runner.Session.Step(2);
             for (var y = 0; y < 8; y++) Require(Runner.Session.World.QueueSetBlocked(new GridPosition(3, y), true), "Wall change rejected");
@@ -204,7 +263,7 @@ namespace RimworldTweak.Demo
 
             for (var repeat = 0; repeat < 10; repeat++)
             {
-                Runner.ResetWorld();
+                Runner.ResetWorld(); Runner.Session.World.SetDrafted(1,true);
                 View.RefreshNow();
                 View.SelectColonist(1);
                 Require(View.MoveSelected(new GridPosition(5, 1)), "Reset cycle move");

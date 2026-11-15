@@ -105,7 +105,7 @@ namespace RimworldTweak.Presentation
             SelectedColonistId = null;
             if (Runner != null)
                 foreach (var colonist in Runner.Session.World.Colonists)
-                    if (colonist.Id == id) { SelectedColonistId = id; break; }
+                    if (colonist.Id == id) { SelectedColonistId = id; if(IsConstructionWorker(colonist)) showProduction=true; break; }
             RefreshNow();
         }
 
@@ -174,7 +174,7 @@ namespace RimworldTweak.Presentation
                 displayedWorld = world;
                 displayedRevision = world.MapRevision;
             }
-            else if (displayedRevision != world.MapRevision || displayedResourceCount != world.Resources.Count)
+            else if (displayedRevision != world.MapRevision || displayedResourceCount != world.Resources.Count || displayedBedCount != world.Beds.Count)
             {
                 DrawWorld(world);
                 displayedRevision = world.MapRevision;
@@ -189,6 +189,7 @@ namespace RimworldTweak.Presentation
             Speed3Button.GetComponent<Image>().color = Runner.SpeedMultiplier == 3 ? new Color(0.30f, 0.44f, 0.42f) : new Color(0.19f, 0.29f, 0.31f);
             RefreshSelection(world);
             RefreshWorkUI(world);
+            RefreshProductionUI(world);
             RefreshInspection(world);
         }
 
@@ -247,6 +248,7 @@ namespace RimworldTweak.Presentation
             pendingOutline = Outline("Pending destination", PendingColor);
             BuildWorkUI();
             BuildInspectionLayout();
+            BuildProductionUI();
         }
 
         private RectTransform Outline(string name, Color color)
@@ -345,6 +347,7 @@ namespace RimworldTweak.Presentation
         {
             switch (code)
             {
+                case "NotDrafted": return "R로 소집한 뒤 이동할 수 있습니다.";
                 case "InvalidColonist": return "No valid colonist selected.";
                 case "OutOfBounds": return "Outside the map. Previous order kept.";
                 case "BlockedDestination": return "Target is blocked. Previous order kept.";
@@ -462,7 +465,7 @@ namespace RimworldTweak.Presentation
 
         private void DrawWorld(WorldState world)
         {
-            displayedResourceCount = world.Resources.Count;
+            displayedResourceCount = world.Resources.Count; displayedBedCount=world.Beds.Count;
             var cell = 480f / Mathf.Max(world.Width, world.Height);
             board.sizeDelta = new Vector2(cell * world.Width, cell * world.Height);
             var blocked = new HashSet<GridPosition>(world.BlockedTiles);

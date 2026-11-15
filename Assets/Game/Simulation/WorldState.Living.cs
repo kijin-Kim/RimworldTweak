@@ -53,7 +53,7 @@ namespace RimworldTweak.Simulation
             if (pawn.ActionId == expectedActionId)
             {
                 pawn.HasSleepIntent = false;
-                EndLife(pawn);
+                CancelFeatureWork(id, expectedActionId, WorkCancelReason.Explicit);
                 pawn.SetFoodReason(string.Empty); pawn.SetSleepReason(string.Empty);
             }
             LastCommandError = string.Empty; return true;

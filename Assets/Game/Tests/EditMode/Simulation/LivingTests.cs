@@ -223,25 +223,26 @@ namespace RimworldTweak.Tests.EditMode
         public void LifeInterruptsManualOrderRejectsManualCommandsAndNeverResumesOldTarget()
         {
             var w = World(new[] { new ColonistSeed(1, P(1, 1), 3030, 9000) });
-            w.QueueMove(1, P(7, 7)); w.Step(3);
+            Assert.That(w.QueueMove(1, P(7, 7)), Is.False); w.Step(3);
             Assert.That(w.Colonists[0].LifeActivity, Is.EqualTo(LifeActivity.Eating)); Assert.That(w.Colonists[0].HasPendingCommand, Is.False);
             Assert.That(w.QueueMove(1, P(7, 7)), Is.False); Assert.That(w.LastCommandError, Is.EqualTo("LifeBusy"));
             w.Step(20); Assert.That(w.Colonists[0].LifeActivity, Is.EqualTo(LifeActivity.Idle));
             Assert.That(w.Colonists[0].Destination, Is.Null); w.Step(20); Assert.That(w.Colonists[0].Position, Is.EqualTo(P(1, 1)));
             var noFood = World(resources: Array.Empty<ResourceSeed>()); noFood.Step(1);
-            Assert.That(noFood.QueueMove(1, P(2, 1)), Is.True);
+            Assert.That(noFood.QueueMove(1, P(2, 1)), Is.False);
+            Assert.That(noFood.LastCommandError, Is.EqualTo("NotDrafted"));
         }
 
         [Test]
         public void StarvationSlowsOnlyTheNextTileAndDoesNotStopMovement()
         {
             var w = World(new[] { new ColonistSeed(1, P(1, 1), 30, 9000) }, Array.Empty<ResourceSeed>());
-            w.QueueMove(1, P(3, 1)); w.Step(4); Assert.That(w.Colonists[0].Position, Is.EqualTo(P(1, 1)));
+            w.SetDrafted(1,true); w.QueueMove(1, P(3, 1)); w.Step(4); Assert.That(w.Colonists[0].Position, Is.EqualTo(P(1, 1)));
             w.Step(1); Assert.That(w.Colonists[0].Position, Is.EqualTo(P(2, 1)));
             w.Step(9); Assert.That(w.Colonists[0].Position, Is.EqualTo(P(2, 1))); w.Step(1);
             Assert.That(w.Colonists[0].Position, Is.EqualTo(P(3, 1))); Assert.That(w.Colonists[0].Nutrition, Is.Zero);
             var hungry = World(new[] { new ColonistSeed(1, P(1, 1), 0, 9000) }, Array.Empty<ResourceSeed>());
-            hungry.QueueMove(1, P(2, 1)); hungry.Step(9); Assert.That(hungry.Colonists[0].Position, Is.EqualTo(P(1, 1)));
+            hungry.SetDrafted(1,true); hungry.QueueMove(1, P(2, 1)); hungry.Step(9); Assert.That(hungry.Colonists[0].Position, Is.EqualTo(P(1, 1)));
             hungry.Step(1); Assert.That(hungry.Colonists[0].Position, Is.EqualTo(P(2, 1)));
         }
 
