@@ -33,3 +33,8 @@
 [식별·하단 선택 UI](Docs/ReadableUiDemo.md): 정착민 고정 색상/상시 이름, 종류별 오브젝트 모양, 저장 구역 바닥·외곽선, 하단 행동·운반·목적지·점유 정보를 제공한다. [공통 계약](Docs/Contracts/ReadableSettlementUI.md)과 [검증 기록](Docs/Verification/2026-11-15-readable-ui.md)을 따른다.
 
 정지 중 소집·취소·필터·지정 변경도 즉시 적용하고 저장 구역 생성 성공 후 도구를 해제한다. 관련 기능은 사용자 정상 확인을 받았다. [즉시 명령 계약](Docs/Contracts/ImmediatePlayerCommands.md)을 따른다.
+
+
+## 공통 자동 작업 기반
+
+2026-11-16 기능별 커밋 1: 작업 후보 조회·시작·취소와 오래된 명령 거부를 연결했다. 건설·재배·조리·개인 설정·파일 저장은 후속 커밋이다. 중간 검사 결과는 [커밋 검증 기록](Docs/Verification/2026-11-16-four-feature-commits.md)을 따른다.

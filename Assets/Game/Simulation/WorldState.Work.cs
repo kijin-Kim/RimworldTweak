@@ -193,51 +193,13 @@ namespace RimworldTweak.Simulation
             if (gatherables.Count == 0 && storageZones.Count == 0) return;
             foreach (var pawn in Colonists)
             {
-                if (pawn.IsDrafted || pawn.IsLifeBusy || pawn.IsWorking || pawn.HasSleepIntent || cancelledThisTick.Contains(pawn.Id) ||
-                    pawn.HasPendingCommand || pawn.Status == MovementStatus.Moving || pawn.Status == MovementStatus.Blocked) continue;
+                if (!CanSelectWork(pawn)) continue;
                 if (pawn.LastWorkRevision == availabilityRevision && Tick < pawn.NextWorkSearchTick) continue;
-                ResourceState source = null; IReadOnlyList<GridPosition> path = null;
-                var reason = "NoDesignation";
-                foreach (var item in Resources)
-                {
-                    if (!item.Exists || item.Amount <= 0 || item.StorageSlotId.HasValue || item.CreatedTick >= Tick) continue;
-                    if (item.OwnerId.HasValue) { reason = "TargetReserved"; continue; }
-                    var approach = FindPath(pawn.Position, item.Position);
-                    if (approach == null) { reason = "Unreachable"; continue; }
-                    if (ChooseStorage(item.Kind, item.Position, out _) == null) { reason = StorageFailure(item.Kind); continue; }
-                    if (source == null || approach.Count < path.Count || approach.Count == path.Count && item.Id < source.Id)
-                    { source = item; path = approach; }
-                }
-                if (source != null)
-                {
-                    EndLife(pawn);
-                    if (source.Reserve(pawn.Id, pawn.ActionId, Math.Min(10, source.Amount)))
-                    {
-                        pawn.WorkTargetId = source.Id; pawn.WorkActivity = WorkActivity.GoingToPickup;
-                        pawn.SetRoute(source.Position, path); pawn.WorkReason = string.Empty; availabilityRevision++; continue;
-                    }
-                }
-                GatherState target = null; path = null;
-                foreach (var node in gatherables)
-                {
-                    if (!node.Designated || node.Depleted) continue;
-                    if (node.OwnerId.HasValue) { reason = "TargetReserved"; continue; }
-                    var approach = FindPath(pawn.Position, node.Position);
-                    if (approach == null) { reason = "Unreachable"; continue; }
-                    if (target == null || approach.Count < path.Count || approach.Count == path.Count &&
-                        (node.RequestOrder < target.RequestOrder || node.RequestOrder == target.RequestOrder && node.Id < target.Id))
-                    { target = node; path = approach; }
-                }
-                if (target != null)
-                {
-                    EndLife(pawn); target.Claim.Acquire(pawn.Id, pawn.ActionId);
-                    pawn.WorkActivity = WorkActivity.GoingToGather; pawn.WorkTargetId = target.Id;
-                    pawn.SetRoute(target.Position, path); pawn.WorkReason = string.Empty; availabilityRevision++;
-                }
-                else
-                {
-                    pawn.WorkReason = reason; pawn.LastWorkRevision = availabilityRevision; pawn.NextWorkSearchTick = Tick + 10;
-                }
+                var context = PrepareWorkContext(pawn.Id);
+                var selected = context.Candidates.Count > 0 ? context.Candidates[0] : null;
+                if (selected != null && TryStartFeatureWork(pawn.Id, selected)) continue;
+                pawn.WorkReason = context.Reason.ToString();
+                pawn.LastWorkRevision = availabilityRevision; pawn.NextWorkSearchTick = Tick + 10;
             }
         }
         private string StorageFailure(ResourceKind kind)

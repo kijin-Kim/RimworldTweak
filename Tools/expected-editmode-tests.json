@@ -78,5 +78,11 @@
   "RimworldTweak.Tests.EditMode.WorkTests.ThreePawnsGatherAndStoreFiniteResourcesWithoutPingPong",
   "RimworldTweak.Tests.EditMode.WorkTests.BlockedHaulDropsAndResumesAfterCorridorOpens",
   "RimworldTweak.Tests.EditMode.WorkTests.LifeSelectionWinsSameTickAsIncomingStackClaim",
-  "RimworldTweak.Tests.EditMode.WorkTests.WorkScenarioResetAndEqualTickBatchesProduceEquivalentState"
+  "RimworldTweak.Tests.EditMode.WorkTests.WorkScenarioResetAndEqualTickBatchesProduceEquivalentState",
+  "RimworldTweak.Tests.EditMode.FeatureWorkContractTests.ContextReadingIsPureAndSnapshotRemainsImmutable",
+  "RimworldTweak.Tests.EditMode.FeatureWorkContractTests.CompetingCandidatesHaveOneOwnerAndLoserHasNoSideEffects",
+  "RimworldTweak.Tests.EditMode.FeatureWorkContractTests.WrongWorldPawnAndAdvancedTickRejectCandidates",
+  "RimworldTweak.Tests.EditMode.FeatureWorkContractTests.DraftAndStaleCancellationDoNotStartOrCancelNewAction",
+  "RimworldTweak.Tests.EditMode.FeatureWorkContractTests.LegacyHaulWinsAndDestinationIsClaimedOnlyAtPickup",
+  "RimworldTweak.Tests.EditMode.FeatureWorkContractTests.FilterChangeInvalidatesPreparedHaulWithoutTakingResources"
 ]
