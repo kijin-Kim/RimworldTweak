@@ -45,7 +45,7 @@ namespace RimworldTweak.Simulation
             Colonists = colonists.AsReadOnly();
             Resources = resources.AsReadOnly();
             mutableResources = resources;
-            foreach (var colonist in colonists) { colonistsById.Add(colonist.Id, colonist); }
+            foreach (var colonist in colonists) { colonistsById.Add(colonist.Id, colonist); workPolicies.Add(new WorkPolicyState(colonist.Id)); }
         }
 
         public int Width { get; }
@@ -174,6 +174,7 @@ namespace RimworldTweak.Simulation
                     ApplyLifeCommands();
                     ApplyTopologyCommands();
                     GrowCrops();
+                ReconcileCookingCycles(true);
                     ValidateWork();
                     if (NeedsEnabled) { ValidateLifeTargets(); UpdateNeedsAndActions(); }
                     if (NeedsEnabled) DecideLife();

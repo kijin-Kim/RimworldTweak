@@ -190,6 +190,7 @@ namespace RimworldTweak.Presentation
             RefreshSelection(world);
             RefreshWorkUI(world);
             RefreshProductionUI(world);
+            RefreshPlanningUI(world);
             RefreshInspection(world);
         }
 
@@ -249,6 +250,7 @@ namespace RimworldTweak.Presentation
             BuildWorkUI();
             BuildInspectionLayout();
             BuildProductionUI();
+            BuildPlanningUI();
         }
 
         private RectTransform Outline(string name, Color color)

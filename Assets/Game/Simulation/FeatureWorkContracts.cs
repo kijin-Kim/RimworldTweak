@@ -84,6 +84,9 @@ namespace RimworldTweak.Simulation
         public GridPosition Position { get; }
         public IReadOnlyList<FeatureWorkOption> Options { get; private set; } = Array.AsReadOnly(Array.Empty<FeatureWorkOption>());
         public FeatureWorkSnapshot ActiveWork { get; private set; }
+        public WorkPolicySnapshot Policy { get; private set; }
+        internal void SetPolicy(WorkPolicySnapshot policy)
+        { if (Candidates != null) throw new InvalidOperationException("Context already sealed."); Policy = policy; }
         internal void SetFeatureInputs(List<FeatureWorkOption> options, FeatureWorkSnapshot active = null)
         { if (Candidates != null) throw new InvalidOperationException("Context already sealed.");
             Options = new List<FeatureWorkOption>(options).AsReadOnly(); ActiveWork = active; }

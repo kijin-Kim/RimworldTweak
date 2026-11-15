@@ -148,6 +148,7 @@ namespace RimworldTweak.Demo
             if (!Check(CheckWork)) yield break;
             if (!Check(CheckProduction)) yield break;
             if (!Check(CheckPlayerControlsAndInspection)) yield break;
+            if (!Check(CheckCookingAndPolicy)) yield break;
             yield return null;
             yield return new WaitForEndOfFrame();
             if (!Check(() => ScreenCapture.CaptureScreenshot(report.screenshot))) yield break;
@@ -155,6 +156,37 @@ namespace RimworldTweak.Demo
             while (!File.Exists(report.screenshot) && Time.realtimeSinceStartup < deadline) yield return null;
             if (!Check(() => Require(File.Exists(report.screenshot) && new FileInfo(report.screenshot).Length > 0, "Screenshot missing"))) yield break;
             Finish(true);
+        }
+
+        private void CheckCookingAndPolicy()
+        {
+            Runner.Initialize(new ScenarioDefinition(10,10,Array.Empty<GridPosition>(),new[]{new ColonistSeed(1,new GridPosition(1,1))},
+                new[]{new ResourceSeed(101,ResourceKind.Wood,20,new GridPosition(1,1))},needsEnabled:false));
+            Runner.SetPaused(true);View.RefreshNow();var w=Runner.Session.World;
+            Require(Runner.PlaceBlueprint(BuildingKind.Stove,new GridPosition(4,4)),"Cooking stove placement");
+            for(var i=0;i<600&&!w.Buildings.Any();i++)w.Step(1);
+            Require(w.Buildings.Count==1,"Actual cooking stove construction");var stove=w.Buildings[0];
+            Require(Runner.SetCookingOrder(stove.Id,true,2),"Enable cooking");
+            Require(Runner.CreateGrowingZone(new GridPosition(6,2),new GridPosition(6,2)),"Cooking crop source");
+            for(var i=0;i<600&&w.Crops[0].Stage!=CropStage.Growing;i++)w.Step(1);
+            Runner.SetSowingEnabled(w.GrowingZones[0].Id,false);
+            for(var i=0;i<3000&&w.CookingOrders[0].Progress<10;i++)w.Step(1);
+            var order=w.CookingOrders[0];Require(order.Progress==10&&order.InputIngredients==2,"Harvest to cooking");
+            var tick=w.Tick;Runner.SetWorkPriority(1,WorkCategory.Cook,0);View.SelectColonist(1);View.RefreshNow();
+            Require(w.Tick==tick&&!order.OwnerId.HasValue&&order.Progress==10&&order.InputIngredients==2,"Paused cook off conservation");
+            Require(w.GetWorkDiagnostic(WorkCategory.Cook,stove.Id)==WorkReasonCode.NoWorker,"No cook diagnostic");
+            Runner.SetWorkPriority(1,WorkCategory.Cook,1);
+            for(var i=0;i<600&&w.CookingProducedMeals<2;i++)w.Step(1);
+            Require(w.CookingProducedMeals==2&&w.CookingConsumedIngredients==4,"Cooking output ledger");
+            Require(w.ResourceTotal(ResourceKind.Ingredients,false)+w.ResourceTotal(ResourceKind.Ingredients,true)+w.CargoTotal(ResourceKind.Ingredients)+w.CookingInputTotal==2,"Harvest input conservation");
+            report.cookedMeals=w.CookingProducedMeals;report.cookingIngredientsConsumed=w.CookingConsumedIngredients;
+            report.cookingPassed=report.workPolicyPassed=true;
+            Runner.SetCookingOrder(stove.Id,true,3);
+            for(var i=0;i<200&&order.Progress<10;i++)w.Step(1);
+            View.HandleMapClick(stove.Position,false);View.SelectColonist(1);View.RefreshNow();
+            Require(View.CookingPanel.Root.gameObject.activeInHierarchy&&View.CookingPanel.DetailText.text.Contains("진행 10/40"),"Cooking panel rendered state");
+            Require(View.WorkPolicyPanel.PriorityButtons[4].GetComponentInChildren<UnityEngine.UI.Text>().text.Contains("1"),"Policy displayed state");
+            report.renderTick=w.Tick;
         }
 
         private void CheckPlayerControlsAndInspection()

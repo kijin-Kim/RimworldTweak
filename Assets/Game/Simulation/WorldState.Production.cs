@@ -65,6 +65,7 @@ namespace RimworldTweak.Simulation
             {
                 CancelProductionOwners(b.Id); b.DemolitionDesignated=enabled;
                 if(enabled) b.RequestOrder=++requestSequence;
+                if(b.Kind==BuildingKind.Stove) ReconcileCookingCycles(false);
                 if(b.Kind==BuildingKind.Bed) bedsById[b.Id].SetExists(!enabled);
                 availabilityRevision++;
             }
@@ -171,10 +172,12 @@ namespace RimworldTweak.Simulation
                 var step=c.Stage==CropStage.Empty?WorkStep.Sow:WorkStep.Harvest;
                 options.Add(new FeatureWorkOption(new WorkCandidate(context,WorkCategory.Farm,step,c.Id,null,c.Position,c.RequestOrder,route),WorkReasonCode.None));
             }
+            PrepareCookingOptions(context,pawn,options);
             context.SetFeatureInputs(options);
         }
         private bool StartProductionWork(ColonistState pawn,WorkCandidate candidate)
         {
+            if(candidate.Step==WorkStep.Cook||candidate.Step==WorkStep.DeliverCook)return StartCookingWork(pawn,candidate);
             InteractionClaim claim=null;
             if(candidate.Step==WorkStep.DeliverBuild)
             {
@@ -211,6 +214,7 @@ namespace RimworldTweak.Simulation
         private bool ValidProductionWork(ColonistState pawn)
         {
             if(!pawn.WorkTargetId.HasValue||!pawn.FeatureStep.HasValue) return false;
+            if(pawn.FeatureStep==WorkStep.Cook||pawn.FeatureStep==WorkStep.DeliverCook)return ValidCookingWork(pawn);
             if(pawn.FeatureStep==WorkStep.DeliverBuild)
             {
                 var b=Blueprint(pawn.PendingDeliveryTargetId??-1); if(b==null||b.DeliveredWood>=b.Cost) return false;
@@ -227,6 +231,7 @@ namespace RimworldTweak.Simulation
         private void FinishProduction(ColonistState pawn) { EndLife(pawn); cancelledThisTick.Add(pawn.Id); availabilityRevision++; }
         private void ProgressProductionWork(ColonistState pawn)
         {
+            if(pawn.FeatureStep==WorkStep.Cook||pawn.FeatureStep==WorkStep.DeliverCook){ProgressCookingWork(pawn);return;}
             if(pawn.WorkActivity==WorkActivity.PickingUpBuild)
             {
                 var b=Blueprint(pawn.PendingDeliveryTargetId.Value); var r=resourcesById[pawn.WorkTargetId.Value];
@@ -264,6 +269,7 @@ namespace RimworldTweak.Simulation
                     if(result.ConsumeAmount!=b.Cost||b.DeliveredWood<b.Cost||!Clearance(b)) return;
                     b.DeliveredWood-=b.Cost; ConstructionConsumedWood+=b.Cost;
                     var built=new BuildingState(NewId(),b.Kind,b.Position);buildings.Add(built); b.Exists=false;
+                    if(b.Kind==BuildingKind.Stove) InitializeStove(built);
                     if(b.Kind==BuildingKind.Bed) {var bed=new BedState(new BedSeed(built.Id,built.Position)); mutableBeds.Add(bed);bedsById.Add(bed.Id,bed);}
                     if(ConstructionRules.BlocksMovement(b.Kind)) SetProductionBlocked(b.Position,true);
                     FinishProduction(pawn);
@@ -274,6 +280,7 @@ namespace RimworldTweak.Simulation
                 var b=Building(id); if(b.DemolitionProgress!=snapshot.Progress) return; b.DemolitionProgress=result.Progress;
                 if(result.Completed)
                 {
+                    if(b.Kind==BuildingKind.Stove) RemoveStove(b);
                     b.Exists=false; if(ConstructionRules.BlocksMovement(b.Kind)) SetProductionBlocked(b.Position,false);
                     if(b.Kind==BuildingKind.Bed) bedsById[b.Id].SetExists(false);
                     SpawnResource(ResourceKind.Wood,result.ProduceAmount,b.Position); DemolitionReturnedWood+=result.ProduceAmount;

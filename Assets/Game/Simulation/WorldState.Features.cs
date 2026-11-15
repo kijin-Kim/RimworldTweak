@@ -5,6 +5,93 @@ namespace RimworldTweak.Simulation
 {
     public sealed partial class WorldState
     {
+        private readonly List<WorkPolicyState> workPolicies = new List<WorkPolicyState>();
+        public IReadOnlyList<WorkPolicyState> WorkPolicies => workPolicies.AsReadOnly();
+        private WorkPolicyState PolicyFor(int pawnId) => workPolicies.Find(p => p.PawnId == pawnId);
+        private WorkCategory CurrentWorkCategory(ColonistState pawn)
+        {
+            if (pawn.FeatureStep == WorkStep.DeliverCook || pawn.FeatureStep == WorkStep.Cook) return WorkCategory.Cook;
+            if (pawn.FeatureStep == WorkStep.Sow || pawn.FeatureStep == WorkStep.Harvest) return WorkCategory.Farm;
+            if (pawn.FeatureStep.HasValue) return WorkCategory.Build;
+            return pawn.WorkActivity == WorkActivity.GoingToGather || pawn.WorkActivity == WorkActivity.Gathering ? WorkCategory.Gather : WorkCategory.Haul;
+        }
+        public bool SetWorkPriority(int pawnId, WorkCategory category, int priority)
+        {
+            if (!colonistsById.TryGetValue(pawnId, out var pawn) || !Enum.IsDefined(typeof(WorkCategory), category) || priority < 0 || priority > 3)
+                return Reject("InvalidWorkPriority");
+            var policy = PolicyFor(pawnId);
+            if (policy.GetPriority(category) != priority)
+            {
+                policy.SetPriority(category, priority);
+                if(priority>0 && pawn.WorkReason==WorkReasonCode.Disabled.ToString()) pawn.WorkReason=string.Empty;
+                if (priority == 0 && pawn.IsWorking && CurrentWorkCategory(pawn) == category)
+                { EndLife(pawn); cancelledThisTick.Add(pawn.Id); pawn.WorkReason = WorkReasonCode.Disabled.ToString(); }
+                availabilityRevision++;
+            }
+            LastCommandError = string.Empty; return true;
+        }
+        public WorkReasonCode GetWorkDiagnostic(WorkCategory category,int? targetId=null)
+        {
+            var enabled=false;foreach(var policy in workPolicies)if(policy.GetPriority(category)>0)enabled=true;
+            if(!enabled)return WorkReasonCode.NoWorker;
+            var reasons=new List<WorkReasonCode>();
+            if(category==WorkCategory.Cook)
+                foreach(var o in cookingOrders)if(o.Exists&&(!targetId.HasValue||o.StoveId==targetId))reasons.Add(CookingDiagnostic(o));
+            if(category==WorkCategory.Build)
+            {
+                foreach(var b in blueprints)if(b.Exists&&(!targetId.HasValue||b.Id==targetId))
+                    reasons.Add(b.OwnerId.HasValue?WorkReasonCode.TargetReserved:!AnyWorkerReaches(category,b.Position,true)?WorkReasonCode.Unreachable:
+                        b.DeliveredWood>=b.Cost?(Clearance(b)?WorkReasonCode.None:WorkReasonCode.AwaitingClearance):MaterialDiagnostic(category,ResourceKind.Wood,b.Position,true));
+                foreach(var b in buildings)if(b.Exists&&b.DemolitionDesignated&&(!targetId.HasValue||b.Id==targetId))
+                    reasons.Add(b.OwnerId.HasValue?WorkReasonCode.TargetReserved:AnyWorkerReaches(category,b.Position,true)?WorkReasonCode.None:WorkReasonCode.Unreachable);
+            }
+            if(category==WorkCategory.Farm)
+                foreach(var c in crops)if(c.Exists&&(!targetId.HasValue||c.Id==targetId)&&c.Stage!=CropStage.Growing)
+                    reasons.Add(c.Stage==CropStage.Empty&&!GrowingZone(c.ZoneId).SowingEnabled?WorkReasonCode.Disabled:c.OwnerId.HasValue?WorkReasonCode.TargetReserved:AnyWorkerReaches(category,c.Position,false)?WorkReasonCode.None:WorkReasonCode.Unreachable);
+            if(category==WorkCategory.Gather)
+                foreach(var n in gatherables)if(n.Designated&&!n.Depleted&&(!targetId.HasValue||n.Id==targetId))
+                    reasons.Add(n.OwnerId.HasValue?WorkReasonCode.TargetReserved:AnyWorkerReaches(category,n.Position,false)?WorkReasonCode.None:WorkReasonCode.Unreachable);
+            if(category==WorkCategory.Haul)
+                foreach(var resource in Resources)if(resource.Exists&&resource.Amount>0&&!resource.StorageSlotId.HasValue&&(!targetId.HasValue||resource.Id==targetId))
+                {
+                    if(resource.OwnerId.HasValue){reasons.Add(WorkReasonCode.TargetReserved);continue;}
+                    if(!AnyWorkerReaches(category,resource.Position,false)){reasons.Add(WorkReasonCode.Unreachable);continue;}
+                    var reason=(WorkReasonCode)Enum.Parse(typeof(WorkReasonCode),StorageFailure(resource.Kind));
+                    foreach(var zone in storageZones)if(zone.Allows(resource.Kind))foreach(var slot in zone.Slots)
+                        if(!slot.OwnerId.HasValue&&slot.Amount<50&&(slot.Amount==0||slot.Stack.Kind==resource.Kind)&&ReadPath(resource.Position,slot.Position)!=null)reason=WorkReasonCode.None;
+                    reasons.Add(reason);
+                }
+            return WorkDiagnostics.ForCategory(category,workPolicies,reasons);
+        }
+        private bool ReadReach(GridPosition start,GridPosition target,bool adjacent)
+        {
+            if(!adjacent)return ReadPath(start,target)!=null;
+            foreach(var d in Directions)if(ReadPath(start,new GridPosition(target.X+d.X,target.Y+d.Y))!=null)return true;
+            return false;
+        }
+        private bool AnyWorkerReaches(WorkCategory category,GridPosition target,bool adjacent)
+        {foreach(var pawn in Colonists)if(PolicyFor(pawn.Id).GetPriority(category)>0&&ReadReach(pawn.Position,target,adjacent))return true;return false;}
+        private WorkReasonCode MaterialDiagnostic(WorkCategory category,ResourceKind kind,GridPosition destination,bool adjacent)
+        {
+            var found=false;var reserved=false;
+            foreach(var resource in Resources)if(resource.Exists&&resource.Kind==kind&&resource.Amount>0)
+            {
+                found=true;if(resource.OwnerId.HasValue){reserved=true;continue;}
+                if(AnyWorkerReaches(category,resource.Position,false)&&ReadReach(resource.Position,destination,adjacent))return WorkReasonCode.None;
+            }
+            return !found?WorkReasonCode.MissingMaterials:reserved?WorkReasonCode.TargetReserved:WorkReasonCode.Unreachable;
+        }
+        private WorkReasonCode CookingDiagnostic(CookingOrderState o)
+        {
+            var b=Building(o.StoveId);if(b==null||b.DemolitionDesignated)return WorkReasonCode.InvalidTarget;
+            if(!o.Enabled)return WorkReasonCode.Disabled;
+            if(MealTotal>=o.TargetMeals)return WorkReasonCode.TargetReached;
+            var output=CookingOutput(o.StoveId);
+            if(output==null||output.Amount>=50)return WorkReasonCode.OutputFull;
+            if(o.OwnerId.HasValue||output.OwnerId.HasValue)return WorkReasonCode.TargetReserved;
+            if(!AnyWorkerReaches(WorkCategory.Cook,o.ServiceCell,false))return WorkReasonCode.Unreachable;
+            return o.InputIngredients>=2?WorkReasonCode.None:MaterialDiagnostic(WorkCategory.Cook,ResourceKind.Ingredients,o.ServiceCell,false);
+        }
         private readonly object workContextToken = new object();
         private bool CanSelectWork(ColonistState pawn) => !pawn.IsDrafted && !pawn.IsLifeBusy && !pawn.IsWorking &&
             !pawn.HasSleepIntent && !cancelledThisTick.Contains(pawn.Id) && !pawn.HasPendingCommand &&
@@ -15,6 +102,7 @@ namespace RimworldTweak.Simulation
         {
             var pawn = colonistsById[pawnId];
             var context = new WorkReadContext(workContextToken, Tick, availabilityRevision, MapRevision, pawn);
+            context.SetPolicy(PolicyFor(pawnId).CreateSnapshot());
             var candidates = new List<WorkCandidate>();
             var reason = WorkReasonCode.NoDesignation;
             if (!CanSelectWork(pawn))
@@ -31,7 +119,7 @@ namespace RimworldTweak.Simulation
                 candidates.Add(new WorkCandidate(context, WorkCategory.Haul, WorkStep.HaulToStorage,
                     item.Id, item.Id, item.Position, 0, approach));
             }
-            if (candidates.Count == 0) foreach (var node in gatherables)
+            foreach (var node in gatherables)
                 {
                     if (!node.Designated || node.Depleted) continue;
                     if (node.OwnerId.HasValue) { reason = WorkReasonCode.TargetReserved; continue; }
@@ -43,6 +131,7 @@ namespace RimworldTweak.Simulation
             PrepareProductionOptions(context, pawn);
             candidates.AddRange(ConstructionRules.GetCandidates(context, pawn.Id));
             candidates.AddRange(FarmingRules.GetCandidates(context, pawn.Id));
+            candidates.AddRange(CookingRules.GetCandidates(context, pawn.Id));
             candidates.Sort((a, b) => {
                 var result = a.PathLength.CompareTo(b.PathLength);
                 if (result == 0) result = a.RequestOrder.CompareTo(b.RequestOrder);
@@ -61,7 +150,7 @@ namespace RimworldTweak.Simulation
                 context.ActionId != pawn.ActionId || context.Position != pawn.Position) return false;
             // Only candidates issued by S0 are executable; feature rules cannot invent an authority token.
             var issued = false; foreach (var entry in context.Candidates) if (ReferenceEquals(entry, candidate)) issued = true;
-            if (!issued) return false;
+            if (!issued || PolicyFor(pawnId).GetPriority(candidate.Category) == 0) return false;
             if (candidate.Step == WorkStep.Gather && candidate.Category == WorkCategory.Gather)
             {
                 var node = Gather(candidate.TargetId);

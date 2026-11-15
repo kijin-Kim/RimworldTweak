@@ -198,9 +198,9 @@ namespace RimworldTweak.Simulation
                 if (!CanSelectWork(pawn)) continue;
                 if (pawn.LastWorkRevision == availabilityRevision && Tick < pawn.NextWorkSearchTick) continue;
                 var context = PrepareWorkContext(pawn.Id);
-                var selected = context.Candidates.Count > 0 ? context.Candidates[0] : null;
+                var selected = WorkPolicy.Select(context, pawn.Id, context.Candidates);
                 if (selected != null && TryStartFeatureWork(pawn.Id, selected)) continue;
-                pawn.WorkReason = context.Reason.ToString();
+                pawn.WorkReason = (context.Candidates.Count > 0 && selected == null ? WorkReasonCode.Disabled : context.Reason).ToString();
                 pawn.LastWorkRevision = availabilityRevision; pawn.NextWorkSearchTick = Tick + 10;
             }
         }

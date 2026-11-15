@@ -72,7 +72,9 @@ namespace RimworldTweak.Presentation
             if(crop==null&&zone!=null) foreach(var c in zone.Cells) if(c.Position==SelectedWorldTile) crop=c;
             inspectedBlueprintId=bp?.Id; inspectedBuildingId=building?.Id;
             ConstructionPanel.Refresh(bp,building,w.LastCommandError);
+            if(bp!=null)ConstructionPanel.DetailText.text+="\n작업 상태: "+WorkDiagnostics.GetReasonText(w.GetWorkDiagnostic(WorkCategory.Build,bp.Id));
             FarmingPanel.Refresh(zone,crop,w.LastCommandError);
+            if(crop!=null)FarmingPanel.InfoText.text+="\n작업 상태: "+WorkDiagnostics.GetReasonText(w.GetWorkDiagnostic(WorkCategory.Farm,crop.Id));
             productionPanel.gameObject.SetActive(showProduction);
             ProductionButton.GetComponentInChildren<Text>().text=showProduction?"물류 보기":"건설 / 계획";
             if(showProduction)
@@ -140,6 +142,7 @@ namespace RimworldTweak.Presentation
                 foreach(var b in w.Blueprints) if(b.Exists&&b.Id==target)
                     LifeText.text+="\n"+RimworldTweak.Presentation.ConstructionPanel.Name(b.Kind)+" 현장 #"+b.Id+" · 목재 "+b.DeliveredWood+"/"+b.Cost+" · 시공 "+b.Progress+"/"+b.Duration;
             }
+            foreach(var o in w.CookingOrders) if(o.Exists&&o.StoveId==(pawn.PendingDeliveryTargetId??pawn.WorkTargetId)) LifeText.text+="\n조리대 #"+o.StoveId+" · 투입 "+o.InputIngredients+"/2 · 조리 "+o.Progress+"/40";
             if(pawn.WorkActivity==WorkActivity.WorkingFeature)
             {
                 foreach(var b in w.Buildings) if(b.Id==pawn.WorkTargetId&&pawn.FeatureStep==WorkStep.Demolish) LifeText.text+=" "+b.DemolitionProgress+"/30";

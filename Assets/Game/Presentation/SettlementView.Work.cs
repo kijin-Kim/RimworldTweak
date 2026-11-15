@@ -170,7 +170,7 @@ namespace RimworldTweak.Presentation
             foreach (var kind in new[] { ResourceKind.Wood, ResourceKind.Ingredients, ResourceKind.Meal })
             {
                 var loose = world.ResourceTotal(kind, false); var stored = world.ResourceTotal(kind, true); var cargo = world.CargoTotal(kind);
-                var onSite = kind == ResourceKind.Wood ? world.ConstructionWood : 0;
+                var onSite = kind == ResourceKind.Wood ? world.ConstructionWood : kind == ResourceKind.Ingredients ? world.CookingInputTotal : 0;
                 totals.Append(ResourceName(kind)).Append("  미보관 ").Append(loose).Append(" / 운반 ").Append(cargo).Append(" / 보관 ").Append(stored);
                 if(onSite > 0) totals.Append(" / 현장 ").Append(onSite);
                 totals.Append(" / 총량 ").Append(loose + stored + cargo + onSite).Append('\n');

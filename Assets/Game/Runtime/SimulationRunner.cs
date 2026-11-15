@@ -58,6 +58,9 @@ namespace RimworldTweak.Runtime
         public bool CreateStorage(GridPosition first, GridPosition second) => PlayerCommand(() => Session.World.QueueCreateStorage(first, second));
         public bool SetStorageFilter(int id, ResourceKind kind, bool allowed) => PlayerCommand(() => Session.World.QueueStorageFilter(id, kind, allowed));
         public bool DeleteStorage(int id) => PlayerCommand(() => Session.World.QueueDeleteStorage(id));
+        public bool SetCookingOrder(int stoveId, bool enabled, int targetMeals) => PlayerCommand(() => Session.World.SetCookingOrder(stoveId, enabled, targetMeals));
+        public bool DeleteCookingOrder(int stoveId) => PlayerCommand(() => Session.World.DeleteCookingOrder(stoveId));
+        public bool SetWorkPriority(int pawnId, WorkCategory category, int priority) => PlayerCommand(() => Session.World.SetWorkPriority(pawnId, category, priority));
         public bool PlaceBlueprint(BuildingKind kind, GridPosition position) => PlayerCommand(() => Session.World.PlaceBlueprint(kind,position));
         public bool CancelBlueprint(int id) => PlayerCommand(() => Session.World.CancelBlueprint(id));
         public bool SetDemolition(int id,bool enabled) => PlayerCommand(() => Session.World.SetDemolition(id,enabled));
