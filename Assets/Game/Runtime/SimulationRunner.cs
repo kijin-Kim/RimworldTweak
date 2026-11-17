@@ -9,6 +9,8 @@ namespace RimworldTweak.Runtime
         public SimulationSession Session { get; private set; }
         public bool IsPaused { get; private set; }
         public int SpeedMultiplier { get; private set; } = 1;
+        public bool IsUiBlocked { get; private set; }
+        public void SetUiBlocked(bool blocked) { IsUiBlocked = blocked; skipNextAutomaticFrame = true; }
 
         private void Awake()
         {
@@ -32,7 +34,7 @@ namespace RimworldTweak.Runtime
         public void AdvanceTime(decimal realSeconds)
         {
             if (realSeconds < 0m) throw new ArgumentOutOfRangeException(nameof(realSeconds));
-            if (!IsPaused && !SaveBusy && !IsLoadConfirmationOpen) Session.AdvanceTime(checked(realSeconds * SpeedMultiplier));
+            if (!IsPaused && !IsUiBlocked && !SaveBusy && !IsLoadConfirmationOpen) Session.AdvanceTime(checked(realSeconds * SpeedMultiplier));
         }
 
         public void SetSpeed(int multiplier)
@@ -46,11 +48,12 @@ namespace RimworldTweak.Runtime
         public void ResetWorld() { if(!SaveBusy&&!IsLoadConfirmationOpen){SaveMessage=string.Empty;Session.Reset();} }
         public void StepOnce()
         {
-            if (IsPaused && !SaveBusy && !IsLoadConfirmationOpen) Session.Step(1);
+            if (IsPaused && !IsUiBlocked && !SaveBusy && !IsLoadConfirmationOpen) Session.Step(1);
         }
 
         private bool PlayerCommand(Func<bool> command)
         {
+            if (IsUiBlocked || SaveBusy || IsLoadConfirmationOpen) return false;
             SaveMessage=string.Empty;
             return command();
         }

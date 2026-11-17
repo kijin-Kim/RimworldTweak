@@ -125,6 +125,42 @@ namespace RimworldTweak.Tests.EditMode
             Assert.That(invalid.FieldPath,Is.EqualTo("CookingOrder.SharedClaim"));
             Assert.That(SimulationSession.TryRestoreSave(data,out _,out _),Is.False);
         }
+        [Test] public void InvalidPlayerRoutesRebuildOrWaitWithoutMutatingSavedFiles()
+        {
+            foreach(var unreachable in new[]{false,true})
+            {
+                var original=Session();original.World.SetDrafted(1,true);original.World.QueueMove(1,P(6,1));original.Step(2);
+                var pawn=original.World.Colonists[0];var position=pawn.Position;var progress=pawn.MovementProgress;
+                Assert.That(progress,Is.GreaterThan(0));var captured=original.CaptureSaveData(true,3);
+                Assert.That(captured.Success,Is.True,captured.ErrorCode);
+                if(unreachable)
+                    for(var y=0;y<8;y++)captured.Data.World.BlockedTiles.Add(new PositionSaveData{X=4,Y=y});
+                else captured.Data.World.Colonists[0].Path[0]=new PositionSaveData{X=7,Y=7};
+                Assert.That(files.Save(path,captured.Data).Success,Is.True);
+                var repository=new SaveRepository(directory);var slot=repository.SaveNew(unreachable?"경로 차단":"경로 재생성",captured.Data);
+                Assert.That(slot.Success,Is.True,slot.ErrorCode);
+                var slotPath=Path.Combine(directory,slot.Slot.SlotId+".save.json");
+                var legacyBytes=File.ReadAllBytes(path);var slotBytes=File.ReadAllBytes(slotPath);
+                var legacy=files.Load(path);var named=new SaveRepository(directory).Load(slot.Slot.SlotId);
+                Assert.That(legacy.Success,Is.True,legacy.ErrorCode);Assert.That(named.Success,Is.True,named.ErrorCode);
+                foreach(var data in new[]{legacy.Data,named.Data})
+                {
+                    Assert.That(SimulationSession.TryRestoreSave(data,out var restored,out var error),Is.True,error);
+                    var result=restored.World.Colonists[0];
+                    Assert.That(result.IsDrafted,Is.True);Assert.That(result.Position,Is.EqualTo(position));
+                    Assert.That(result.Destination,Is.EqualTo(P(6,1)));Assert.That(result.MovementProgress,Is.Zero);
+                    Assert.That(result.Status,Is.EqualTo(unreachable?MovementStatus.Blocked:MovementStatus.Moving));
+                    restored.Step(50);
+                    Assert.That(result.Position,Is.EqualTo(unreachable?position:P(6,1)));
+                    Assert.That(result.Status,Is.EqualTo(unreachable?MovementStatus.Blocked:MovementStatus.Arrived));
+                    Assert.That(restored.World.ResourceTotal(ResourceKind.Wood,false),Is.EqualTo(20));
+                }
+                Assert.That(pawn.Position,Is.EqualTo(position));Assert.That(pawn.MovementProgress,Is.EqualTo(progress));
+                Assert.That(original.World.Tick,Is.EqualTo(2));
+                CollectionAssert.AreEqual(legacyBytes,File.ReadAllBytes(path));CollectionAssert.AreEqual(slotBytes,File.ReadAllBytes(slotPath));
+            }
+        }
+
         [Test] public void PausedMoveQueueAndFractionalTimeSurviveFileAndSessionRestore()
         {
             var original=Session();original.World.ToggleDraft(1);Assert.That(original.World.QueueMove(1,P(6,1)),Is.True);original.AdvanceTime(0.037m);

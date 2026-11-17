@@ -23,6 +23,10 @@ namespace RimworldTweak.Runtime
     }
     public sealed class SaveFileService
     {
+        // Narrow fault-injection seam for atomic file tests. Production leaves this unset.
+        public Action<string> BeforeAtomicStage { get; set; }
+        // Diagnostic only: no path or file contents; never used to decide persistence success.
+        public string LastFailureDiagnostic { get; private set; } = string.Empty;
         private static int busy;
         private static readonly UTF8Encoding Utf8 = new UTF8Encoding(false,true);
         private sealed class SizeLimitException : Exception { }
@@ -136,6 +140,86 @@ namespace RimworldTweak.Runtime
             catch(Exception e) when(e is IOException||e is UnauthorizedAccessException||e is ArgumentException||e is NotSupportedException)
             {return new SaveLoadResult(false,errorCode:"SaveIoError");}
             finally{Volatile.Write(ref busy,0);}
+        }
+
+        internal static byte[] EncodeJson<T>(T data)
+        {
+            var serializer=new DataContractJsonSerializer(typeof(T),new DataContractJsonSerializerSettings {
+                EmitTypeInformation=EmitTypeInformation.Never,MaxItemsInObjectGraph=1000000,UseSimpleDictionaryFormat=true });
+            using(var stream=new LimitedStream()){serializer.WriteObject(stream,data);return stream.ToArray();}
+        }
+        internal static T DecodeJson<T>(byte[] bytes)
+        {
+            if(bytes.Length==0||bytes.Length>SaveValidation.MaximumFileBytes)throw new SizeLimitException();
+            RequireSingleObject(Utf8.GetString(bytes));
+            var quotas=new XmlDictionaryReaderQuotas {MaxDepth=64,MaxStringContentLength=SaveValidation.MaximumFileBytes,MaxArrayLength=1000000,MaxBytesPerRead=4096,MaxNameTableCharCount=16384};
+            var serializer=new DataContractJsonSerializer(typeof(T),new DataContractJsonSerializerSettings {
+                EmitTypeInformation=EmitTypeInformation.Never,MaxItemsInObjectGraph=1000000,UseSimpleDictionaryFormat=true });
+            using(var reader=JsonReaderWriterFactory.CreateJsonReader(bytes,0,bytes.Length,Utf8,quotas,null))
+            {var value=(T)serializer.ReadObject(reader);if(reader.Read())throw new SerializationException("Trailing JSON content.");return value;}
+        }
+        private static bool ExpectedFileException(Exception e) => e is IOException||e is UnauthorizedAccessException||e is ArgumentException||e is NotSupportedException||
+            e is SizeLimitException||e is SerializationException||e is XmlException||e is DecoderFallbackException||e is FormatException||e is OverflowException;
+        private static string FileError(Exception e) => e is IOException||e is UnauthorizedAccessException ? "SaveIoError" : "SaveInvalidData";
+
+        internal bool ReadJson<T>(string path,out T data,out string error,int maximumBytes=SaveValidation.MaximumFileBytes)
+        {
+            data=default;error=string.Empty;LastFailureDiagnostic=string.Empty;
+            if(Interlocked.CompareExchange(ref busy,1,0)!=0){error="SaveBusy";return false;}
+            try
+            {
+                if(!File.Exists(path)){error="SaveNotFound";return false;}
+                if(new FileInfo(path).Length>maximumBytes){error="SaveInvalidData";return false;}
+                data=DecodeJson<T>(Read(path));return true;
+            }
+            catch(Exception e) when(ExpectedFileException(e)){LastFailureDiagnostic="Read:"+e.GetType().Name+":"+e.HResult;error=FileError(e);return false;}
+            finally{Volatile.Write(ref busy,0);}
+        }
+
+        private void ReplaceValidatedFile(string temporary,string destination)
+        {
+            // Win32 1175 leaves both names intact. Retry only this observed failure;
+            // never delete the destination or retry partially completed rename errors.
+            for(var attempt=0;;attempt++)
+            {
+                try
+                {
+                    BeforeAtomicStage?.Invoke("Replace");
+                    File.Replace(temporary,destination,null);
+                    return;
+                }
+                catch(IOException error) when(error.HResult==unchecked((int)0x80070497)&&attempt<2)
+                { Thread.Sleep(10*(attempt+1)); }
+            }
+        }
+
+        internal SaveFileResult WriteJson<T>(string path,T data,Func<T,string> validate,int maximumBytes=SaveValidation.MaximumFileBytes)
+        {
+            LastFailureDiagnostic=string.Empty;var stage="Validate";
+            if(Interlocked.CompareExchange(ref busy,1,0)!=0)return new SaveFileResult(false,"SaveBusy");
+            string temporary=null;var created=false;
+            try
+            {
+                var error=validate(data);if(!string.IsNullOrEmpty(error))return new SaveFileResult(false,error);
+                var bytes=EncodeJson(data);if(bytes.Length>maximumBytes)return new SaveFileResult(false,"SaveInvalidData");
+                var full=Path.GetFullPath(path);Directory.CreateDirectory(Path.GetDirectoryName(full));temporary=full+".tmp";
+                stage="Write";BeforeAtomicStage?.Invoke(stage);
+                using(var stream=new FileStream(temporary,FileMode.Create,FileAccess.Write,FileShare.None))
+                {created=true;stream.Write(bytes,0,bytes.Length);stream.Flush(true);}
+                stage="ReadBack";BeforeAtomicStage?.Invoke(stage);
+                var copy=DecodeJson<T>(Read(temporary));error=validate(copy);
+                if(!string.IsNullOrEmpty(error))return new SaveFileResult(false,error);
+                stage="Replace";
+                if(File.Exists(full))ReplaceValidatedFile(temporary,full);
+                else { BeforeAtomicStage?.Invoke(stage);File.Move(temporary,full); }
+                created=false;return new SaveFileResult(true);
+            }
+            catch(Exception e) when(ExpectedFileException(e)){LastFailureDiagnostic=stage+":"+e.GetType().Name+":"+e.HResult;return new SaveFileResult(false,FileError(e));}
+            finally
+            {
+                if(created&&temporary!=null){try{File.Delete(temporary);}catch(IOException){}catch(UnauthorizedAccessException){}}
+                Volatile.Write(ref busy,0);
+            }
         }
     }
 }

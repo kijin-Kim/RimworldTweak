@@ -65,7 +65,21 @@ namespace RimworldTweak.Tests.EditMode
                 Assert.That(SimulationSession.TryRestoreSave(loaded.Data, out var restored, out var error), Is.True, error);
                 Assert.That(restored.World, Is.Not.SameAs(original.World)); Assert.That(State(restored.World), Is.EqualTo(before), "Restore lost state");
                 Assert.That(restored.PendingSeconds, Is.EqualTo(original.PendingSeconds)); Assert.That(restored.ResetCount, Is.EqualTo(original.ResetCount));
-                return restored;
+                var legacyBytes=File.ReadAllBytes(path);
+                var repository=new SaveRepository(directory);
+                var slot=repository.SaveNew("진행 중 작업",capture.Data);
+                Assert.That(slot.Success,Is.True,slot.ErrorCode);
+                var reopened=new SaveRepository(directory).Load(slot.Slot.SlotId);
+                Assert.That(reopened.Success,Is.True,reopened.ErrorCode);
+                Assert.That(SimulationSession.TryRestoreSave(reopened.Data,out var slotRestored,out error),Is.True,error);
+                Assert.That(State(slotRestored.World),Is.EqualTo(before),"Named slot lost in-progress state");
+                Assert.That(slotRestored.PendingSeconds,Is.EqualTo(original.PendingSeconds));
+                Assert.That(slotRestored.ResetCount,Is.EqualTo(original.ResetCount));
+                CollectionAssert.AreEqual(legacyBytes,File.ReadAllBytes(path),"Named slot changed legacy file");
+                // Exercise both file formats under identical subsequent commands/ticks.
+                Equivalent(restored,slotRestored,50);
+                Assert.That(SimulationSession.TryRestoreSave(reopened.Data,out slotRestored,out error),Is.True,error);
+                return slotRestored;
             }
             finally
             {
@@ -161,6 +175,106 @@ namespace RimworldTweak.Tests.EditMode
             Equivalent(s,cooking,2);Assert.That(cooking.World.CookingProducedMeals,Is.EqualTo(1));Assert.That(cooking.World.CookingConsumedIngredients,Is.EqualTo(2));
             var final=Restore(cooking);var output=final.World.CookingOutputs.Single(o=>o.Exists);
             Assert.That(output.Stack.Claim,Is.SameAs(output.Claim));Equivalent(cooking,final,10);Assert.That(final.World.CookingProducedMeals,Is.EqualTo(1));
+        }
+
+        private static byte[] DataBytes(SaveData data)
+        {
+            using(var stream=new MemoryStream())
+            {
+                new System.Runtime.Serialization.Json.DataContractJsonSerializer(typeof(SaveData)).WriteObject(stream,data);
+                return stream.ToArray();
+            }
+        }
+        private static int Total(WorldState world,ResourceKind kind)
+            => world.ResourceTotal(kind,false)+world.ResourceTotal(kind,true)+world.CargoTotal(kind)
+                +(kind==ResourceKind.Wood?world.ConstructionWood:kind==ResourceKind.Ingredients?world.CookingOrders.Where(o=>o.Exists).Sum(o=>o.InputIngredients):0);
+
+        [Test]
+        public void InvalidWorkAndLifeRoutesCancelOnlyRestoredCandidatesAndDropCargoOnceThroughBothFiles()
+        {
+            foreach(var activity in new[]{"haul","build","cook","farm","gather","sleep","food"})
+            foreach(var damage in new[]{"discontinuous","blocked"})
+            {
+                var source=new SimulationSession(Scenario());var world=source.World;
+                switch(activity)
+                {
+                    case "haul": Only(world,WorkCategory.Haul);world.QueueCreateStorage(P(6,1),P(6,1));break;
+                    case "build": Only(world,WorkCategory.Build);world.PlaceBlueprint(BuildingKind.Bed,P(4,1));break;
+                    case "cook":
+                        Only(world,WorkCategory.Build);world.PlaceBlueprint(BuildingKind.Stove,P(4,4));
+                        Until(source,()=>world.Buildings.Any(b=>b.Exists&&b.Kind==BuildingKind.Stove));
+                        Only(world,WorkCategory.Cook);world.SetCookingOrder(world.Buildings.Single(b=>b.Exists&&b.Kind==BuildingKind.Stove).Id,true,7);break;
+                    case "farm": Only(world,WorkCategory.Farm);world.CreateGrowingZone(P(6,1),P(6,1));break;
+                    case "gather": Only(world,WorkCategory.Gather);world.QueueDesignateGather(301,true);break;
+                    case "sleep":
+                        source=new SimulationSession(new ScenarioDefinition(8,8,Array.Empty<GridPosition>(),
+                            new[]{new ColonistSeed(1,P(1,1),9000,2000)},Array.Empty<ResourceSeed>(),new[]{new BedSeed(201,P(6,1))},true));break;
+                    case "food":
+                        source=new SimulationSession(new ScenarioDefinition(8,8,Array.Empty<GridPosition>(),
+                            new[]{new ColonistSeed(1,P(1,1),3000,9000)},new[]{new ResourceSeed(101,ResourceKind.Meal,6,P(6,1))},Array.Empty<BedSeed>(),true));break;
+                }
+                world=source.World;
+                var carries=activity=="haul"||activity=="build"||activity=="cook";
+                Until(source,()=>world.Colonists[0].Status==MovementStatus.Moving&&(!carries||world.Colonists[0].CargoAmount>0));
+                var original=State(world);var capture=source.CaptureSaveData(true,3);
+                Assert.That(capture.Success,Is.True,capture.ErrorCode);
+                var pawnData=capture.Data.World.Colonists[0];
+                Assert.That(pawnData.Path.Count,Is.GreaterThan(0));
+                if(damage=="blocked")
+                {
+                    var next=pawnData.Path[0];
+                    capture.Data.World.BlockedTiles.Add(new PositionSaveData{X=next.X,Y=next.Y});
+                }
+                else pawnData.Path[0]=new PositionSaveData{X=7,Y=7};
+                var inputBytes=DataBytes(capture.Data);
+                var root=Path.GetFullPath(Path.Combine(Application.dataPath,"..","TestResults","InvalidSaveRoutes"));
+                var directory=Path.GetFullPath(Path.Combine(root,Guid.NewGuid().ToString("N")));
+                try
+                {
+                    var file=new SaveFileService();var legacy=Path.Combine(directory,"settlement-v1.json");
+                    var saved=file.Save(legacy,capture.Data);Assert.That(saved.Success,Is.True,activity+" "+damage+" "+saved.ErrorCode);
+                    var repository=new SaveRepository(directory);var slot=repository.SaveNew(activity+" "+damage,capture.Data);
+                    Assert.That(slot.Success,Is.True,slot.ErrorCode);
+                    var slotPath=Path.Combine(directory,slot.Slot.SlotId+".save.json");
+                    var legacyBytes=File.ReadAllBytes(legacy);var slotBytes=File.ReadAllBytes(slotPath);
+                    var legacyLoad=file.Load(legacy);var slotLoad=new SaveRepository(directory).Load(slot.Slot.SlotId);
+                    Assert.That(legacyLoad.Success,Is.True,legacyLoad.ErrorCode);Assert.That(slotLoad.Success,Is.True,slotLoad.ErrorCode);
+                    SimulationSession first=null;
+                    foreach(var data in new[]{legacyLoad.Data,slotLoad.Data})
+                    {
+                        Assert.That(SimulationSession.TryRestoreSave(data,out var restored,out var error),Is.True,error);
+                        var pawn=restored.World.Colonists[0];
+                        Assert.That(pawn.IsWorking,Is.False);Assert.That(pawn.IsLifeBusy,Is.False);
+                        Assert.That(pawn.WorkReason,Is.EqualTo("RestoreInvalid"));Assert.That(pawn.CargoAmount,Is.Zero);
+                        Assert.That(pawn.Path,Is.Empty);Assert.That(pawn.MovementProgress,Is.Zero);
+                        Assert.That(restored.World.Resources.All(r=>!r.OwnerId.HasValue&&r.Reservations.Count==0),Is.True);
+                        Assert.That(restored.World.Beds.All(b=>!b.OwnerId.HasValue&&!b.IsOccupied),Is.True);
+                        Assert.That(restored.World.StorageZones.SelectMany(z=>z.Slots).All(s=>!s.OwnerId.HasValue),Is.True);
+                        Assert.That(restored.World.Blueprints.All(b=>!b.OwnerId.HasValue),Is.True);
+                        Assert.That(restored.World.Buildings.All(b=>!b.OwnerId.HasValue),Is.True);
+                        Assert.That(restored.World.Crops.All(c=>!c.OwnerId.HasValue),Is.True);
+                        Assert.That(restored.World.Gatherables.All(g=>!g.OwnerId.HasValue),Is.True);
+                        foreach(ResourceKind kind in Enum.GetValues(typeof(ResourceKind)))Assert.That(Total(restored.World,kind),Is.EqualTo(Total(world,kind)));
+                        var cleaned=restored.CaptureSaveData(true,3);Assert.That(cleaned.Success,Is.True,cleaned.ErrorCode);
+                        Assert.That(SimulationSession.TryRestoreSave(cleaned.Data,out var twice,out error),Is.True,error);
+                        CollectionAssert.AreEqual(DataBytes(cleaned.Data),DataBytes(twice.CaptureSaveData(true,3).Data),"Restoring a cleaned candidate must not drop again or allocate another ID.");
+                        restored.World.SetDrafted(1,true);
+                        if(first==null)first=restored;
+                        else
+                        {
+                            Equivalent(first,restored,50);
+                            foreach(ResourceKind kind in Enum.GetValues(typeof(ResourceKind)))Assert.That(Total(restored.World,kind),Is.EqualTo(Total(world,kind)));
+                        }
+                    }
+                    CollectionAssert.AreEqual(inputBytes,DataBytes(capture.Data));Assert.That(State(world),Is.EqualTo(original));
+                    CollectionAssert.AreEqual(legacyBytes,File.ReadAllBytes(legacy));CollectionAssert.AreEqual(slotBytes,File.ReadAllBytes(slotPath));
+                }
+                finally
+                {
+                    Assert.That(directory.StartsWith(root+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase),Is.True);
+                    if(Directory.Exists(directory))Directory.Delete(directory,true);
+                }
+            }
         }
 
         [Test]
