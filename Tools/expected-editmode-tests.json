@@ -163,5 +163,12 @@
   "RimworldTweak.Tests.EditMode.SaveTests.MismatchedClaimOwnerActionIsRejectedWithoutChangingDto",
   "RimworldTweak.Tests.EditMode.SaveTests.StoredStackSharedClaimMustMatchSlotAuthority",
   "RimworldTweak.Tests.EditMode.SaveTests.PausedMoveQueueAndFractionalTimeSurviveFileAndSessionRestore",
-  "RimworldTweak.Tests.EditMode.SaveRoundTripTests.ImpossibleIdleCargoFeatureStageAndFacilityTopologyRejectRestore"
+  "RimworldTweak.Tests.EditMode.SaveRoundTripTests.ImpossibleIdleCargoFeatureStageAndFacilityTopologyRejectRestore",
+  "RimworldTweak.Tests.EditMode.VisualCatalogTests.DuplicateOrMissingEntryDoesNotReplaceValidCatalog",
+  "RimworldTweak.Tests.EditMode.VisualCatalogTests.DifferentSpritePivotAndSizeKeepAuthoredGroundPoint",
+  "RimworldTweak.Tests.EditMode.VisualCatalogTests.CropDisplayBoundariesDoNotInventSimulationStages",
+  "RimworldTweak.Tests.EditMode.VisualCatalogTests.BuildingResourceAndDirectionKeysCoverCurrentKinds",
+  "RimworldTweak.Tests.EditMode.VisualCatalogTests.BuiltCatalogConnectsEveryCurrentVisualWithoutMissingSprites",
+  "RimworldTweak.Tests.EditMode.PlacementPreviewTests.BlueprintPreviewLeavesStateUntouchedAndMatchesCommitAtEveryCell",
+  "RimworldTweak.Tests.EditMode.PlacementPreviewTests.RectanglePreviewPreservesStateForReverseSingleOccupiedAndOutOfBoundsAreas"
 ]

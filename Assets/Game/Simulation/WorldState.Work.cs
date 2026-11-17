@@ -71,6 +71,7 @@ namespace RimworldTweak.Simulation
                 }
             return true;
         }
+        public bool CanCreateStorage(GridPosition first, GridPosition second) => ValidStorageRectangle(first,second);
         public bool QueueStorageFilter(int zoneId, ResourceKind kind, bool allowed)
         {
             if (Zone(zoneId) == null || !Enum.IsDefined(typeof(ResourceKind), kind)) return Reject("InvalidStorageFilter");

@@ -40,10 +40,24 @@ namespace RimworldTweak.Simulation
         }
         public bool PlaceBlueprint(BuildingKind kind, GridPosition position)
         {
-            if(!Enum.IsDefined(typeof(BuildingKind),kind) || !CanPlaceProduction(position)) return Reject("InvalidBlueprint");
-            if(kind==BuildingKind.Stove && !CanPlaceProduction(ConstructionRules.ServiceCell(position))) return Reject("OccupiedServiceCell");
+            if(!CanPlaceBlueprint(kind, position, out var reason)) return Reject(reason);
             blueprints.Add(new BlueprintState(NewId(),kind,position,++requestSequence)); availabilityRevision++;
             LastCommandError=string.Empty; return true;
+        }
+        // Preview and commit share the same read-only rules. A preview never changes LastCommandError or IDs.
+        public bool CanPlaceBlueprint(BuildingKind kind, GridPosition position, out string reason)
+        {
+            reason = !Enum.IsDefined(typeof(BuildingKind),kind) || !CanPlaceProduction(position) ? "InvalidBlueprint"
+                : kind==BuildingKind.Stove && !CanPlaceProduction(ConstructionRules.ServiceCell(position)) ? "OccupiedServiceCell" : string.Empty;
+            return reason.Length==0;
+        }
+        public bool CanCreateGrowingZone(GridPosition first,GridPosition second)
+        {
+            if(!InBounds(first)||!InBounds(second)) return false;
+            for(var y=Math.Min(first.Y,second.Y);y<=Math.Max(first.Y,second.Y);y++)
+                for(var x=Math.Min(first.X,second.X);x<=Math.Max(first.X,second.X);x++)
+                    if(!CanPlaceProduction(new GridPosition(x,y))) return false;
+            return true;
         }
         private void CancelProductionOwners(int targetId)
         {
@@ -73,10 +87,7 @@ namespace RimworldTweak.Simulation
         }
         public bool CreateGrowingZone(GridPosition first,GridPosition second)
         {
-            if(!InBounds(first)||!InBounds(second)) return Reject("InvalidGrowingArea");
-            for(var y=Math.Min(first.Y,second.Y);y<=Math.Max(first.Y,second.Y);y++)
-                for(var x=Math.Min(first.X,second.X);x<=Math.Max(first.X,second.X);x++)
-                    if(!CanPlaceProduction(new GridPosition(x,y))) return Reject("InvalidGrowingArea");
+            if(!CanCreateGrowingZone(first,second)) return Reject("InvalidGrowingArea");
             var id=NewId(); var cells=new List<CropState>();
             for(var y=Math.Min(first.Y,second.Y);y<=Math.Max(first.Y,second.Y);y++)
                 for(var x=Math.Min(first.X,second.X);x<=Math.Max(first.X,second.X);x++)

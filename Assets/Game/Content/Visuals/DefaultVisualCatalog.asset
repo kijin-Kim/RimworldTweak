@@ -1,0 +1,302 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8eff52e9453485c8cbd57a18ad93722, type: 3}
+  m_Name: DefaultVisualCatalog
+  m_EditorClassIdentifier: RimworldTweak.Presentation::RimworldTweak.Presentation.VisualCatalog
+  entries:
+  - key: terrain.soil
+    sprite: {fileID: 21300000, guid: 001bb6634b2b4384d918d2f7959177eb, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Built-in imagegen original sample 2026-11-17: soil'
+  - key: tree
+    sprite: {fileID: 21300000, guid: 4dd1567620d4ce046a1e630861ae81e8, type: 3}
+    worldSize: {x: 1.32, y: 1.32}
+    groundAnchorNormalized: {x: 0.5, y: 0.10526316}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Built-in imagegen original sample 2026-11-17: tree'
+  - key: pawn.front
+    sprite: {fileID: 21300000, guid: 4260dccb1bcfb7b45b7b3a09a2866aa7, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Built-in imagegen original sample 2026-11-17: pawn-front'
+  - key: pawn.back
+    sprite: {fileID: 21300000, guid: b9c21e8146df89a4fa630befd80a34fc, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Built-in imagegen original sample 2026-11-17: pawn-back'
+  - key: pawn.side
+    sprite: {fileID: 21300000, guid: 4566aec5a32442e489ca718f5725f5ca, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Built-in imagegen original sample 2026-11-17: pawn-side'
+  - key: building.bed
+    sprite: {fileID: 21300000, guid: c2a76805cf7d48e44a3bff72f8ed5a80, type: 3}
+    worldSize: {x: 1.08, y: 1.08}
+    groundAnchorNormalized: {x: 0.5, y: 0.1}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Built-in imagegen original sample 2026-11-17: bed'
+  - key: building.wall.0
+    sprite: {fileID: 21300000, guid: 744094f11f79f2046b7c9cda5bd6db7d, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: building.wall.1
+    sprite: {fileID: 21300000, guid: 17d6f2a57ffa12841ab08c6982878262, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: building.wall.2
+    sprite: {fileID: 21300000, guid: c1d26a3155f5b64499635537db9f1698, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: building.wall.3
+    sprite: {fileID: 21300000, guid: 83856490dd93ed645b94f50aee9c683a, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: building.wall.4
+    sprite: {fileID: 21300000, guid: 60efcac9ff4fd094199b8d71d75a783f, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: building.wall.5
+    sprite: {fileID: 21300000, guid: 9f216b8c16f2a0e41b5a9a6179acd0d3, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: building.wall.6
+    sprite: {fileID: 21300000, guid: c7c2bc200f4296f4eab0ce8e3365d85e, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: building.wall.7
+    sprite: {fileID: 21300000, guid: 68ced9855a0eec647a536d835eac1b65, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: building.wall.8
+    sprite: {fileID: 21300000, guid: a533b042b38000747be3fb195a794c65, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: building.wall.9
+    sprite: {fileID: 21300000, guid: 602be56151e482f49b6c0ed39b0176c0, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: building.wall.10
+    sprite: {fileID: 21300000, guid: 38f3cc18c604ee140a9ea9f03951cc22, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: building.wall.11
+    sprite: {fileID: 21300000, guid: b60bb860f66cda24c9e8aa6c531353aa, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: building.wall.12
+    sprite: {fileID: 21300000, guid: c1a7b351ea3985a47809f24d04bb4e4f, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: building.wall.13
+    sprite: {fileID: 21300000, guid: 1148045aa5bb6574a977282d4f519bc5, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: building.wall.14
+    sprite: {fileID: 21300000, guid: deb6a939e6186cb4e9afc8272cf808d2, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: building.wall.15
+    sprite: {fileID: 21300000, guid: 2aae8d4fb416307469ade2ad4689b655, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: building.wall
+    sprite: {fileID: 21300000, guid: 744094f11f79f2046b7c9cda5bd6db7d, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original procedural connected wall / BuildArtAssets
+  - key: terrain.blocked
+    sprite: {fileID: 21300000, guid: 53ea2108d65b9d448b7c81c1d8c5d43f, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: ui.panel
+    sprite: {fileID: 21300000, guid: 1aa119eb4d6ae5442bae8fe783880a71, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: overlay.selection
+    sprite: {fileID: 21300000, guid: 14f3469d3fb8a514299e7dea8635bab8, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: overlay.storage
+    sprite: {fileID: 21300000, guid: f7fde0395f09a3c478e489130e03eb31, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: overlay.growing
+    sprite: {fileID: 21300000, guid: 0f8df8db09060394e98975f94b357b25, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: overlay.blueprint
+    sprite: {fileID: 21300000, guid: 58e812c7c5f94554a8a20237afa4f8ca, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: building.door
+    sprite: {fileID: 21300000, guid: 8ccb96a1abe09ef46a55edef40234635, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: building.stove
+    sprite: {fileID: 21300000, guid: 6672b0cca7131d34d8627d5106007e99, type: 3}
+    worldSize: {x: 1.08, y: 1.08}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Built-in imagegen original sample 2026-11-17: stove'
+  - key: plant.gather
+    sprite: {fileID: 21300000, guid: edcfd8b9744991a40b3a887acdf01577, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.18}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Built-in imagegen original sample 2026-11-17: gather'
+  - key: crop.young
+    sprite: {fileID: 21300000, guid: 852b69d17b44ac84892db475c5f23e91, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.1396}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Built-in imagegen original sample 2026-11-17: crop-young'
+  - key: crop.growing
+    sprite: {fileID: 21300000, guid: eaeda18096cc67f44a456723b94bfcd1, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.1619}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Built-in imagegen original sample 2026-11-17: crop-growing'
+  - key: crop.mature
+    sprite: {fileID: 21300000, guid: 34fbc6d1a33cdb44294ff169c58634db, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.1348}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Built-in imagegen original sample 2026-11-17: crop-mature'
+  - key: item.wood
+    sprite: {fileID: 21300000, guid: cb479925b99a9a042bea0b5cb9577790, type: 3}
+    worldSize: {x: 0.9, y: 0.9}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Built-in imagegen original sample 2026-11-17: wood'
+  - key: item.ingredients
+    sprite: {fileID: 21300000, guid: cb1054c7d8690614e8e2c34c7aec0f97, type: 3}
+    worldSize: {x: 0.9, y: 0.9}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Built-in imagegen original sample 2026-11-17: ingredients'
+  - key: item.meal
+    sprite: {fileID: 21300000, guid: ce112074223b089498adca105159617d, type: 3}
+    worldSize: {x: 0.9, y: 0.9}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Built-in imagegen original sample 2026-11-17: meal'
+  - key: icon.draft
+    sprite: {fileID: 21300000, guid: 432609cf3eec2d14cac834fb4ecfa162, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: icon.sleep
+    sprite: {fileID: 21300000, guid: 9d216118ca83c774e8617d4c558c014a, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
+  - key: icon.work
+    sprite: {fileID: 21300000, guid: 1737e0fed9f27154997bb6c93920c7cd, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
