@@ -13,6 +13,7 @@ namespace RimworldTweak.Demo
     {
         public SimulationRunner Runner;
         public SettlementView View;
+        public VisualCatalog Visuals;
         private string output;
         private readonly SmokeReport report = new SmokeReport();
 
@@ -50,16 +51,44 @@ namespace RimworldTweak.Demo
 
         private void Start()
         {
-            View.Bind(Runner);
             var args = Environment.GetCommandLineArgs();
+            var uxIndex=Array.IndexOf(args,"--ux-output");
+            if(uxIndex>=0)
+            {
+                if(uxIndex+1>=args.Length){Application.Quit(2);return;}
+                View.gameObject.SetActive(false);Runner.enabled=false;
+                gameObject.AddComponent<SettlementPlayerCheck>().Begin(Runner,Visuals,args);
+                return;
+            }
             var index = Array.IndexOf(args, "--smoke-output");
-            if (index < 0) return;
+            if (index < 0)
+            {
+                try { StartInteractive(args); }
+                catch(Exception exception) { Debug.LogError("Interactive startup failed: "+exception.Message);Application.Quit(2); }
+                return;
+            }
+            View.Bind(Runner);
             if (index + 1 >= args.Length) { Application.Quit(2); return; }
             Runner.Initialize(SandboxScenario.Create());
             View.Bind(Runner);
             output = Path.GetFullPath(args[index + 1]);
             Directory.CreateDirectory(output);
             StartCoroutine(Smoke());
+        }
+
+        public void StartInteractive(string[] args)
+        {
+            var storageIndex=Array.IndexOf(args,"--storage-root");
+            string storageRoot=null;
+            if(storageIndex>=0)
+            {
+                if(storageIndex+1>=args.Length||string.IsNullOrWhiteSpace(args[storageIndex+1])||args[storageIndex+1].StartsWith("--",StringComparison.Ordinal))
+                    throw new ArgumentException("--storage-root requires a directory path.");
+                storageRoot=Path.GetFullPath(args[storageIndex+1]);
+            }
+            View.gameObject.SetActive(false);
+            var shell=gameObject.AddComponent<SettlementShell>();
+            shell.Initialize(Runner, true, storageRoot, Visuals, Array.IndexOf(args, "--development-ui") >= 0);
         }
 
         private static void Require(bool condition, string message)

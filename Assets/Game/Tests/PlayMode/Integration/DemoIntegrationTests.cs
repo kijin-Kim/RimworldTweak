@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using RimworldTweak.Presentation;
@@ -15,6 +16,7 @@ namespace RimworldTweak.Tests.PlayMode
     public sealed class DemoIntegrationTests
     {
         private readonly List<GameObject> owned = new List<GameObject>();
+        private string manualDirectory;
 
         private SimulationRunner Runner(ScenarioDefinition scenario = null)
         {
@@ -41,6 +43,38 @@ namespace RimworldTweak.Tests.PlayMode
         {
             foreach (var go in owned) if (go != null) UnityEngine.Object.Destroy(go);
             owned.Clear();
+            yield return null;
+            var allowed=Path.GetFullPath(Path.Combine(Application.dataPath,"..","TestResults","ManualStartup"))+Path.DirectorySeparatorChar;
+            if(manualDirectory!=null&&manualDirectory.StartsWith(allowed,StringComparison.OrdinalIgnoreCase)&&Directory.Exists(manualDirectory))Directory.Delete(manualDirectory,true);
+            manualDirectory=null;
+        }
+
+        [UnityTest]
+        public IEnumerator InteractiveStartupUsesExplicitSaveRootAndRejectsMissingPath()
+        {
+            var runner=Runner();runner.enabled=false;
+            var view=View(runner);
+            var go=new GameObject("Manual startup test");owned.Add(go);
+            var bootstrap=go.AddComponent<RimworldTweak.Demo.DemoBootstrap>();bootstrap.enabled=false;
+            bootstrap.Runner=runner;bootstrap.View=view;
+            foreach(var args in new[]{new[]{"--storage-root"},new[]{"--storage-root"," "},new[]{"--storage-root","--other-option"}})
+            {
+                Assert.Throws<ArgumentException>(()=>bootstrap.StartInteractive(args));
+                Assert.That(runner.Slots,Is.Null,"Invalid explicit storage must not fall back to personal saves.");
+                Assert.That(go.GetComponent<SettlementShell>(),Is.Null);
+            }
+            manualDirectory=Path.GetFullPath(Path.Combine(Application.dataPath,"..","TestResults","ManualStartup","경로 공백 "+Guid.NewGuid().ToString("N")));
+            bootstrap.StartInteractive(new[]{"game.exe","--storage-root",manualDirectory});
+            var shell=go.GetComponent<SettlementShell>();Assert.That(shell,Is.Not.Null);
+            Assert.That(view.gameObject.activeSelf,Is.False);Assert.That(shell.IsMenuOpen,Is.True);
+            Assert.That(runner.Slots.SaveDirectory,Is.EqualTo(Path.Combine(manualDirectory,"Saves")));
+            shell.Buttons["new"].onClick.Invoke();runner.SetPaused(true);runner.Session.Step(3);
+            shell.ShowSaveMenu();shell.SaveNameInput.text="수동 확인";shell.Buttons["save.new"].onClick.Invoke();
+            Assert.That(runner.ActiveSlotId,Is.Not.Null);
+            Assert.That(File.Exists(Path.Combine(manualDirectory,"Saves",runner.ActiveSlotId+".save.json")),Is.True);
+            var settings=new UserSettingsStore(Path.Combine(manualDirectory,"Settings","user-settings.json")).Load();
+            Assert.That(settings.Success,Is.True);Assert.That(settings.Settings.RecentSlotId,Is.EqualTo(runner.ActiveSlotId));
+            Assert.That(new SaveRepository(Path.Combine(manualDirectory,"Saves")).Load(runner.ActiveSlotId).Slot.Tick,Is.EqualTo(3));
             yield return null;
         }
 

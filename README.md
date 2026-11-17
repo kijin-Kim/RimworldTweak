@@ -43,3 +43,7 @@
 [식별·하단 선택 UI](Docs/ReadableUiDemo.md): 정착민 고정 색상/상시 이름, 종류별 오브젝트 모양, 저장 구역 바닥·외곽선, 하단 행동·운반·목적지·점유 정보를 제공한다. [공통 계약](Docs/Contracts/ReadableSettlementUI.md)과 [검증 기록](Docs/Verification/2026-11-15-readable-ui.md)을 따른다.
 
 정지 중 소집·취소·필터·지정 변경도 즉시 적용하고 저장 구역 생성 성공 후 도구를 해제한다. 관련 기능은 사용자 정상 확인을 받았다. [즉시 명령 계약](Docs/Contracts/ImmediatePlayerCommands.md)을 따른다.
+
+## UI 구현과 검증
+
+[UI 구현 기록](Docs/Plans/RimWorld-UI-Implementation.md)과 [사람 확인](Docs/Verification/2026-11-17-manual-acceptance.md)에서 건축가·대상별 명령·저장 메뉴·화면 배치와 수락 결과를 확인한다.

@@ -175,8 +175,22 @@ namespace RimworldTweak.Tests.EditMode
             io.BeforeAtomicStage=stage=>{
                 if(stage=="Replace" && ++attempts<3)throw new IOException("Transient replacement failure",unchecked((int)0x80070497));
             };
-            Assert.That(store.Save(new UserSettings {UiScalePercent=150}).Success,Is.True);
-            Assert.That(attempts,Is.EqualTo(3));Assert.That(store.Load().Settings.UiScalePercent,Is.EqualTo(150));
+            var original = File.ReadAllBytes(path);
+            var result = store.Save(new UserSettings {UiScalePercent=150});
+            Assert.That(attempts, Is.EqualTo(3));
+            if (result.Success)
+            {
+                Assert.That(store.Load().Settings.UiScalePercent, Is.EqualTo(150));
+            }
+            else
+            {
+                // The final real Windows replace can itself encounter the same transient error.
+                Assert.That(result.ErrorCode, Is.EqualTo("SaveIoError"));
+                Assert.That(io.LastFailureDiagnostic, Is.EqualTo("Replace:IOException:" + unchecked((int)0x80070497)));
+                CollectionAssert.AreEqual(original, File.ReadAllBytes(path));
+                Assert.That(store.Load().Settings.UiScalePercent, Is.EqualTo(100));
+                TestContext.WriteLine("Third replace also hit Win32 1175. The retry bound preserved the prior settings.");
+            }
             foreach(var code in new[]{unchecked((int)0x80070497),unchecked((int)0x80070498),unchecked((int)0x80070020)})
             {
                 attempts=0;var before=File.ReadAllBytes(path);

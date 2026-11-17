@@ -23,6 +23,7 @@ namespace RimworldTweak.Editor
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = new Color(0.035f, 0.05f, 0.07f);
             camera.orthographic = true;
+            camera.cullingMask = ~(1 << WorldMapView.MapLayer);
             camera.transform.position = new Vector3(0, 0, -10);
             var runner = new GameObject("Simulation").AddComponent<SimulationRunner>();
             var view = new GameObject("Settlement").AddComponent<SettlementView>();
@@ -30,6 +31,7 @@ namespace RimworldTweak.Editor
             var bootstrap = new GameObject("Demo").AddComponent<DemoBootstrap>();
             bootstrap.Runner = runner;
             bootstrap.View = view;
+            bootstrap.Visuals = AssetDatabase.LoadAssetAtPath<VisualCatalog>(VisualCatalog.DefaultAssetPath);
             EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene(), ScenePath);
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
             PlayerSettings.companyName = "RimworldTweak";

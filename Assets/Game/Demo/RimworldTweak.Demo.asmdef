@@ -1,4 +1,4 @@
 {
   "name": "RimworldTweak.Demo",
-  "references": ["RimworldTweak.Runtime", "RimworldTweak.Presentation", "RimworldTweak.Simulation", "Unity.ugui"]
+  "references": ["RimworldTweak.Runtime", "RimworldTweak.Presentation", "RimworldTweak.Simulation", "Unity.ugui", "Unity.InputSystem", "Unity.RenderPipelines.Universal.Runtime"]
 }

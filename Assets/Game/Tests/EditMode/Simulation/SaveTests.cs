@@ -136,12 +136,14 @@ namespace RimworldTweak.Tests.EditMode
                 if(unreachable)
                     for(var y=0;y<8;y++)captured.Data.World.BlockedTiles.Add(new PositionSaveData{X=4,Y=y});
                 else captured.Data.World.Colonists[0].Path[0]=new PositionSaveData{X=7,Y=7};
-                Assert.That(files.Save(path,captured.Data).Success,Is.True);
+                var legacyPath = Path.Combine(directory, unreachable ? "blocked-v1.json" : "rerouted-v1.json");
+                var legacySaved = files.Save(legacyPath, captured.Data);
+                Assert.That(legacySaved.Success, Is.True, legacySaved.ErrorCode);
                 var repository=new SaveRepository(directory);var slot=repository.SaveNew(unreachable?"경로 차단":"경로 재생성",captured.Data);
                 Assert.That(slot.Success,Is.True,slot.ErrorCode);
                 var slotPath=Path.Combine(directory,slot.Slot.SlotId+".save.json");
-                var legacyBytes=File.ReadAllBytes(path);var slotBytes=File.ReadAllBytes(slotPath);
-                var legacy=files.Load(path);var named=new SaveRepository(directory).Load(slot.Slot.SlotId);
+                var legacyBytes=File.ReadAllBytes(legacyPath);var slotBytes=File.ReadAllBytes(slotPath);
+                var legacy=files.Load(legacyPath);var named=new SaveRepository(directory).Load(slot.Slot.SlotId);
                 Assert.That(legacy.Success,Is.True,legacy.ErrorCode);Assert.That(named.Success,Is.True,named.ErrorCode);
                 foreach(var data in new[]{legacy.Data,named.Data})
                 {
@@ -157,7 +159,7 @@ namespace RimworldTweak.Tests.EditMode
                 }
                 Assert.That(pawn.Position,Is.EqualTo(position));Assert.That(pawn.MovementProgress,Is.EqualTo(progress));
                 Assert.That(original.World.Tick,Is.EqualTo(2));
-                CollectionAssert.AreEqual(legacyBytes,File.ReadAllBytes(path));CollectionAssert.AreEqual(slotBytes,File.ReadAllBytes(slotPath));
+                CollectionAssert.AreEqual(legacyBytes,File.ReadAllBytes(legacyPath));CollectionAssert.AreEqual(slotBytes,File.ReadAllBytes(slotPath));
             }
         }
 

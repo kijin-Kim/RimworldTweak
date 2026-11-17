@@ -1,6 +1,7 @@
 {
   "name": "RimworldTweak.Tests.PlayMode",
   "references": [
+    "RimworldTweak.Demo",
     "RimworldTweak.Runtime",
     "RimworldTweak.Presentation",
     "RimworldTweak.Simulation",
