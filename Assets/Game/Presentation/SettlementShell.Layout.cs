@@ -178,7 +178,20 @@ namespace RimworldTweak.Presentation
             Place(portrait, 7, 2, 48, 48);
             var baseImage = portrait.GetComponent<Image>();
             baseImage.raycastTarget = false;
-            if (visualCatalog.TryGet("pawn.front", out var fallback))
+            if (PawnAppearance.ForId(pawnId).TryResolve(visualCatalog, "front", out var layers))
+            {
+                baseImage.enabled = false;
+                foreach (var layer in layers)
+                {
+                    var part = Box(layer.Key, portrait, layer.Tint);
+                    Stretch(part);
+                    var image = part.GetComponent<Image>();
+                    image.sprite = layer.Sprite;
+                    image.preserveAspect = true;
+                    image.raycastTarget = false;
+                }
+            }
+            else if (visualCatalog.TryGet("pawn.front", out var fallback))
             {
                 baseImage.sprite = fallback.Sprite;
                 baseImage.color = WorldMapView.PawnColor(pawnId) * fallback.Tint;

@@ -42,6 +42,19 @@ namespace RimworldTweak.Tests.PlayMode
             var go = Own(new GameObject("World map test"));
             map = go.AddComponent<WorldMapView>(); map.Initialize(); map.Refresh(world, null, null, true);
         }
+        private UnityEngine.Rendering.SortingGroup PawnGroup(int id) =>
+            map.GetComponentsInChildren<UnityEngine.Rendering.SortingGroup>().Single(g => g.transform.parent.name == "pawn." + id);
+
+        private SpriteRenderer PawnBody(int id) =>
+            PawnGroup(id).GetComponentsInChildren<SpriteRenderer>().Single(r => r.enabled && r.sortingOrder == 0);
+
+        private static VisualDefinition PawnBodyDefinition(VisualCatalog catalog, int id, string direction)
+        {
+            if (PawnAppearance.ForId(id).TryResolve(catalog, direction, out var parts)) return parts[0];
+            Assert.That(catalog.TryGet("pawn." + direction, out var fallback), Is.True);
+            return fallback;
+        }
+
         private GameObject Own(GameObject go) { objects.Add(go); return go; }
         private Mouse MouseDevice()
         {
@@ -183,11 +196,13 @@ namespace RimworldTweak.Tests.PlayMode
                     var keys=new[]{"pawn.side","tree","building.bed"};
                     for(var i=0;i<identities.Length;i++)
                     {
-                        var renderer=map.GetComponentsInChildren<SpriteRenderer>().Single(r=>r.transform.parent.name==identities[i]);
+                        var renderer=i==0 ? PawnBody(1) : map.GetComponentsInChildren<SpriteRenderer>().Single(r=>r.transform.parent.name==identities[i]);
                         var anchor=new Vector2(.5f,.5f);
                         if(catalog!=null)
                         {
-                            Assert.That(catalog.TryGet(keys[i],out var definition),Is.True);
+                            VisualDefinition definition;
+                            if (i==0) definition=PawnBodyDefinition(catalog,1,"side");
+                            else Assert.That(catalog.TryGet(keys[i],out definition),Is.True);
                             Assert.That(renderer.sprite,Is.SameAs(definition.Sprite));anchor=definition.GroundAnchorNormalized;
                         }
                         var actualSprite=renderer.sprite;
@@ -300,7 +315,7 @@ namespace RimworldTweak.Tests.PlayMode
             var before=SaveBytes(session);
             map.Refresh(world,1,null,true); yield return null;
             var sprites=map.GetComponentsInChildren<SpriteRenderer>();
-            var pawn=sprites.Single(r=>r.transform.parent.name=="pawn.1");
+            var pawn=PawnGroup(1);
             foreach(var id in new[]{"bed.201","resource.101","gather.301"})
                 Assert.That(pawn.sortingOrder,Is.GreaterThan(sprites.Single(r=>r.transform.parent.name==id).sortingOrder),id);
             Assert.That(Quaternion.Angle(pawn.transform.localRotation,Quaternion.identity),Is.LessThan(.01f));
@@ -394,6 +409,72 @@ namespace RimworldTweak.Tests.PlayMode
             MouseState(new Vector2(-10, -10)); PumpInput(); yield return null; Assert.That(clicks, Is.Zero);
             MouseState(target, true); PumpInput(); yield return null; MouseState(target); PumpInput(); yield return null; Assert.That(clicks, Is.EqualTo(1), pointerEvidence);
         }
+
+
+
+
+
+        [UnityTest] public IEnumerator ModularPawnsKeepTheirLayersTogetherAcrossDirectionsAndCatalogChanges()
+        {
+            Setup();
+#if UNITY_EDITOR
+            var catalog = UnityEditor.AssetDatabase.LoadAssetAtPath<VisualCatalog>(VisualCatalog.DefaultAssetPath);
+            var partial = ScriptableObject.CreateInstance<VisualCatalog>();
+            try
+            {
+                world = WorldState.Create(new ScenarioDefinition(8, 8, Array.Empty<GridPosition>(),
+                    new[] { new ColonistSeed(1, P(3,3)), new ColonistSeed(2, P(3,3)) }, Array.Empty<ResourceSeed>()));
+                map.SetCatalog(catalog);
+                map.Refresh(world, 1, null, true);
+                var group = PawnGroup(1);
+                var appearance = PawnAppearance.ForId(1);
+                Assert.That(appearance.TryResolve(catalog, "front", out var front), Is.True);
+                SpriteRenderer[] VisibleParts() => group.GetComponentsInChildren<SpriteRenderer>()
+                    .Where(r => r.enabled).OrderBy(r => r.sortingOrder).ToArray();
+                var original = VisibleParts();
+                Assert.That(original.Select(r => r.sprite), Is.EqualTo(front.Select(v => v.Sprite)));
+                Assert.That(original.Select(r => r.color), Is.EqualTo(front.Select(v => v.Tint)));
+                Assert.That(original.Length, Is.EqualTo(5));
+                var secondGroup = PawnGroup(2);
+                Assert.That(secondGroup.sortingOrder, Is.EqualTo(group.sortingOrder));
+                Assert.That(secondGroup, Is.Not.SameAs(group));
+                Assert.That(secondGroup.GetComponentsInChildren<SpriteRenderer>().Count(r => r.enabled), Is.EqualTo(4));
+                Assert.That(original.All(r => r.gameObject.layer == WorldMapView.MapLayer), Is.True);
+                Assert.That(group.transform.parent.Find("Label").IsChildOf(group.transform), Is.False);
+                Assert.That(world.SetDrafted(1, true), Is.True);
+                Assert.That(world.QueueMove(1,P(2,3)), Is.True);
+                world.Step(1);
+                map.Refresh(world, 1, null, false);
+                Assert.That(appearance.TryResolve(catalog, "side", out var side), Is.True);
+                CollectionAssert.AreEqual(original, VisibleParts());
+                Assert.That(original[0].transform.parent.localScale.x, Is.LessThan(0));
+                for (var i = 0; i < original.Length; i++)
+                {
+                    Assert.That(original[i].sprite, Is.SameAs(side[i].Sprite));
+                    var sprite = original[i].sprite;
+                    var foot = (Vector2.Scale(side[i].GroundAnchorNormalized, sprite.rect.size) - sprite.pivot) / sprite.pixelsPerUnit;
+                    var actual = map.MapCamera.WorldToScreenPoint(original[i].transform.TransformPoint(foot));
+                    var expected = map.MapCamera.WorldToScreenPoint(WorldMapView.PawnPosition(world.Colonists[0]));
+                    Assert.That(Vector2.Distance(actual, expected), Is.LessThanOrEqualTo(1), side[i].Key);
+                }
+                partial.SetEntries(catalog.Entries.Where(v => v.Key != side[1].Key));
+                map.SetCatalog(partial);
+                map.Refresh(world, 1, null, true);
+                Assert.That(VisibleParts().Length, Is.EqualTo(1));
+                Assert.That(partial.TryGet("pawn.side", out var fallback), Is.True);
+                Assert.That(original[0].sprite, Is.SameAs(fallback.Sprite));
+                Assert.That(original[0].color, Is.EqualTo(fallback.Tint * WorldMapView.PawnColor(1)));
+                map.SetCatalog(catalog);
+                map.Refresh(world, 1, null, true);
+                CollectionAssert.AreEqual(original, VisibleParts());
+                Assert.That(VisibleParts().Select(r => r.sprite), Is.EqualTo(side.Select(v => v.Sprite)));
+            }
+            finally { UnityEngine.Object.Destroy(partial); }
+#endif
+            yield return null;
+        }
+
+
 
         [UnityTest] public IEnumerator EdgeCellsCanBeCenteredWithoutChangingZoom()
         {

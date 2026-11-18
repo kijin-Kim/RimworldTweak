@@ -19,7 +19,7 @@ using RimworldTweak.Simulation;
 namespace RimworldTweak.Demo
 {
     // A real Player probe. Commands are scripted: screenshots do not certify physical input.
-    public sealed class SettlementPlayerCheck : MonoBehaviour
+    public sealed partial class SettlementPlayerCheck : MonoBehaviour
     {
         private SettlementShell shell;
         private SimulationRunner runner;
@@ -261,8 +261,12 @@ namespace RimworldTweak.Demo
                     if(Hash()!=sampleHash)throw new InvalidOperationException("Sample capture changed game state.");
                     foreach(var identity in new[]{"pawn.1","bed.201","gather.301"})
                     {
-                        var sprite=shell.Map.GetComponentsInChildren<SpriteRenderer>().Single(r=>r.transform.parent.name==identity);
-                        var bounds=sprite.bounds;
+                        var mark = shell.Map.transform.Find("World map content/" + identity);
+                        if (mark == null) throw new InvalidOperationException("Missing sample " + identity);
+                        var parts = mark.GetComponentsInChildren<SpriteRenderer>().Where(r => r.enabled && r.sprite != null).ToArray();
+                        if (parts.Length == 0) throw new InvalidOperationException("Empty sample " + identity);
+                        var bounds = parts[0].bounds;
+                        for (var i = 1; i < parts.Length; i++) bounds.Encapsulate(parts[i].bounds);
                         foreach(var corner in new[]{bounds.min,bounds.max,new Vector3(bounds.min.x,bounds.max.y),new Vector3(bounds.max.x,bounds.min.y),bounds.center})
                         {
                             var screen=(Vector2)shell.Map.MapCamera.WorldToScreenPoint(corner);
@@ -295,6 +299,11 @@ namespace RimworldTweak.Demo
                     if (!label.text.EndsWith("…", StringComparison.Ordinal) || !fullName.text.StartsWith("정착민 " + longNameId+"\n", StringComparison.Ordinal))
                         throw new InvalidOperationException("Long portrait name did not truncate and disclose the full value.");
                 })) yield break;
+            }
+            else if(mode=="settlement-art")
+            {
+                yield return CaptureSettlementArt();
+                if(finished)yield break;
             }
             else if(mode=="save")
             {

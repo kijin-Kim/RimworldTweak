@@ -4,7 +4,7 @@
 
 먼저 [원본 사진과 화면별 분석](../Reviews/RimWorld-UI-Reference.md)의 공식 화면 A를 열어 상단·좌하단·우하단을 비교한다. 기존 조작, 저장과 접근성의 판정에는 [기능별 수락 기준](SaveLoad-UX-Art-Acceptance.md)을 함께 적용한다. 기존 기능을 실행하는 대상은 [DemoBootstrap](../../Assets/Game/Demo/DemoBootstrap.cs)이 만드는 `SettlementShell`이다. `SettlementView`는 과거 데모 및 회귀 경로다.
 
-최신 적용은 [모던 HUD 대조 검토](../Reviews/Modern-Hud-RimWorld-Audit.md)를 따른다. 아래 표의 색과 건축가 크기는 당시 초기 기준이며, 최신 건축가는 현재 도구에 맞춘 작은 영역과 별도 활성 도구 표시를 사용한다. 조리 계획서는 새 행에 편집 초점을 옮기고 스크롤 중에도 선택한 계획서 이름을 보여준다.
+최신 적용은 [모던 HUD 대조 검토](../Reviews/Modern-Hud-RimWorld-Audit.md)와 [모던 다크 HUD 계획](Modern-Hud-Pawn-Eyes.md)을 따른다. 아래 표의 색과 건축가 크기는 당시 초기 기준이며, 최신 건축가는 현재 도구에 맞춘 작은 영역과 별도 활성 도구 표시를 사용한다. 조리 계획서는 새 행에 편집 초점을 옮기고 스크롤 중에도 선택한 계획서 이름을 보여준다.
 
 ### 1. 핵심 설계
 

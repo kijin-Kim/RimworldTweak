@@ -8,13 +8,14 @@ using UnityEngine.Tilemaps;
 namespace RimworldTweak.Presentation
 {
     /// <summary>Read-only projection of a simulation into world-space sprites. Never owns game rules.</summary>
-    public sealed class WorldMapView : MonoBehaviour
+    public sealed partial class WorldMapView : MonoBehaviour
     {
         public const int MapLayer = 30;
         private sealed class Mark
         {
             public GameObject Root;
             public SpriteRenderer Sprite;
+            public PawnVisual Pawn;
             public TextMesh Label;
             public TextMesh Shadow;
         }
@@ -50,6 +51,7 @@ namespace RimworldTweak.Presentation
         public void Initialize(VisualCatalog visuals = null)
         {
             catalog = visuals;
+            foreach (var mark in marks.Values) mark.Pawn?.Invalidate();
             if (MapCamera != null) return;
             content = new GameObject("World map content").transform;
             content.SetParent(transform, false);
@@ -206,11 +208,7 @@ namespace RimworldTweak.Presentation
                 var sleeping = inBed || pawn.LifeActivity == LifeActivity.SleepingOnFloor;
                 if (inBed) direction = Vector2.down;
                 var label = "정착민 " + pawn.Id + (pawn.IsDrafted ? " [R]" : sleeping ? " Zz" : pawn.IsWorking ? " · 작업" : "");
-                var mark = Draw("pawn." + pawn.Id, VisualCatalog.PawnKey(direction), position + (inBed ? new Vector2(0, .04f) : Vector2.zero), PawnColor(pawn.Id), Sort(position.y, 40), label,
-                    inBed ? new Vector2(.72f, .72f) : (Vector2?)null);
-                mark.Sprite.flipX = direction.x < 0;
-                mark.Sprite.transform.localRotation = Quaternion.Euler(0, 0, sleeping && !inBed ? 75 : 0);
-                // Movement uses simulation progress only, so pause and low frame rates cannot advance the pawn.
+                DrawPawn(pawn, position, direction, inBed, sleeping, label);
                 if (pawn.CargoAmount > 0)
                     Draw("cargo." + pawn.Id, VisualCatalog.ResourceKey(pawn.CargoKind), position + new Vector2(.28f, .08f), Color.white,
                         Sort(position.y, 45), pawn.CargoAmount.ToString(), new Vector2(.28f, .28f));
@@ -402,12 +400,14 @@ namespace RimworldTweak.Presentation
             ground.ClearAllTiles();
             for (var y = 0; y < displayedWorld.Height; y++)
                 for (var x = 0; x < displayedWorld.Width; x++) ground.SetTile(new Vector3Int(x, y, 0), soilTile);
-            foreach (var p in displayedWorld.BlockedTiles) ground.SetTile(new Vector3Int(p.X, p.Y, 0), blockedTile);
+            var stoveCells = displayedWorld.Buildings.Where(b => b.Exists && b.Kind == BuildingKind.Stove).Select(b => b.Position).ToHashSet();
+            foreach (var p in displayedWorld.BlockedTiles)
+                if (!stoveCells.Contains(p)) ground.SetTile(new Vector3Int(p.X, p.Y, 0), blockedTile);
             terrainRevision = displayedWorld.MapRevision;
         }
         private bool HasVisual(string key) => catalog != null && catalog.TryGet(key, out var visual) && visual.Sprite != null;
         private Sprite SpriteFor(string key) => catalog != null && catalog.TryGet(key, out var visual) && visual.Sprite != null ? visual.Sprite : fallback;
-        private Mark Draw(string identity, string key, Vector2 groundPoint, Color tint, int order, string caption, Vector2? sizeOverride = null)
+        private Mark GetMark(string identity)
         {
             if (!marks.TryGetValue(identity, out var mark))
             {
@@ -435,6 +435,12 @@ namespace RimworldTweak.Presentation
                 marks.Add(identity, mark);
             }
             mark.Root.SetActive(true); VisibleEntityCount++;
+            return mark;
+        }
+
+        private Mark Draw(string identity, string key, Vector2 groundPoint, Color tint, int order, string caption, Vector2? sizeOverride = null)
+        {
+            var mark = GetMark(identity);
             var sprite = SpriteFor(key);
             var size = sizeOverride ?? new Vector2(.85f, .85f);
             var anchor = new Vector2(.5f, .5f);
@@ -450,17 +456,22 @@ namespace RimworldTweak.Presentation
             mark.Sprite.transform.localScale = new Vector3(size.x / Math.Max(.001f, sprite.bounds.size.x), size.y / Math.Max(.001f, sprite.bounds.size.y), 1);
             var pivot = new Vector2(sprite.pivot.x / sprite.rect.width, sprite.pivot.y / sprite.rect.height);
             mark.Sprite.transform.localPosition = Vector2.Scale(pivot - anchor, size);
+            SetMarkLabel(mark, caption, Color.white, size.y * (1 - anchor.y));
+            return mark;
+        }
+
+        private void SetMarkLabel(Mark mark, string caption, Color color, float top)
+        {
             mark.Label.gameObject.SetActive(!string.IsNullOrEmpty(caption));
             mark.Label.text = caption ?? string.Empty;
-            mark.Label.color = identity.StartsWith("pawn.", StringComparison.Ordinal) ? tint : Color.white;
-            mark.Label.transform.localPosition = new Vector3(0, size.y * (1 - anchor.y) + .04f, 0);
+            mark.Label.color = color;
+            mark.Label.transform.localPosition = new Vector3(0, top + .04f, 0);
             mark.Label.characterSize = 16f * 2f * MapCamera.orthographicSize / Math.Max(1,MapCamera.pixelHeight) * 10f / mark.Label.fontSize;
             mark.Label.transform.localScale = Vector3.one;
             mark.Shadow.text = mark.Label.text;
             mark.Shadow.characterSize = mark.Label.characterSize;
             var pixel = 2f * MapCamera.orthographicSize / Math.Max(1, MapCamera.pixelHeight);
             mark.Shadow.transform.localPosition = new Vector3(pixel, -pixel);
-            return mark;
         }
         private static bool HasBuilding(WorldState world, int id) { foreach (var b in world.Buildings) if (b.Id == id && b.Exists) return true; return false; }
         private static int Sort(float y, int offset) => Mathf.Clamp(10000 - Mathf.RoundToInt(y * 100) + offset, -20000, 30000);

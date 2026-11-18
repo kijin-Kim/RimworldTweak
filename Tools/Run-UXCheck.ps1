@@ -1,7 +1,7 @@
 #requires -Version 7.0
 [CmdletBinding()]
 param(
-    [ValidateSet('Capture','Restart')][string] $Action='Capture',
+    [ValidateSet('Capture','Restart','SettlementArt')][string] $Action='Capture',
     [int] $Width=1920,
     [int] $Height=1080,
     [ValidateSet(100,125,150)][int] $Scale=100
@@ -18,7 +18,11 @@ try {
     $run=Join-Path $results ([DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfffZ')+'-ux-'+$Action.ToLowerInvariant())
     [IO.Directory]::CreateDirectory($run)|Out-Null
     $storage=Join-Path $run 'storage'
-    $modes=if($Action -eq 'Restart'){@('save','load')}else{@('capture')}
+    $modes=switch($Action){
+        'Restart' {@('save','load')}
+        'SettlementArt' {'settlement-art'}
+        default {'capture'}
+    }
     $records=@()
     $renderFailures=@()
     $layoutFailures=@()
@@ -39,16 +43,24 @@ try {
         $result=Get-Content $resultPath -Raw|ConvertFrom-Json
         if($process.ExitCode -ne 0 -or !$result.passed){throw "Player failed: $($result.error)"}
         if($result.width -ne $Width -or $result.height -ne $Height -or $result.scale -ne $Scale){throw 'Actual resolution/scale differs from requested configuration.'}
-        $images=@(Get-ChildItem -LiteralPath $output -Filter '*.png')
+        $diagnostic=$mode -eq 'settlement-art'
+        $imageFilter=if($diagnostic){'*-offscreen.png'}else{'*.png'}
+        $images=@(Get-ChildItem -LiteralPath $output -Filter $imageFilter)
         if($images.Count -eq 0){throw 'No screenshot evidence.'}
         foreach($png in $images){
             $render=Get-RenderVerdict -Path $png.FullName -ExpectedWidth $Width -ExpectedHeight $Height
             if(!$render.Passed){$renderFailures+="Blank or wrong-sized rendered image: $($png.FullName) ($($render.SampledColors) colors)"}
         }
         $layouts=@(Get-ChildItem -LiteralPath $output -Filter '*-layout.json')
-        $requiredScreens=if($mode -eq 'capture'){@('default','sample-five','stove','work','building','save','confirmation','error')}else{@($(if($mode -eq 'save'){'saved'}else{'restored'}))}
+        $requiredScreens=switch($mode){
+            'capture' {@('default','sample-five','stove','work','building','save','confirmation','error')}
+            'settlement-art' {@('settlement-default','settlement-details','settlement-distant','settlement-cooking','settlement-harvest')}
+            'save' {'saved'}
+            'load' {'restored'}
+        }
         foreach($screen in $requiredScreens){
             if(!(Test-Path (Join-Path $output ($screen+'-layout.json')))){$layoutFailures+="Missing layout report: $screen"}
+            if($diagnostic -and !(Test-Path (Join-Path $output ($screen+'-offscreen.png')))){$renderFailures+="Missing diagnostic render: $screen"}
         }
         foreach($layoutFile in $layouts){
             $layout=Get-Content $layoutFile.FullName -Raw|ConvertFrom-Json

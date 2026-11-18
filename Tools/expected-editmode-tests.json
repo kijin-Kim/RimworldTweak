@@ -192,5 +192,7 @@
   "RimworldTweak.Tests.EditMode.CookingTests.CookDeliversProductToSpecifiedStorageWithoutHaulPriority",
   "RimworldTweak.Tests.EditMode.SaveRoundTripTests.MultipleCookingBillsAndCookDeliveryResumeAfterFileRoundTrip",
   "RimworldTweak.Tests.EditMode.CookingTests.PausingReorderingAndDeletingPartialBillPreservesMaterials",
-  "RimworldTweak.Tests.EditMode.CookingTests.DraftedAssignedWorkerAllowsNextBillToRun"
+  "RimworldTweak.Tests.EditMode.CookingTests.DraftedAssignedWorkerAllowsNextBillToRun",
+  "RimworldTweak.Tests.EditMode.VisualCatalogTests.MissingRequiredLayerFallsBackAsAWholeAndShirtOnlyNeedsNoJacket",
+  "RimworldTweak.Tests.EditMode.VisualCatalogTests.AllPawnCombinationsUseAlignedFullCanvasSpritesAndStableIds"
 ]

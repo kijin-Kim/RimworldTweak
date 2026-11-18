@@ -19,14 +19,16 @@ MonoBehaviour:
     groundAnchorNormalized: {x: 0.5, y: 0.5}
     tint: {r: 1, g: 1, b: 1, a: 1}
     isFinalArt: 0
-    source: 'Built-in imagegen original sample 2026-11-17: soil'
+    source: 'Original settlement art 2026-11-18, source exec-7b143ff8-3a1b-4000-84d4-93afd9ce03e4.png:
+      soil'
   - key: tree
     sprite: {fileID: 21300000, guid: 4dd1567620d4ce046a1e630861ae81e8, type: 3}
     worldSize: {x: 1.32, y: 1.32}
     groundAnchorNormalized: {x: 0.5, y: 0.10526316}
     tint: {r: 1, g: 1, b: 1, a: 1}
     isFinalArt: 0
-    source: 'Built-in imagegen original sample 2026-11-17: tree'
+    source: 'Original settlement art 2026-11-18, source exec-ed04d0bb-82b8-4de7-afec-1423983e73e7.png:
+      tree'
   - key: pawn.front
     sprite: {fileID: 21300000, guid: 4260dccb1bcfb7b45b7b3a09a2866aa7, type: 3}
     worldSize: {x: 0.95, y: 0.95}
@@ -48,13 +50,303 @@ MonoBehaviour:
     tint: {r: 1, g: 1, b: 1, a: 1}
     isFinalArt: 0
     source: 'Built-in imagegen original sample 2026-11-17: pawn-side'
+  - key: pawn.face.front
+    sprite: {fileID: 21300000, guid: dd06fe9ffa7ef97429d0d623537d4736, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.face.front'
+  - key: pawn.hair.short.front
+    sprite: {fileID: 21300000, guid: 374c6d4c5a8754349a2a073b097838fb, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.hair.short.front'
+  - key: pawn.hair.bob.front
+    sprite: {fileID: 21300000, guid: e00d7641e0b468043958fcfcaec022c4, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.hair.bob.front'
+  - key: pawn.hair.bun.front
+    sprite: {fileID: 21300000, guid: ed5a6b07190306d4fa8def61494e60d2, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.hair.bun.front'
+  - key: pawn.body.slim.front
+    sprite: {fileID: 21300000, guid: 441679eb8b774e040b3d8547d2bb3634, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.body.slim.front'
+  - key: pawn.shirt.slim.front
+    sprite: {fileID: 21300000, guid: 6b0574045635548449f6a431bf62d88c, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.shirt.slim.front'
+  - key: pawn.jacket.slim.front
+    sprite: {fileID: 21300000, guid: f0ccec913749a7e4585e7f572d679b35, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.jacket.slim.front'
+  - key: pawn.body.broad.front
+    sprite: {fileID: 21300000, guid: c06eec3334daa1a4c96c693aba54022c, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.body.broad.front'
+  - key: pawn.shirt.broad.front
+    sprite: {fileID: 21300000, guid: 796aab4c909f33b4885b846bf8b035fd, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.shirt.broad.front'
+  - key: pawn.jacket.broad.front
+    sprite: {fileID: 21300000, guid: 4e4acc6fa74afec4eb3d5b1c5495507a, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.jacket.broad.front'
+  - key: pawn.body.round.front
+    sprite: {fileID: 21300000, guid: b1d6c220ed8632c48841d9d1dd623f8c, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.body.round.front'
+  - key: pawn.shirt.round.front
+    sprite: {fileID: 21300000, guid: 49c996c2af1d3134ab588d43aaf0ba37, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.shirt.round.front'
+  - key: pawn.jacket.round.front
+    sprite: {fileID: 21300000, guid: 17ffe166b70cf8849aba640b652b32d2, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.jacket.round.front'
+  - key: pawn.face.side
+    sprite: {fileID: 21300000, guid: bde10994e3d8d1447b8f1d2eb0b942d8, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.face.side'
+  - key: pawn.hair.short.side
+    sprite: {fileID: 21300000, guid: c9651b6e0dab0424db1076744581bc41, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.hair.short.side'
+  - key: pawn.hair.bob.side
+    sprite: {fileID: 21300000, guid: f0b56acab85da2943919c0e56f8b9d92, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.hair.bob.side'
+  - key: pawn.hair.bun.side
+    sprite: {fileID: 21300000, guid: bada2f750402b634ca49ec803383b9c1, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.hair.bun.side'
+  - key: pawn.body.slim.side
+    sprite: {fileID: 21300000, guid: 7e88044548936d1489dbc71744ed4907, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.body.slim.side'
+  - key: pawn.shirt.slim.side
+    sprite: {fileID: 21300000, guid: 5eb5100ab25a90f42b71ff66ca4a7adf, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.shirt.slim.side'
+  - key: pawn.jacket.slim.side
+    sprite: {fileID: 21300000, guid: 3fd0605ed22e8394cb255803685cc190, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.jacket.slim.side'
+  - key: pawn.body.broad.side
+    sprite: {fileID: 21300000, guid: c60e237b686abf047bab5e1e301bdf3e, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.body.broad.side'
+  - key: pawn.shirt.broad.side
+    sprite: {fileID: 21300000, guid: a7ca749aaf4fdd34eac80212c0180da5, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.shirt.broad.side'
+  - key: pawn.jacket.broad.side
+    sprite: {fileID: 21300000, guid: d737202cc166ef244976d888465cdf56, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.jacket.broad.side'
+  - key: pawn.body.round.side
+    sprite: {fileID: 21300000, guid: 4ba2bc5b8a87a754c8ff9a920a014ed5, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.body.round.side'
+  - key: pawn.shirt.round.side
+    sprite: {fileID: 21300000, guid: ec8d021a906f76947a04a8cdd975c612, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.shirt.round.side'
+  - key: pawn.jacket.round.side
+    sprite: {fileID: 21300000, guid: fff3206500459854ebf4b01ac0bf25b1, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.jacket.round.side'
+  - key: pawn.face.back
+    sprite: {fileID: 21300000, guid: 037579570d9c6474fb0c79d4ea228458, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.face.back'
+  - key: pawn.hair.short.back
+    sprite: {fileID: 21300000, guid: 786ccf9bed612f042a7a4ff2ea7317e0, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.hair.short.back'
+  - key: pawn.hair.bob.back
+    sprite: {fileID: 21300000, guid: f19baae5ad1aace4c955b3c06ce0ed85, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.hair.bob.back'
+  - key: pawn.hair.bun.back
+    sprite: {fileID: 21300000, guid: bb32b608a9cdff745a9bd531f2116ec5, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.hair.bun.back'
+  - key: pawn.body.slim.back
+    sprite: {fileID: 21300000, guid: 7e99b07f00b56d64bab329a94ce5d9a5, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.body.slim.back'
+  - key: pawn.shirt.slim.back
+    sprite: {fileID: 21300000, guid: a9426f40a26abca4a96f2964335fe9b0, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.shirt.slim.back'
+  - key: pawn.jacket.slim.back
+    sprite: {fileID: 21300000, guid: 98d07d506627dbe44b40b408d0bc510c, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.jacket.slim.back'
+  - key: pawn.body.broad.back
+    sprite: {fileID: 21300000, guid: 184c66eea1cfdb44194f842a5d23fcd8, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.body.broad.back'
+  - key: pawn.shirt.broad.back
+    sprite: {fileID: 21300000, guid: 849e3f17e1fb40645aea55c60f9eb430, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.shirt.broad.back'
+  - key: pawn.jacket.broad.back
+    sprite: {fileID: 21300000, guid: e6d3620d60420964582a1afeae1a5f37, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.jacket.broad.back'
+  - key: pawn.body.round.back
+    sprite: {fileID: 21300000, guid: 5712d13254943c941a2b66bfea4f9a3b, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.body.round.back'
+  - key: pawn.shirt.round.back
+    sprite: {fileID: 21300000, guid: 9ad5bf567cedf0d478892d19b172fd8f, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.shirt.round.back'
+  - key: pawn.jacket.round.back
+    sprite: {fileID: 21300000, guid: 3a0a3e69c7e4c9544b481416391ade04, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.05}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art, aligned pawn layer: PawnLayers/pawn.jacket.round.back'
+  - key: preview.rifle
+    sprite: {fileID: 21300000, guid: 31757384d13628845b10b5fb377069a5, type: 3}
+    worldSize: {x: 0.95, y: 0.95}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art 2026-11-18, source exec-ed04d0bb-82b8-4de7-afec-1423983e73e7.png:
+      ground-rifle'
+  - key: preview.knife
+    sprite: {fileID: 21300000, guid: 0b8ba9010b198484d9c318c999ab7c0a, type: 3}
+    worldSize: {x: 0.65, y: 0.65}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 0
+    source: 'Original settlement art 2026-11-18, source exec-ed04d0bb-82b8-4de7-afec-1423983e73e7.png:
+      ground-knife'
   - key: building.bed
     sprite: {fileID: 21300000, guid: c2a76805cf7d48e44a3bff72f8ed5a80, type: 3}
     worldSize: {x: 1.08, y: 1.08}
     groundAnchorNormalized: {x: 0.5, y: 0.1}
     tint: {r: 1, g: 1, b: 1, a: 1}
     isFinalArt: 0
-    source: 'Built-in imagegen original sample 2026-11-17: bed'
+    source: 'Original settlement art 2026-11-18, source exec-ed04d0bb-82b8-4de7-afec-1423983e73e7.png:
+      bed'
   - key: building.wall.0
     sprite: {fileID: 21300000, guid: 744094f11f79f2046b7c9cda5bd6db7d, type: 3}
     worldSize: {x: 1, y: 1}
@@ -229,56 +521,64 @@ MonoBehaviour:
     groundAnchorNormalized: {x: 0.5, y: 0.5}
     tint: {r: 1, g: 1, b: 1, a: 1}
     isFinalArt: 0
-    source: 'Built-in imagegen original sample 2026-11-17: stove'
+    source: 'Original settlement art 2026-11-18, source exec-7626dd5a-912b-4800-8031-c0bc20a5bee5.png:
+      stove'
   - key: plant.gather
     sprite: {fileID: 21300000, guid: edcfd8b9744991a40b3a887acdf01577, type: 3}
     worldSize: {x: 1, y: 1}
     groundAnchorNormalized: {x: 0.5, y: 0.18}
     tint: {r: 1, g: 1, b: 1, a: 1}
     isFinalArt: 0
-    source: 'Built-in imagegen original sample 2026-11-17: gather'
+    source: 'Original settlement art 2026-11-18, source exec-7626dd5a-912b-4800-8031-c0bc20a5bee5.png:
+      gather'
   - key: crop.young
     sprite: {fileID: 21300000, guid: 852b69d17b44ac84892db475c5f23e91, type: 3}
     worldSize: {x: 1, y: 1}
     groundAnchorNormalized: {x: 0.5, y: 0.1396}
     tint: {r: 1, g: 1, b: 1, a: 1}
     isFinalArt: 0
-    source: 'Built-in imagegen original sample 2026-11-17: crop-young'
+    source: 'Original settlement art 2026-11-18, source exec-7626dd5a-912b-4800-8031-c0bc20a5bee5.png:
+      crop-young'
   - key: crop.growing
     sprite: {fileID: 21300000, guid: eaeda18096cc67f44a456723b94bfcd1, type: 3}
     worldSize: {x: 1, y: 1}
     groundAnchorNormalized: {x: 0.5, y: 0.1619}
     tint: {r: 1, g: 1, b: 1, a: 1}
     isFinalArt: 0
-    source: 'Built-in imagegen original sample 2026-11-17: crop-growing'
+    source: 'Original settlement art 2026-11-18, source exec-7626dd5a-912b-4800-8031-c0bc20a5bee5.png:
+      crop-growing'
   - key: crop.mature
     sprite: {fileID: 21300000, guid: 34fbc6d1a33cdb44294ff169c58634db, type: 3}
     worldSize: {x: 1, y: 1}
     groundAnchorNormalized: {x: 0.5, y: 0.1348}
     tint: {r: 1, g: 1, b: 1, a: 1}
     isFinalArt: 0
-    source: 'Built-in imagegen original sample 2026-11-17: crop-mature'
+    source: 'Original settlement art 2026-11-18, source exec-7626dd5a-912b-4800-8031-c0bc20a5bee5.png:
+      crop-mature'
   - key: item.wood
     sprite: {fileID: 21300000, guid: cb479925b99a9a042bea0b5cb9577790, type: 3}
     worldSize: {x: 0.9, y: 0.9}
     groundAnchorNormalized: {x: 0.5, y: 0.5}
     tint: {r: 1, g: 1, b: 1, a: 1}
     isFinalArt: 0
-    source: 'Built-in imagegen original sample 2026-11-17: wood'
+    source: 'Original settlement art 2026-11-18, source exec-7626dd5a-912b-4800-8031-c0bc20a5bee5.png:
+      wood'
   - key: item.ingredients
     sprite: {fileID: 21300000, guid: cb1054c7d8690614e8e2c34c7aec0f97, type: 3}
     worldSize: {x: 0.9, y: 0.9}
     groundAnchorNormalized: {x: 0.5, y: 0.5}
     tint: {r: 1, g: 1, b: 1, a: 1}
     isFinalArt: 0
-    source: 'Built-in imagegen original sample 2026-11-17: ingredients'
+    source: 'Original settlement art 2026-11-18, source exec-7626dd5a-912b-4800-8031-c0bc20a5bee5.png:
+      ingredients'
   - key: item.meal
     sprite: {fileID: 21300000, guid: ce112074223b089498adca105159617d, type: 3}
     worldSize: {x: 0.9, y: 0.9}
     groundAnchorNormalized: {x: 0.5, y: 0.5}
     tint: {r: 1, g: 1, b: 1, a: 1}
     isFinalArt: 0
-    source: 'Built-in imagegen original sample 2026-11-17: meal'
+    source: 'Original settlement art 2026-11-18, source exec-7626dd5a-912b-4800-8031-c0bc20a5bee5.png:
+      meal'
   - key: icon.draft
     sprite: {fileID: 21300000, guid: 432609cf3eec2d14cac834fb4ecfa162, type: 3}
     worldSize: {x: 1, y: 1}

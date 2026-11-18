@@ -113,5 +113,6 @@
   "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.RectangleAndAdditiveSelectionDraftAndMoveAllSelectedPawns",
   "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.ObjectContextMenuChangesDesignationAndEscapeKeepsSelection",
   "RimworldTweak.Tests.PlayMode.WorldMapViewTests.PageZoomAndHeldArrowRespectModalSuppression",
-  "RimworldTweak.Tests.PlayMode.WorldMapViewTests.EdgeCellsCanBeCenteredWithoutChangingZoom"
+  "RimworldTweak.Tests.PlayMode.WorldMapViewTests.EdgeCellsCanBeCenteredWithoutChangingZoom",
+  "RimworldTweak.Tests.PlayMode.WorldMapViewTests.ModularPawnsKeepTheirLayersTogetherAcrossDirectionsAndCatalogChanges"
 ]

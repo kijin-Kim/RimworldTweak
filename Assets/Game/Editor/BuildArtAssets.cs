@@ -23,12 +23,17 @@ namespace RimworldTweak.Editor
             Directory.CreateDirectory(Structural);
             Directory.CreateDirectory("Assets/Game/Content/Visuals");
             var entries = new List<VisualDefinition>();
-            AddGenerated(entries, "terrain.soil", "soil", Vector2.one, new Vector2(.5f,.5f));
-            AddGenerated(entries, "tree", "tree", new Vector2(1.32f,1.32f), new Vector2(.5f,132f/1254f));
+            const string propSource = "Original settlement art 2026-11-18, source exec-ed04d0bb-82b8-4de7-afec-1423983e73e7.png";
+            const string soilSource = "Original settlement art 2026-11-18, source exec-7b143ff8-3a1b-4000-84d4-93afd9ce03e4.png";
+            AddGenerated(entries, "terrain.soil", "soil", Vector2.one, new Vector2(.5f,.5f), soilSource);
+            AddGenerated(entries, "tree", "tree", new Vector2(1.32f,1.32f), new Vector2(.5f,132f/1254f), propSource);
             AddGenerated(entries, "pawn.front", "pawn-front", new Vector2(.95f,.95f), new Vector2(.5f,.05f));
             AddGenerated(entries, "pawn.back", "pawn-back", new Vector2(.95f,.95f), new Vector2(.5f,.05f));
             AddGenerated(entries, "pawn.side", "pawn-side", new Vector2(.95f,.95f), new Vector2(.5f,.05f));
-            AddGenerated(entries, "building.bed", "bed", new Vector2(1.08f,1.08f), new Vector2(.5f,.10f));
+            AddPawnLayers(entries);
+            AddGenerated(entries, "preview.rifle", "ground-rifle", new Vector2(.95f,.95f), new Vector2(.5f,.5f), propSource);
+            AddGenerated(entries, "preview.knife", "ground-knife", new Vector2(.65f,.65f), new Vector2(.5f,.5f), propSource);
+            AddGenerated(entries, "building.bed", "bed", new Vector2(1.08f,1.08f), new Vector2(.5f,.10f), propSource);
 
             for (var mask = 0; mask < 16; mask++)
             {
@@ -44,14 +49,15 @@ namespace RimworldTweak.Editor
             AddStructural(entries,"overlay.growing","growing",c => { Fill(c,0,0,128,128,new Color(.45f,.65f,.25f,.17f)); Border(c,0,0,128,128,3,new Color(.6f,.8f,.35f,.6f)); },true);
             AddStructural(entries,"overlay.blueprint","blueprint",c => { Fill(c,8,8,112,112,new Color(.3f,.7f,1,.18f)); Border(c,8,8,112,112,4,new Color(.3f,.7f,1,.85f)); },true);
             AddStructural(entries,"building.door","door",c => { Fill(c,20,4,88,120,Ink); Fill(c,27,10,74,108,Wood); Fill(c,60,10,4,108,Ink); Disk(c,87,64,5,new Color(.9f,.75f,.4f)); },true);
-            AddGenerated(entries, "building.stove", "stove", new Vector2(1.08f,1.08f), new Vector2(.5f,.5f));
-            AddGenerated(entries, "plant.gather", "gather", new Vector2(1f,1f), new Vector2(.5f,.18f));
-            AddGenerated(entries, "crop.young", "crop-young", Vector2.one, new Vector2(.5f,.1396f));
-            AddGenerated(entries, "crop.growing", "crop-growing", Vector2.one, new Vector2(.5f,.1619f));
-            AddGenerated(entries, "crop.mature", "crop-mature", Vector2.one, new Vector2(.5f,.1348f));
-            AddGenerated(entries, "item.wood", "wood", new Vector2(.9f,.9f), new Vector2(.5f,.5f));
-            AddGenerated(entries, "item.ingredients", "ingredients", new Vector2(.9f,.9f), new Vector2(.5f,.5f));
-            AddGenerated(entries, "item.meal", "meal", new Vector2(.9f,.9f), new Vector2(.5f,.5f));
+            const string productionSource = "Original settlement art 2026-11-18, source exec-7626dd5a-912b-4800-8031-c0bc20a5bee5.png";
+            AddGenerated(entries, "building.stove", "stove", new Vector2(1.08f,1.08f), new Vector2(.5f,.5f), productionSource);
+            AddGenerated(entries, "plant.gather", "gather", new Vector2(1f,1f), new Vector2(.5f,.18f), productionSource);
+            AddGenerated(entries, "crop.young", "crop-young", Vector2.one, new Vector2(.5f,.1396f), productionSource);
+            AddGenerated(entries, "crop.growing", "crop-growing", Vector2.one, new Vector2(.5f,.1619f), productionSource);
+            AddGenerated(entries, "crop.mature", "crop-mature", Vector2.one, new Vector2(.5f,.1348f), productionSource);
+            AddGenerated(entries, "item.wood", "wood", new Vector2(.9f,.9f), new Vector2(.5f,.5f), productionSource);
+            AddGenerated(entries, "item.ingredients", "ingredients", new Vector2(.9f,.9f), new Vector2(.5f,.5f), productionSource);
+            AddGenerated(entries, "item.meal", "meal", new Vector2(.9f,.9f), new Vector2(.5f,.5f), productionSource);
             AddStructural(entries,"icon.draft","draft",c => { Line(c,30,25,98,104,8,Ink); Line(c,30,104,98,25,8,Ink); Line(c,30,25,98,104,4,new Color(.96f,.75f,.3f)); Line(c,30,104,98,25,4,new Color(.96f,.75f,.3f)); },true);
             AddStructural(entries,"icon.sleep","sleep",c => { Line(c,28,90,95,90,7,Teal); Line(c,95,90,28,35,7,Teal); Line(c,28,35,95,35,7,Teal); },true);
             AddStructural(entries,"icon.work","work",c => { Line(c,38,23,83,89,9,Wood); Fill(c,51,77,48,25,Ink); Fill(c,55,81,40,17,new Color(.75f,.77f,.70f)); },true);
@@ -64,12 +70,32 @@ namespace RimworldTweak.Editor
             Debug.Log("Visual catalog built: " + entries.Count + " entries. Generated samples await actual in-game visual acceptance.");
         }
 
-        private static void AddGenerated(List<VisualDefinition> entries,string key,string file,Vector2 size,Vector2 anchor)
+        private static void AddPawnLayers(List<VisualDefinition> entries)
+        {
+            var size = new Vector2(.95f, .95f);
+            var foot = new Vector2(.5f, .05f);
+            void Add(string key) => AddGenerated(entries, key, "PawnLayers/" + key, size, foot, "Original settlement art, aligned pawn layer");
+            foreach (var direction in new[] { "front", "side", "back" })
+            {
+                Add("pawn.face." + direction);
+                foreach (var hair in new[] { "short", "bob", "bun" })
+                    Add($"pawn.hair.{hair}.{direction}");
+                foreach (var body in new[] { "slim", "broad", "round" })
+                {
+                    Add($"pawn.body.{body}.{direction}");
+                    Add($"pawn.shirt.{body}.{direction}");
+                    Add($"pawn.jacket.{body}.{direction}");
+                }
+            }
+        }
+
+        private static void AddGenerated(List<VisualDefinition> entries,string key,string file,Vector2 size,Vector2 anchor,
+            string source = "Built-in imagegen original sample 2026-11-17")
         {
             var path=Generated+file+".png";
             if (!File.Exists(path)) throw new FileNotFoundException("Generated sample must exist before art build.",path);
             var sprite=Import(path,false);
-            entries.Add(new VisualDefinition(key,sprite,size,anchor,Color.white,false,"Built-in imagegen original sample 2026-11-17: "+file));
+            entries.Add(new VisualDefinition(key,sprite,size,anchor,Color.white,false,source+": "+file));
         }
 
         private static void AddStructural(List<VisualDefinition> entries,string key,string file,Action<Color[]> draw,bool final)
