@@ -27,7 +27,7 @@ namespace RimworldTweak.Runtime
         public void StartNewSettlement()
         {
             if (SaveBusy) return;
-            Initialize(WorkScenario.Create());
+            Initialize(WorkScenario.CreateTestMap());
             ActiveSlotId = null;
             SaveMessage = string.Empty;
         }

@@ -26,6 +26,20 @@ namespace RimworldTweak.Tests.PlayMode
         private string directory;
         private Keyboard keyboard;
         private static GridPosition P(int x,int y)=>new GridPosition(x,y);
+        [UnityTest]
+        public IEnumerator NewSettlementUsesLargeMapAndPreservesDimensionsThroughSave()
+        {
+            Setup();runner.StartNewSettlement();
+            yield return null;
+            var w=runner.Session.World;
+            Assert.That(w.Width,Is.EqualTo(32));Assert.That(w.Height,Is.EqualTo(32));
+            Assert.That(w.Gatherables.Any(x=>x.Position.X>20&&x.Position.Y>20),Is.True);
+            var captured=runner.Session.CaptureSaveData(true,1);
+            Assert.That(captured.Success,Is.True);
+            Assert.That(SimulationSession.TryRestoreSave(captured.Data,out var restored,out var error),Is.True,error);
+            Assert.That(restored.World.Width,Is.EqualTo(32));
+            Assert.That(restored.World.Gatherables.Count,Is.EqualTo(w.Gatherables.Count));
+        }
         private void Setup(bool developmentUi = false)
         {
             directory=Path.GetFullPath(Path.Combine(Application.dataPath,"..","TestResults","ShellIntegration",Guid.NewGuid().ToString("N")));
