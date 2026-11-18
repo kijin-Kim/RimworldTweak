@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using System.Collections.Generic;
 using RimworldTweak.Simulation;
@@ -25,6 +26,7 @@ namespace RimworldTweak.Presentation
         private Tilemap ground;
         private Tile soilTile, blockedTile;
         private LineRenderer selection, preview, route;
+        private readonly Dictionary<int,LineRenderer> pawnSelections=new Dictionary<int,LineRenderer>();
         private SpriteRenderer placementGhost;
         private Material spriteMaterial;
         private Sprite fallback;
@@ -125,6 +127,8 @@ namespace RimworldTweak.Presentation
             Initialize(catalog);
             if (ReferenceEquals(displayedWorld, world)) return;
             ClearMarks();
+            foreach(var line in pawnSelections.Values)Destroy(line.gameObject);
+            pawnSelections.Clear();
             displayedWorld = world;
             pawnDirections.Clear();
             terrainRevision = -1;
@@ -387,10 +391,10 @@ namespace RimworldTweak.Presentation
         private void ClampCamera()
         {
             if (displayedWorld == null || MapCamera == null) return;
-            var halfY = MapCamera.orthographicSize; var halfX = halfY * CameraAspect;
             var p = MapCamera.transform.position;
-            p.x = displayedWorld.Width <= 2 * halfX ? displayedWorld.Width / 2f : Mathf.Clamp(p.x, halfX, displayedWorld.Width - halfX);
-            p.y = displayedWorld.Height <= 2 * halfY ? displayedWorld.Height / 2f : Mathf.Clamp(p.y, halfY, displayedWorld.Height - halfY);
+            // The camera may look beyond an edge so border targets can be centered clear of the HUD.
+            p.x = Mathf.Clamp(p.x, 0, displayedWorld.Width);
+            p.y = Mathf.Clamp(p.y, 0, displayedWorld.Height);
             p.z = -10; MapCamera.transform.position = p;
         }
         private void RebuildGround()
@@ -460,6 +464,23 @@ namespace RimworldTweak.Presentation
         }
         private static bool HasBuilding(WorldState world, int id) { foreach (var b in world.Buildings) if (b.Id == id && b.Exists) return true; return false; }
         private static int Sort(float y, int offset) => Mathf.Clamp(10000 - Mathf.RoundToInt(y * 100) + offset, -20000, 30000);
+        public void ShowPawnSelections(IEnumerable<int> ids,int? primary)
+        {
+            foreach(var line in pawnSelections.Values)line.positionCount=0;
+            if(displayedWorld==null)return;
+            foreach(var id in ids)
+            {
+                if(id==primary)continue;
+                var pawn=displayedWorld.Colonists.FirstOrDefault(p=>p.Id==id);
+                if(pawn==null)continue;
+                if(!pawnSelections.TryGetValue(id,out var line))
+                {
+                    line=CreateLine("Selected pawn "+id,new Color(1,.86f,.3f),32000,.045f);
+                    pawnSelections.Add(id,line);
+                }
+                DrawBox(line,PawnPosition(pawn),new Vector2(.92f,.92f));
+            }
+        }
         private LineRenderer CreateLine(string name, Color color, int order, float width)
         {
             var go = new GameObject(name, typeof(LineRenderer)); go.transform.SetParent(content, false); go.layer = MapLayer;

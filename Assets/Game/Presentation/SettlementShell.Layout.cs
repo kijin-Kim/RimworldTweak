@@ -11,7 +11,8 @@ namespace RimworldTweak.Presentation
     {
         private RectTransform colonistBar, portraitViewport, resources, timeControls;
         private RectTransform inspectContent, panelContent, alertContent, alerts;
-        private ScrollRect portraitScroll, commandScroll;
+        private Text cookingHeader;
+        private ScrollRect portraitScroll, commandScroll, inspectorScroll;
         private const float WorkTableMinimumWidth = 122 + 5 * 92 + 5 * 6;
         private readonly Dictionary<ResourceKind, Text> resourceTotals = new Dictionary<ResourceKind, Text>();
         private Text timeStatus, selectionSummary, resourceBreakdown;
@@ -40,6 +41,13 @@ namespace RimworldTweak.Presentation
             Stretch(selectionSummary.rectTransform, 10);
             selectionCommands = Box("Selection commands", canvasRoot, Color.clear);
             inspection=Box("Inspector",canvasRoot);inspectContent=Scroll("Inspector scroll",inspection);
+            inspectorScroll = inspectContent.GetComponentInParent<ScrollRect>();
+            cookingHeader = Label("Selected cooking bill", inspection, 15);
+            cookingHeader.rectTransform.anchorMin = new Vector2(0, 1);
+            cookingHeader.rectTransform.anchorMax = Vector2.one;
+            cookingHeader.rectTransform.offsetMin = new Vector2(12, -42);
+            cookingHeader.rectTransform.offsetMax = new Vector2(-12, -6);
+            cookingHeader.gameObject.SetActive(false);
             panel=Box("Command panel",canvasRoot);panelContent=Scroll("Command scroll",panel);
             commandScroll = panelContent.GetComponentInParent<ScrollRect>();
             tabs=Box("Tabs",canvasRoot);
@@ -127,7 +135,7 @@ namespace RimworldTweak.Presentation
                 var button = ButtonAt("pawn." + id, "", colonistBar, index * PortraitStride, 0, PortraitWidth, PortraitHeight, () =>
                 {
                     var doubleClick = lastPortraitId == id && Time.unscaledTime - lastPortraitClick <= .3f;
-                    SelectPawn(id);
+                    SelectPawn(id,ShiftHeld);
                     if (doubleClick) FocusTarget(pawn.Position);
                     lastPortraitId = id;
                     lastPortraitClick = Time.unscaledTime;
@@ -139,26 +147,43 @@ namespace RimworldTweak.Presentation
                 var fullName = "정착민 " + id;
                 caption.text = FitPortraitName(caption, fullName);
                 if (caption.text != fullName) truncatedPortraits.Add((RectTransform)button.transform, fullName);
-                if (visualCatalog != null && visualCatalog.TryGet("pawn.front", out var portraitVisual))
-                {
-                    var portrait = Box("Portrait", button.transform, Color.clear);
-                    Place(portrait, 7, 2, 48, 48);
-                    var image = portrait.GetComponent<Image>();
-                    image.sprite = portraitVisual.Sprite;
-                    image.color = WorldMapView.PawnColor(id);
-                    image.preserveAspect = true;
-                }
+                BuildPortrait(button.transform, id);
+                var nutrition=Box("Nutrition",button.transform,new Color(.20f,.65f,.34f));
+                var rest=Box("Rest",button.transform,new Color(.30f,.55f,.85f));
+                nutrition.GetComponent<Image>().raycastTarget=false;
+                rest.GetComponent<Image>().raycastTarget=false;
                 refreshers.Add(() =>
                 {
-                    button.GetComponent<Image>().color = SelectedPawnId == id
-                        ? new Color(.30f,.40f,.26f)
-                        : pawn.IsDrafted ? new Color(.27f,.34f,.39f) : new Color(.15f,.19f,.19f);
+                    Place(nutrition,4,42,54*Mathf.Clamp01(pawn.Nutrition/10000f),3);
+                    Place(rest,4,46,54*Mathf.Clamp01(pawn.Rest/10000f),3);
+                    nutrition.GetComponent<Image>().color=pawn.Nutrition<=3000?new Color(.95f,.34f,.23f):new Color(.20f,.65f,.34f);
+                    rest.GetComponent<Image>().color=pawn.Rest<=2000?new Color(.95f,.66f,.20f):new Color(.30f,.55f,.85f);
+                    truncatedPortraits[(RectTransform)button.transform]=fullName+"\n"+PawnAction(pawn)+
+                        "\n포만도 "+pawn.Nutrition/100+" · 휴식 "+pawn.Rest/100;
+                    button.GetComponent<Image>().color = selectedPawns.Contains(id)
+                        ? ActiveColor
+                        : pawn.IsDrafted ? new Color(.35f,.41f,.46f) : ControlColor;
                 });
                 index++;
             }
 
             Place(colonistBar, 0, 0, Mathf.Max(0, index * PortraitStride - 8), PortraitHeight);
             LayoutPortraits(canvasRoot.rect.width);
+        }
+
+        private void BuildPortrait(Transform parent, int pawnId)
+        {
+            if (visualCatalog == null) return;
+            var portrait = Box("Portrait", parent, Color.clear);
+            Place(portrait, 7, 2, 48, 48);
+            var baseImage = portrait.GetComponent<Image>();
+            baseImage.raycastTarget = false;
+            if (visualCatalog.TryGet("pawn.front", out var fallback))
+            {
+                baseImage.sprite = fallback.Sprite;
+                baseImage.color = WorldMapView.PawnColor(pawnId) * fallback.Tint;
+                baseImage.preserveAspect = true;
+            }
         }
 
         private static string FitPortraitName(Text caption, string fullName)
@@ -191,7 +216,7 @@ namespace RimworldTweak.Presentation
                         RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRoot, center, null, out var canvasPoint);
                         const float width = 224;
                         var x = Mathf.Clamp(canvasPoint.x - canvasRoot.rect.xMin - width / 2, 8, canvasRoot.rect.width - width - 8);
-                        Place(portraitTooltip, x, 84, width, 36);
+                        Place(portraitTooltip, x, 84, width, 84);
                         portraitFullName.text = portrait.Value;
                         if (!portraitTooltip.gameObject.activeSelf) portraitTooltip.SetAsLastSibling();
                         portraitTooltip.gameObject.SetActive(true);
@@ -220,7 +245,7 @@ namespace RimworldTweak.Presentation
             var size = canvasRoot.rect.size;
             var width = size.x;
             var height = size.y;
-            var bottom = Mathf.Min(320, height * .39f);
+            var bottom = CommandPanelHeight(height);
             var occupiedHeight = panel.gameObject.activeSelf ? bottom
                 : inspection.gameObject.activeSelf ? 192 + Mathf.Min(360, height - 282)
                 : selectionCard.gameObject.activeSelf ? 188 : 44;
@@ -240,7 +265,7 @@ namespace RimworldTweak.Presentation
             tabs.GetComponent<Image>().raycastTarget = false;
             Place((RectTransform)buttons["tab.menu"].transform, width - 120, 0, 120, 40);
             LayoutSelection(width, height);
-            Place(panel, 8, height - bottom, Mathf.Min(880, width - 244), bottom - 44);
+            LayoutCommandPanel();
             LayoutCommandScroll();
             Map?.SetViewport(new Rect(0,0,1,1));
             LayoutMenu();
@@ -251,9 +276,23 @@ namespace RimworldTweak.Presentation
             var r=new GameObject(name,typeof(RectTransform)).GetComponent<RectTransform>();r.SetParent(parent,false);
             r.anchorMin=r.anchorMax=r.pivot=new Vector2(0,1);
             var image=r.gameObject.AddComponent<Image>();image.color=color??PanelColor;image.raycastTarget=color!=Color.clear;
-            if(!color.HasValue&&visualCatalog!=null&&visualCatalog.TryGet("ui.panel",out var panelVisual))
-            {image.sprite=panelVisual.Sprite;image.type=Image.Type.Sliced;image.color=Color.white;}
+            if (!color.HasValue) ApplySurface(image);
             return r;
+        }
+        private void ApplySurface(Image image)
+        {
+            if (visualCatalog == null || !visualCatalog.TryGet("ui.panel", out var panelVisual)) return;
+            image.sprite = panelVisual.Sprite;
+            image.type = Image.Type.Sliced;
+        }
+
+        private static void SetButtonActive(Button button, bool active)
+        {
+            var surface = active ? ActiveColor : ControlColor;
+            if (button.targetGraphic.color == surface) return;
+            button.targetGraphic.color = surface;
+            var caption = button.GetComponentInChildren<Text>();
+            caption.color = active ? Accent : TextColor;
         }
         private static void Place(RectTransform r,float x,float y,float w,float h)
         {r.anchorMin=r.anchorMax=r.pivot=new Vector2(0,1);r.anchoredPosition=new Vector2(x,-y);r.sizeDelta=new Vector2(w,h);}
@@ -268,16 +307,22 @@ namespace RimworldTweak.Presentation
         }
         private Button ButtonAt(string key,string caption,Transform parent,float x,float y,float w,float h,Action action)
         {
-            var r=Box(key,parent,new Color(.17f,.215f,.22f));Place(r,x,y,w,h);
+            var r=Box(key,parent,ControlColor);Place(r,x,y,w,h);
             var b=r.gameObject.AddComponent<Button>();b.targetGraphic=r.GetComponent<Image>();
-            var colors=b.colors;colors.highlightedColor=new Color(.78f,.87f,.73f);colors.selectedColor=new Color(.78f,.87f,.73f);b.colors=colors;
+            ApplySurface((Image)b.targetGraphic);
+            var colors = b.colors;
+            colors.highlightedColor = new Color(1f, 1f, .93f);
+            colors.selectedColor = new Color(.78f, .90f, 1f);
+            colors.pressedColor = new Color(.72f, .74f, .68f);
+            colors.disabledColor = new Color(.68f, .68f, .68f);
+            b.colors = colors;
             var text=Label("Caption",r,17);text.text=caption;text.alignment=TextAnchor.MiddleCenter;Stretch(text.rectTransform,4);
             b.onClick.AddListener(()=>{if(!Runner.SaveBusy)action();});buttons[key]=b;return b;
         }
         private RectTransform Scroll(string name,RectTransform parent)
         {
             var outer=Box(name,parent,Color.clear);Stretch(outer,10);
-            var viewport=Box("Viewport",outer,new Color(.08f,.105f,.12f,1));Stretch(viewport);
+            var viewport=Box("Viewport",outer,new Color(.12f,.12f,.11f));Stretch(viewport);
             viewport.gameObject.AddComponent<RectMask2D>();
             var content=new GameObject("Content",typeof(RectTransform)).GetComponent<RectTransform>();content.SetParent(viewport,false);
             content.anchorMin=new Vector2(0,1);content.anchorMax=new Vector2(1,1);content.pivot=new Vector2(.5f,1);content.sizeDelta=Vector2.zero;
@@ -314,8 +359,11 @@ namespace RimworldTweak.Presentation
         public void OpenTab(string tab)
         {
             if (tab == "development" && !developmentUi) return;
+            var wasArchitect = openTab == "architect";
             architectCategory = tab=="build" ? "structure" : tab=="zone" ? "zones" : null;
             openTab = tab=="build" || tab=="zone" ? "architect" : tab;
+            SetButtonActive(buttons["tab.build"], openTab == "architect");
+            SetButtonActive(buttons["tab.work"], openTab == "work");
             panel.gameObject.SetActive(openTab.Length>0);
             UpdateInspectorVisibility();
             Clear(panelContent);
@@ -324,6 +372,7 @@ namespace RimworldTweak.Presentation
             CancelTool();
             commandScroll.StopMovement();
             panelContent.anchoredPosition = Vector2.zero;
+            if (wasArchitect != (openTab == "architect")) LayoutCommandPanel();
             LayoutCommandScroll();
             if(openTab=="architect") BuildArchitect();
             else if(tab=="work")
@@ -342,6 +391,15 @@ namespace RimworldTweak.Presentation
                         var cat=category;Func<int> priority=()=>Runner.Session.World.WorkPolicies.First(p=>p.PawnId==id).GetPriority(cat);
                         BoundButton(row,"priority."+id+"."+cat,()=>priority()==0?"끔":priority().ToString(),
                             ()=>Runner.SetWorkPriority(id,cat,(priority()+1)%4),panelRefreshers);
+                        var button=buttons["priority."+id+"."+cat];
+                        var trigger=button.gameObject.AddComponent<UnityEngine.EventSystems.EventTrigger>();
+                        var entry=new UnityEngine.EventSystems.EventTrigger.Entry
+                        {eventID=UnityEngine.EventSystems.EventTriggerType.PointerClick};
+                        entry.callback.AddListener(data=>{
+                            if(((UnityEngine.EventSystems.PointerEventData)data).button==UnityEngine.EventSystems.PointerEventData.InputButton.Right&&!IsInputBlocked)
+                                Runner.SetWorkPriority(id,cat,(priority()+3)%4);
+                        });
+                        trigger.triggers.Add(entry);
                     }
                     SizeWorkColumns(row);
                 }
@@ -363,6 +421,17 @@ namespace RimworldTweak.Presentation
                 });
                 EqualizeWorkCells(row);
             }
+        }
+
+        private float CommandPanelHeight(float height) =>
+            Mathf.Min(openTab == "architect" ? 218 : 320, height * .39f);
+
+        private void LayoutCommandPanel()
+        {
+            var size = canvasRoot.rect.size;
+            var height = CommandPanelHeight(size.y);
+            var width = openTab == "architect" ? 428 : 880;
+            Place(panel, 8, size.y - height, Mathf.Min(width, size.x - 244), height - 44);
         }
 
         private void LayoutCommandScroll()
@@ -393,6 +462,7 @@ namespace RimworldTweak.Presentation
         private void BuildArchitect()
         {
             Clear(panelContent);
+            panelRefreshers.Clear();
             var content = Box("Architect categories and tools", panelContent, Color.clear);
             content.gameObject.AddComponent<LayoutElement>().preferredHeight = 154;
             var index = 0;
@@ -406,7 +476,7 @@ namespace RimworldTweak.Presentation
                         architectCategory = key;
                         BuildArchitect();
                     });
-                if (architectCategory == key) button.targetGraphic.color = new Color(.30f,.40f,.26f);
+                if (architectCategory == key) SetButtonActive(button, true);
                 index++;
             }
 
@@ -430,11 +500,11 @@ namespace RimworldTweak.Presentation
                     AddBuildingTool(content, BuildingKind.Stove, 0);
                     break;
                 case "zones":
-                    AddArchitectTool(content, 0, "tool.storage", "저장", "overlay.storage", () => BeginTool(Tool.Storage));
-                    AddArchitectTool(content, 1, "tool.growing", "경작", "overlay.growing", () => BeginTool(Tool.Growing));
+                    AddArchitectTool(content, 0, "tool.storage", "저장", "overlay.storage", Tool.Storage);
+                    AddArchitectTool(content, 1, "tool.growing", "경작", "overlay.growing", Tool.Growing);
                     break;
                 case "orders":
-                    AddArchitectTool(content, 0, "tool.gather", "채집", "tree", () => BeginTool(Tool.Gather));
+                    AddArchitectTool(content, 0, "tool.gather", "채집", "tree", Tool.Gather);
                     break;
             }
         }
@@ -442,12 +512,14 @@ namespace RimworldTweak.Presentation
         private void AddBuildingTool(Transform parent, BuildingKind kind, int index)
         {
             AddArchitectTool(parent, index, "build." + kind, ConstructionPanel.Name(kind) + "\n목재 " + ConstructionRules.Cost(kind),
-                VisualCatalog.BuildingKey(kind), () => BeginTool(Tool.Building, kind));
+                VisualCatalog.BuildingKey(kind), Tool.Building, kind);
         }
 
-        private void AddArchitectTool(Transform parent, int index, string key, string caption, string visualKey, Action action)
+        private void AddArchitectTool(Transform parent, int index, string key, string caption, string visualKey,
+            Tool tool, BuildingKind kind = BuildingKind.Wall)
         {
-            var button = ButtonAt(key, caption, parent, 202 + index * 78, 0, 72, 72, action);
+            var button = ButtonAt(key, caption, parent, 202 + index * 78, 0, 72, 72, () => BeginTool(tool, kind));
+            panelRefreshers.Add(() => SetButtonActive(button, ActiveTool == tool && (tool != Tool.Building || kind == buildingKind)));
             var text = button.GetComponentInChildren<Text>();
             text.fontSize = 14;
             if (visualCatalog == null || !visualCatalog.TryGet(visualKey, out var visual)) return;
@@ -540,9 +612,11 @@ namespace RimworldTweak.Presentation
 
         private void FocusTarget(GridPosition position)
         {
+            var coveredBefore=inspection.gameObject.activeInHierarchy&&
+                RectTransformUtility.RectangleContainsScreenPoint(inspection,Map.GridToScreen(position));
             Map.Focus(position);
             var point = Map.GridToScreen(position);
-            if (inspection.gameObject.activeInHierarchy && RectTransformUtility.RectangleContainsScreenPoint(inspection, point))
+            if (coveredBefore || (inspection.gameObject.activeInHierarchy && RectTransformUtility.RectangleContainsScreenPoint(inspection, point)))
                 SetDetailOpen(false);
             if (!MapInput.IsPointerOverUI(point)) return;
 
@@ -592,10 +666,22 @@ namespace RimworldTweak.Presentation
             detailOpen = false;
             UpdateInspectorVisibility();
             Clear(inspectContent);
+            cookingHeader.gameObject.SetActive(false);
+            var outer = (RectTransform)inspectorScroll.transform;
+            outer.offsetMax = new Vector2(-10, -10);
             Clear(selectionCommands);
             detailRefreshers.Clear();
             var world = Runner.Session.World;
             var pawn = world.Colonists.FirstOrDefault(x => x.Id == SelectedPawnId);
+            if(selectedPawns.Count>1)
+            {
+                SetSelectionSummary(()=>"정착민 "+selectedPawns.Count+"명 선택\n"+
+                    string.Join(", ",selectedPawns.OrderBy(x=>x).Select(x=>"#"+x))+"\n우클릭 이동 · R 소집/해제");
+                CommandTile("draft",()=>world.Colonists.Any(p=>selectedPawns.Contains(p.Id)&&!p.IsDrafted)?"소집 [R]":"해제 [R]",ToggleSelectedDraft);
+                CommandTile("locate",()=>"위치 보기",()=>FocusTarget(pawn.Position));
+                LayoutSelection(canvasRoot.rect.width,canvasRoot.rect.height);
+                return;
+            }
             if (pawn != null)
             {
                 SetSelectionSummary(() => "정착민 " + pawn.Id + (pawn.IsDrafted ? " · 소집" : "") +
@@ -705,6 +791,10 @@ namespace RimworldTweak.Presentation
             UpdateInspectorVisibility();
         }
         private int? selectedCookingBill;
+        private bool cookingConditionsOpen;
+        private static string CookingStatus(CookingOrderState bill) =>
+            !bill.Enabled?"일시중지":bill.RepeatMode==CookingRepeatMode.RepeatCount&&bill.RemainingCount==0?"횟수 완료":
+            WorkDiagnostics.GetReasonText(bill.Reason);
         private static string RepeatName(CookingRepeatMode mode) =>
             mode==CookingRepeatMode.RepeatCount?"횟수 지정":mode==CookingRepeatMode.Forever?"계속 생산":"목표 재고";
         private void BuildCookingInspector(int stove)
@@ -713,12 +803,55 @@ namespace RimworldTweak.Presentation
             var bills=world.CookingOrders.Where(x=>x.Exists&&x.StoveId==stove).OrderBy(x=>x.Priority).ThenBy(x=>x.Id).ToList();
             var selected=bills.FirstOrDefault(x=>x.Id==selectedCookingBill)??bills.FirstOrDefault();
             selectedCookingBill=selected?.Id;
-            RowButton(inspectContent,"cook.add","계획서 추가 · 식사 조리",()=>{Runner.AddCookingBill(stove);RebuildCookingInspector();});
+            cookingHeader.gameObject.SetActive(true);
+            var scrollFrame = (RectTransform)inspectorScroll.transform;
+            scrollFrame.offsetMax = new Vector2(-10, -42);
+            detailRefreshers.Add(() => cookingHeader.text = selected == null ? "조리 계획서" :
+                $"조리 계획서 #{selected.Id} · {CookingStatus(selected)}");
+            RowButton(inspectContent,"cook.add","계획서 추가 · 식사 조리",()=>{
+                if (!Runner.AddCookingBill(stove, out var id)) return;
+                selectedCookingBill = id;
+                RebuildCookingInspector();
+                RevealCookingControl("cook.bill."+id);
+            },32);
+            buttons["cook.add"].GetComponentInChildren<Text>().fontSize=14;
             foreach(var bill in bills)
             {
                 var id=bill.Id;
-                BoundButton(inspectContent,"cook.bill."+id,()=>"#"+id+" 식사 · "+RepeatName(bill.RepeatMode)+" · "+(bill.Enabled?"가동":"중지"),
+                var chosen=selected!=null&&id==selected.Id;
+                var prefix=chosen?"cook.":"cook."+id+".";
+                Func<int> quantity=()=>bill.RepeatMode==CookingRepeatMode.RepeatCount?bill.RemainingCount:bill.TargetMeals;
+                Action<bool,CookingRepeatMode,int> apply=(enabled,mode,count)=>Runner.ConfigureCookingBill(id,enabled,mode,count,
+                    bill.WorkerId,bill.AllowIngredients,bill.IngredientRadius,bill.DeliveryMode,bill.DestinationZoneId);
+                BoundButton(inspectContent,"cook.bill."+id,()=>"#"+id+" 식사 · "+
+                    (bill.RepeatMode == CookingRepeatMode.Forever ? "계속" :
+                        bill.RepeatMode == CookingRepeatMode.TargetStock ? "목표 "+quantity() : "남은 "+quantity())+
+                    " · "+CookingStatus(bill),
                     ()=>{selectedCookingBill=id;RebuildCookingInspector();},detailRefreshers);
+                buttons["cook.bill."+id].GetComponent<LayoutElement>().preferredHeight=28;
+                buttons["cook.bill."+id].GetComponentInChildren<Text>().fontSize=14;
+                SetButtonActive(buttons["cook.bill."+id], chosen);
+                var controls=WorkRow(inspectContent,28);
+                var less = RowButton(controls,prefix+"less","−",()=>apply(bill.Enabled,bill.RepeatMode,Math.Max(0,quantity()-1)),34);
+                var more = RowButton(controls,prefix+"more","+",()=>apply(bill.Enabled,bill.RepeatMode,Math.Min(99,quantity()+1)),34);
+                detailRefreshers.Add(() => less.interactable = bill.RepeatMode != CookingRepeatMode.Forever && quantity() > 0);
+                detailRefreshers.Add(() => more.interactable = bill.RepeatMode != CookingRepeatMode.Forever && quantity() < 99);
+                BoundButton(controls,prefix+"mode",()=>bill.RepeatMode==CookingRepeatMode.TargetStock?"재고":bill.RepeatMode==CookingRepeatMode.RepeatCount?"횟수":"계속",
+                    ()=>apply(bill.Enabled,(CookingRepeatMode)(((int)bill.RepeatMode+1)%3),quantity()),detailRefreshers);
+                BoundButton(controls,prefix+"toggle",()=>bill.Enabled?"중지":"재개",
+                    ()=>apply(!bill.Enabled,bill.RepeatMode,quantity()),detailRefreshers);
+                RowButton(controls,prefix+"up","↑",()=>{Runner.MoveCookingBill(id,-1);RebuildCookingInspector();},28);
+                RowButton(controls,prefix+"down","↓",()=>{Runner.MoveCookingBill(id,1);RebuildCookingInspector();},28);
+                RowButton(controls,prefix+"delete","삭제",()=>{Runner.DeleteCookingBill(id);RebuildCookingInspector();},28);
+                RowButton(controls,"cook.rowdetails."+id,"상세",()=>{
+                    selectedCookingBill=id;cookingConditionsOpen=true;RebuildCookingInspector();
+                    RevealCookingControl("cook.details");
+                },28);
+                foreach(Transform child in controls)
+                {
+                    child.GetComponent<LayoutElement>().preferredHeight=28;
+                    child.GetComponentInChildren<Text>().fontSize=14;
+                }
             }
             if(selected==null)
             {
@@ -732,15 +865,14 @@ namespace RimworldTweak.Presentation
                     Runner.ConfigureCookingBill(o.Id,enabled,mode,amount,worker,allow,radius,delivery,zone);
                 };
             Func<int> amount=()=>o.RepeatMode==CookingRepeatMode.RepeatCount?o.RemainingCount:o.TargetMeals;
-            BoundLabel(inspectContent,()=>"#"+o.Id+" 식사 조리 · "+RepeatName(o.RepeatMode)+" "+amount()+
+            BoundLabel(inspectContent,()=>"#"+o.Id+" 식사 조리 · "+RepeatName(o.RepeatMode)+
+                (o.RepeatMode == CookingRepeatMode.Forever ? "" : " "+amount())+
                 "\n입력 "+o.InputIngredients+"/2 · 조리 "+o.Progress+"/40 · 완성 "+o.CompletedMeals+
-                "\n"+WorkDiagnostics.GetReasonText(o.Reason),detailRefreshers,108);
-            BoundButton(inspectContent,"cook.toggle",()=>o.Enabled?"계획서 일시중지":"계획서 재개",
-                ()=>configure(!o.Enabled,o.RepeatMode,amount(),o.WorkerId,o.AllowIngredients,o.IngredientRadius,o.DeliveryMode,o.DestinationZoneId),detailRefreshers);
-            BoundButton(inspectContent,"cook.mode",()=>"반복 · "+RepeatName(o.RepeatMode),
-                ()=>configure(o.Enabled,(CookingRepeatMode)(((int)o.RepeatMode+1)%3),amount(),o.WorkerId,o.AllowIngredients,o.IngredientRadius,o.DeliveryMode,o.DestinationZoneId),detailRefreshers);
-            RowButton(inspectContent,"cook.more","수량 +1",()=>configure(o.Enabled,o.RepeatMode,Math.Min(99,amount()+1),o.WorkerId,o.AllowIngredients,o.IngredientRadius,o.DeliveryMode,o.DestinationZoneId));
-            RowButton(inspectContent,"cook.less","수량 -1",()=>configure(o.Enabled,o.RepeatMode,Math.Max(0,amount()-1),o.WorkerId,o.AllowIngredients,o.IngredientRadius,o.DeliveryMode,o.DestinationZoneId));
+                "\n"+CookingStatus(o),detailRefreshers,108);
+            RowButton(inspectContent,"cook.details",cookingConditionsOpen?"상세 조건 접기":"상세 조건 · 작업자/재료/운반",()=>{
+                cookingConditionsOpen=!cookingConditionsOpen;RebuildCookingInspector();
+            });
+            if(!cookingConditionsOpen)return;
             BoundButton(inspectContent,"cook.worker",()=>"작업자 · "+(o.WorkerId.HasValue?"정착민 #"+o.WorkerId.Value:"누구나"),()=>{
                 var ids=world.Colonists.Select(x=>(int?)x.Id).ToList();ids.Insert(0,null);
                 configure(o.Enabled,o.RepeatMode,amount(),ids[(ids.IndexOf(o.WorkerId)+1)%ids.Count],o.AllowIngredients,o.IngredientRadius,o.DeliveryMode,o.DestinationZoneId);
@@ -761,9 +893,15 @@ namespace RimworldTweak.Presentation
                 RowButton(inspectContent,"cook.zone."+zoneId,"운반 위치 · 저장 구역 #"+zoneId,
                     ()=>configure(o.Enabled,o.RepeatMode,amount(),o.WorkerId,o.AllowIngredients,o.IngredientRadius,CookingDeliveryMode.SpecificStorage,zoneId));
             }
-            RowButton(inspectContent,"cook.up","위로",()=>{Runner.MoveCookingBill(o.Id,-1);RebuildCookingInspector();});
-            RowButton(inspectContent,"cook.down","아래로",()=>{Runner.MoveCookingBill(o.Id,1);RebuildCookingInspector();});
-            RowButton(inspectContent,"cook.delete","계획서 삭제",()=>{Runner.DeleteCookingBill(o.Id);RebuildCookingInspector();});
+
+        }
+        private void RevealCookingControl(string key)
+        {
+            Canvas.ForceUpdateCanvases();
+            inspectorScroll.StopMovement();
+            var bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(inspectContent, buttons[key].transform);
+            var limit = Mathf.Max(0, inspectContent.rect.height - inspectorScroll.viewport.rect.height);
+            inspectContent.anchoredPosition = new Vector2(0, Mathf.Clamp(-bounds.max.y, 0, limit));
         }
         private static string PawnAction(ColonistState p)
         {

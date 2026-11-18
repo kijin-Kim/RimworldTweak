@@ -36,13 +36,22 @@ namespace RimworldTweak.Presentation
         {
             var reason=Runner.Session.World.GetWorkDiagnostic(category,target);
             if(reason!=WorkReasonCode.MissingMaterials&&reason!=WorkReasonCode.NoWorker&&reason!=WorkReasonCode.Unreachable
-                &&reason!=WorkReasonCode.OutputFull&&reason!=WorkReasonCode.TargetReached&&reason!=WorkReasonCode.NoAllowedStorage&&reason!=WorkReasonCode.StorageFull)return;
+                &&reason!=WorkReasonCode.OutputFull&&reason!=WorkReasonCode.NoAllowedStorage&&reason!=WorkReasonCode.StorageFull)return;
+            ShowAlert(active,target,position,reason,null);
+        }
+        private void ShowAlert(HashSet<string> active,int target,GridPosition position,WorkReasonCode reason,string group)
+        {
             var key=target+"."+reason;active.Add(key);
-            if(alertRows.ContainsKey(key))return;
-            var normal=reason==WorkReasonCode.TargetReached;
-            var caption=(normal?"정상 · ":"! ")+AlertTargetName(target)+" "+position+"\n"+WorkDiagnostics.GetReasonText(reason);
+            if(alertRows.TryGetValue(key,out var existing)&&group==null)return;
+            var caption="! "+(group??AlertTargetName(target))+" "+position+"\n"+WorkDiagnostics.GetReasonText(reason);
+            if(existing!=null)
+            {
+                var label=existing.GetComponentInChildren<Text>();
+                if(label.text!=caption)label.text=caption;
+                return;
+            }
             var button=RowButton(alertContent,"alert."+key,caption,()=>{SelectObject(target);FocusTarget(position);},58);
-            button.GetComponent<Image>().color=normal?new Color(.18f,.29f,.20f):new Color(.34f,.23f,.15f);
+            button.GetComponent<Image>().color=new Color(.34f,.23f,.15f);
             alertRows.Add(key,button);
         }
         private string AlertTargetName(int id)
@@ -52,6 +61,8 @@ namespace RimworldTweak.Presentation
             if(blueprint!=null)return ConstructionPanel.Name(blueprint.Kind)+" 설계";
             var building=world.Buildings.FirstOrDefault(x=>x.Id==id);
             if(building!=null)return ConstructionPanel.Name(building.Kind);
+            if(world.StorageZones.Any(x=>x.Id==id))return "저장 구역";
+            if(world.GrowingZones.Any(x=>x.Id==id))return "경작 구역";
             var resource=world.Resources.FirstOrDefault(x=>x.Id==id);
             if(resource!=null)return SettlementView.ResourceName(resource.Kind);
             var gather=world.Gatherables.FirstOrDefault(x=>x.Id==id);

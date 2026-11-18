@@ -26,6 +26,8 @@ namespace RimworldTweak.Tests.PlayMode
         private string directory;
         private Keyboard keyboard;
         private static GridPosition P(int x,int y)=>new GridPosition(x,y);
+
+
         [Test]
         public void GatherRectangleIncludesBothCornersAndSupportsReverseDrag()
         {
@@ -61,8 +63,19 @@ namespace RimworldTweak.Tests.PlayMode
             shell.SelectObject(stove.Id);Click("selection.detail");
             Click("cook.add");
             var second=w.CookingOrders.Where(o=>o.Exists).OrderBy(o=>o.Id).Last();
-            Click("cook.bill."+second.Id);
             Click("cook.more");Assert.That(second.RemainingCount,Is.EqualTo(2));
+            Click("cook.rowdetails."+second.Id);
+            var selectedBill = shell.Buttons["cook.bill."+second.Id];
+            var firstBill = shell.Buttons["cook.bill."+w.CookingOrders.First(o=>o.Exists).Id];
+            var selectedColor = selectedBill.targetGraphic.color;
+            Assert.That(selectedColor, Is.Not.EqualTo(firstBill.targetGraphic.color));
+            EventSystem.current.SetSelectedGameObject(shell.Buttons["cook.worker"].gameObject);
+            yield return null;
+            Assert.That(selectedBill.targetGraphic.color, Is.EqualTo(selectedColor));
+            var workerRect=(RectTransform)shell.Buttons["cook.worker"].transform;
+            var viewport=workerRect.GetComponentInParent<ScrollRect>().viewport;
+            Assert.That(RectTransformUtility.RectangleContainsScreenPoint(viewport,
+                RectTransformUtility.WorldToScreenPoint(null,workerRect.TransformPoint(workerRect.rect.center))),Is.True);
             Click("cook.worker");Assert.That(second.WorkerId,Is.EqualTo(1));
             Click("cook.ingredients");Assert.That(second.AllowIngredients,Is.False);
             Click("cook.radius");Assert.That(second.IngredientRadius,Is.Zero);
@@ -86,6 +99,85 @@ namespace RimworldTweak.Tests.PlayMode
             Assert.That(SimulationSession.TryRestoreSave(captured.Data,out var restored,out var error),Is.True,error);
             Assert.That(restored.World.Width,Is.EqualTo(32));
             Assert.That(restored.World.Gatherables.Count,Is.EqualTo(w.Gatherables.Count));
+        }
+        [Test]
+        public void NavigationShortcutsCyclePawnsAndRespectMenus()
+        {
+            Setup();runner.Initialize(WorkScenario.Create());
+            Assert.That(shell.ProcessShortcut(Key.Period),Is.True);
+            Assert.That(shell.SelectedPawnId,Is.EqualTo(1));
+            shell.ProcessShortcut(Key.Period);Assert.That(shell.SelectedPawnId,Is.EqualTo(2));
+            shell.ProcessShortcut(Key.Comma);Assert.That(shell.SelectedPawnId,Is.EqualTo(1));
+            shell.ProcessShortcut(Key.Comma);Assert.That(shell.SelectedPawnId,Is.EqualTo(3));
+            Assert.That(shell.ProcessShortcut(Key.Tab),Is.True);
+            Assert.That(shell.ProcessShortcut(Key.F1),Is.True);
+            shell.ShowPauseMenu();
+            Assert.That(shell.ProcessShortcut(Key.Period),Is.False);
+            Assert.That(shell.SelectedPawnId,Is.EqualTo(3));
+        }
+        [UnityTest]
+        public IEnumerator RepeatedDesignationAndReverseWorkPriorityAffectOnlyTheirTargets()
+        {
+            Setup();runner.SetPaused(true);
+            shell.BeginTool(SettlementShell.Tool.Building,BuildingKind.Wall);
+            shell.HandleMapClick(P(4,4),false);shell.HandleMapClick(P(5,4),false);
+            Assert.That(runner.Session.World.Blueprints.Count(b=>b.Exists),Is.EqualTo(2));
+            Assert.That(shell.ActiveTool,Is.EqualTo(SettlementShell.Tool.Building));
+            shell.HandleMapClick(P(4,4),false);
+            Assert.That(runner.Session.World.Blueprints.Count(b=>b.Exists),Is.EqualTo(2));
+            Assert.That(shell.ActiveTool,Is.EqualTo(SettlementShell.Tool.Building));
+            shell.HandleMapClick(P(0,0),true);
+            Assert.That(shell.ActiveTool,Is.EqualTo(SettlementShell.Tool.None));
+            shell.BeginTool(SettlementShell.Tool.Storage);
+            shell.HandleRectangle(P(3,3),P(3,3));shell.HandleRectangle(P(4,3),P(4,3));
+            Assert.That(runner.Session.World.StorageZones.Count(z=>z.Exists),Is.EqualTo(2));
+            shell.ProcessShortcut(Key.Escape);
+            shell.OpenTab("work");
+            var policy=runner.Session.World.WorkPolicies.Single(p=>p.PawnId==1);
+            var before=policy.GetPriority(WorkCategory.Cook);
+            var pointer=new PointerEventData(EventSystem.current){button=PointerEventData.InputButton.Right};
+            ExecuteEvents.Execute(shell.Buttons["priority.1.Cook"].gameObject,pointer,ExecuteEvents.pointerClickHandler);
+            Assert.That(policy.GetPriority(WorkCategory.Cook),Is.EqualTo((before+3)%4));
+            Assert.That(runner.Session.World.Tick,Is.Zero);
+            yield return null;
+        }
+        [UnityTest]
+        public IEnumerator RectangleAndAdditiveSelectionDraftAndMoveAllSelectedPawns()
+        {
+            Setup();runner.Initialize(WorkScenario.Create());runner.SetPaused(true);
+            yield return null;
+            shell.HandleRectangle(P(0,0),P(2,2));
+            CollectionAssert.AreEquivalent(new[]{1,2,3},shell.SelectedPawnIds);
+            shell.ProcessShortcut(Key.R);
+            Assert.That(runner.Session.World.Colonists.All(p=>p.IsDrafted),Is.True);
+            shell.HandleMapClick(P(6,6),true);
+            Assert.That(runner.Session.World.PendingCommandCount,Is.EqualTo(3));
+            runner.Session.Step(100);
+            Assert.That(runner.Session.World.Colonists.All(p=>p.Position==P(6,6)&&p.Status==MovementStatus.Arrived),Is.True);
+            shell.SelectPawn(2,true);
+            CollectionAssert.AreEquivalent(new[]{1,3},shell.SelectedPawnIds);
+            shell.ProcessShortcut(Key.Escape);
+            Assert.That(shell.SelectedPawnIds,Is.Empty);
+            shell.SelectPawn(2);Assert.That(shell.SelectedPawnIds.Count,Is.EqualTo(1));
+        }
+        [UnityTest]
+        public IEnumerator ObjectContextMenuChangesDesignationAndEscapeKeepsSelection()
+        {
+            Setup();runner.Initialize(WorkScenario.Create());runner.SetPaused(true);
+            yield return null;
+            shell.SelectPawn(1);
+            var node=runner.Session.World.Gatherables.First();
+            shell.HandleMapClick(node.Position,true);
+            Assert.That(shell.IsContextMenuOpen,Is.True);
+            Assert.That(shell.Buttons["context.move"].interactable,Is.False);
+            Assert.That(runner.Session.World.PendingCommandCount,Is.Zero);
+            Click("context.gather."+node.Id);
+            Assert.That(node.Designated,Is.True);Assert.That(shell.IsContextMenuOpen,Is.False);
+            shell.HandleMapClick(node.Position,true);
+            Assert.That(shell.ProcessShortcut(Key.Escape),Is.True);
+            Assert.That(shell.IsContextMenuOpen,Is.False);
+            Assert.That(shell.SelectedPawnId,Is.EqualTo(1));
+            Assert.That(runner.Session.World.Tick,Is.Zero);
         }
         private void Setup(bool developmentUi = false)
         {
@@ -287,6 +379,8 @@ namespace RimworldTweak.Tests.PlayMode
             Assert.That(summary,Is.EqualTo("목재 20"));
         }
 
+
+
         [UnityTest] public IEnumerator ConstructionNoticeTracksMissingMaterialsAndBlockedAccess()
         {
             Setup();runner.Initialize(new ScenarioDefinition(8,8,Array.Empty<GridPosition>(),
@@ -334,7 +428,7 @@ namespace RimworldTweak.Tests.PlayMode
             var tickBefore=world.Tick;Assert.That(runner.SetCookingOrder(stove.Id,true,50),Is.True);
             yield return null;yield return null;
             Assert.That(shell.Buttons.ContainsKey(full),Is.False);
-            Assert.That(shell.Buttons[reached].GetComponentInChildren<Text>().text,Does.StartWith("정상 · 조리대"));
+            Assert.That(shell.Buttons.ContainsKey(reached),Is.False,"Normal target completion belongs in the inspector, not the problem notices.");
             Assert.That(world.Tick,Is.EqualTo(tickBefore));
             Assert.That(runner.SetCookingOrder(stove.Id,true,51),Is.True);
             yield return null;yield return null;
@@ -368,6 +462,15 @@ namespace RimworldTweak.Tests.PlayMode
             Setup();
             shell.ShowPauseMenu();Click("main");Click("transition.discard");
             Assert.That(shell.Buttons["continue"].interactable,Is.False);
+            var blockedClicks = 0;
+            var disabledContinue = shell.Buttons["continue"];
+            disabledContinue.onClick.AddListener(() => blockedClicks++);
+            ExecuteEvents.Execute(disabledContinue.gameObject,
+                new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left },
+                ExecuteEvents.pointerClickHandler);
+            ExecuteEvents.Execute(disabledContinue.gameObject, new BaseEventData(EventSystem.current),
+                ExecuteEvents.submitHandler);
+            Assert.That(blockedClicks, Is.Zero);
             SaveDirect("이전 저장",2);
             var latest=SaveDirect("최근 저장",3);
             runner.Settings.RecentSlotId=null;
@@ -699,14 +802,14 @@ namespace RimworldTweak.Tests.PlayMode
                     CollectionAssert.AreEqual(before,CurrentSaveBytes(),"Dragging preview must not change game state.");
                     pump(reverse?firstScreen:lastScreen,false);
                     CollectionAssert.AreEquivalent(new[]{P(3,3),P(4,3),P(3,4),P(4,4)},cells());
-                    Assert.That(shell.ActiveTool,Is.EqualTo(SettlementShell.Tool.None));
+                    Assert.That(shell.ActiveTool,Is.EqualTo(tool));
                     pump(lastScreen,false);Assert.That(count(),Is.EqualTo(1));
                     delete();
                 }
                 pump(firstScreen,false);shell.BeginTool(tool);
                 pump(firstScreen,true);pump(firstScreen,false);
                 CollectionAssert.AreEqual(new[]{first},cells());
-                Assert.That(shell.ActiveTool,Is.EqualTo(SettlementShell.Tool.None));
+                Assert.That(shell.ActiveTool,Is.EqualTo(tool));
                 delete();
                 foreach(var interruption in new[]{"menu","focus","reset","load"})
                 {
@@ -765,7 +868,7 @@ namespace RimworldTweak.Tests.PlayMode
             Click("tab.build");Click("architect.zones");Click("tool.storage");shell.HandleRectangle(P(4,3),P(3,2));
             var storage=world.StorageZones.Single(z=>z.Exists);
             Assert.That(storage.Slots.Count,Is.EqualTo(4));
-            Assert.That(shell.ActiveTool,Is.EqualTo(SettlementShell.Tool.None));
+            Assert.That(shell.ActiveTool,Is.EqualTo(SettlementShell.Tool.Storage));
             shell.SelectObject(storage.Id);Click("selection.detail");
             foreach(ResourceKind kind in Enum.GetValues(typeof(ResourceKind)))
             {
@@ -781,7 +884,7 @@ namespace RimworldTweak.Tests.PlayMode
             Click("tab.build");Click("architect.zones");Click("tool.growing");shell.HandleRectangle(P(6,5),P(5,4));
             var growing=world.GrowingZones.Single(z=>z.Exists);
             Assert.That(growing.Cells.Count,Is.EqualTo(4));
-            Assert.That(shell.ActiveTool,Is.EqualTo(SettlementShell.Tool.None));
+            Assert.That(shell.ActiveTool,Is.EqualTo(SettlementShell.Tool.Growing));
             shell.SelectObject(growing.Id);Click("sowing");
             Assert.That(growing.SowingEnabled,Is.False);yield return null;
             Assert.That(shell.Buttons["sowing"].GetComponentInChildren<Text>().text,Does.StartWith("파종 중지"));
@@ -797,8 +900,8 @@ namespace RimworldTweak.Tests.PlayMode
             Setup();runner.SetPaused(true);yield return null;
             shell.OpenTab("build");Click("build.Wall");shell.HandleMapClick(P(4,4),false);
             var world=runner.Session.World;var blueprint=world.Blueprints.Single(b=>b.Exists);
-            Assert.That(shell.SelectedObjectId,Is.EqualTo(blueprint.Id));
-            Assert.That(shell.ActiveTool,Is.EqualTo(SettlementShell.Tool.None));
+            Assert.That(shell.ActiveTool,Is.EqualTo(SettlementShell.Tool.Building));
+            shell.CancelTool();shell.SelectObject(blueprint.Id);
             for(var tick=0;tick<300&&blueprint.DeliveredWood==0;tick++)runner.Session.Step(1);
             Assert.That(blueprint.Exists,Is.True);Assert.That(blueprint.DeliveredWood,Is.EqualTo(2));
             var savedTick=world.Tick;Click("cancel.blueprint");
@@ -1076,7 +1179,7 @@ namespace RimworldTweak.Tests.PlayMode
                     pump(point,1,false);pump(point,0,false);pump(point,0,false);
                     var world=runner.Session.World;var blueprint=world.Blueprints.Single(b=>b.Exists);
                     Assert.That(blueprint.Kind,Is.EqualTo(kind));Assert.That(blueprint.Position,Is.EqualTo(valid));
-                    Assert.That(shell.ActiveTool,Is.EqualTo(SettlementShell.Tool.None));
+                    Assert.That(shell.ActiveTool,Is.EqualTo(SettlementShell.Tool.Building));
                     Assert.That(world.Tick,Is.Zero);Assert.That(world.PendingCommandCount,Is.Zero);
                     Assert.That(world.Resources.Single(r=>r.Id==101).Amount,Is.EqualTo(20));
                     Assert.That(runner.CancelBlueprint(blueprint.Id),Is.True);shell.SelectPawn(1);

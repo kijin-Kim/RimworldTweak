@@ -18,6 +18,8 @@ namespace RimworldTweak.Presentation
         public WorldMapView Map { get; private set; }
         public WorldMapInput MapInput { get; private set; }
         public int? SelectedPawnId { get; private set; }
+        private readonly HashSet<int> selectedPawns=new HashSet<int>();
+        public IReadOnlyCollection<int> SelectedPawnIds => selectedPawns.ToArray();
         public int? SelectedObjectId { get; private set; }
         public Tool ActiveTool { get; private set; }
         public bool IsMenuOpen => menuRoot != null && menuRoot.gameObject.activeSelf;
@@ -51,9 +53,11 @@ namespace RimworldTweak.Presentation
         private bool draftHeld;
         private bool developmentUi;
         private bool hadFocus = true;
-        private static readonly Color PanelColor = new Color(.08f,.105f,.12f,.98f);
-        private static readonly Color TextColor = new Color(.91f,.92f,.88f);
-        private static readonly Color Accent = new Color(.69f,.81f,.52f);
+        private static readonly Color PanelColor = new Color(.22f, .22f, .21f, .98f);
+        private static readonly Color ControlColor = new Color(.30f, .30f, .28f);
+        private static readonly Color ActiveColor = new Color(.48f, .53f, .36f);
+        private static readonly Color TextColor = new Color(.96f, .94f, .88f);
+        private static readonly Color Accent = new Color(.73f, .80f, .56f);
 
         public void Initialize(SimulationRunner runner, bool startAtMenu = true, string storageRoot = null, VisualCatalog visuals = null, bool enableDevelopmentUi = false)
         {
@@ -68,7 +72,7 @@ namespace RimworldTweak.Presentation
             Map.Initialize(visuals);
             Map.Bind(Runner.Session.World);
             MapInput = Map.gameObject.AddComponent<WorldMapInput>();
-            MapInput.Configure(Map, () => IsInputBlocked, () => ActiveTool != Tool.None, () => ActiveTool == Tool.Storage || ActiveTool == Tool.Growing || ActiveTool == Tool.Gather, HandleMapClick, HandleRectangle, CancelTool);
+            MapInput.Configure(Map, () => IsInputBlocked, () => ActiveTool != Tool.None, () => ActiveTool == Tool.None || ActiveTool == Tool.Storage || ActiveTool == Tool.Growing || ActiveTool == Tool.Gather, HandleMapClick, HandleRectangle, CancelTool);
             displayed = Runner.Session.World;
             HasSettlement = !startAtMenu;
             RefreshLayout();
@@ -76,7 +80,7 @@ namespace RimworldTweak.Presentation
             if (startAtMenu) ShowMainMenu();
         }
 
-        public bool IsInputBlocked => !HasSettlement || IsMenuOpen || Runner == null || Runner.SaveBusy || TextFocused();
+        public bool IsInputBlocked => !HasSettlement || IsMenuOpen || IsContextMenuOpen || Runner == null || Runner.SaveBusy || TextFocused();
         private static bool TextFocused()
         {
             var current = EventSystem.current == null ? null : EventSystem.current.currentSelectedGameObject;
@@ -92,6 +96,10 @@ namespace RimworldTweak.Presentation
             if (keys.spaceKey.wasPressedThisFrame) ProcessShortcut(Key.Space);
             if (keys.digit1Key.wasPressedThisFrame) ProcessShortcut(Key.Digit1);
             if (keys.digit3Key.wasPressedThisFrame) ProcessShortcut(Key.Digit3);
+            if (keys.tabKey.wasPressedThisFrame) ProcessShortcut(Key.Tab);
+            if (keys.f1Key.wasPressedThisFrame) ProcessShortcut(Key.F1);
+            if (keys.commaKey.wasPressedThisFrame) ProcessShortcut(Key.Comma);
+            if (keys.periodKey.wasPressedThisFrame) ProcessShortcut(Key.Period);
             var held = keys.rKey.isPressed;
             if (held && !draftHeld && hadFocus) ProcessShortcut(Key.R);
             draftHeld = held;
@@ -103,6 +111,7 @@ namespace RimworldTweak.Presentation
             if (Runner == null || Runner.SaveBusy || TextFocused()) return false;
             if (key == Key.Escape)
             {
+                if (IsContextMenuOpen) { CloseContextMenu(); return true; }
                 if (IsMenuOpen) { CancelMenuLevel(); return true; }
                 if (ActiveTool != Tool.None) { CancelTool(); return true; }
                 if (!string.IsNullOrEmpty(openTab)) { OpenTab(string.Empty); return true; }
@@ -113,19 +122,39 @@ namespace RimworldTweak.Presentation
             if (IsInputBlocked) return false;
             switch (key)
             {
+                case Key.Tab: ToggleTab("architect"); break;
+                case Key.F1: ToggleTab("work"); break;
+                case Key.Comma: SelectAdjacentPawn(-1); break;
+                case Key.Period: SelectAdjacentPawn(1); break;
                 case Key.F3: if (!developmentUi) return false; ToggleTab("development"); break;
                 case Key.Space: Runner.SetPaused(!Runner.IsPaused); break;
                 case Key.Digit1: Runner.SetSpeed(1); break;
                 case Key.Digit3: Runner.SetSpeed(3); break;
-                case Key.R: if (!SelectedPawnId.HasValue) return false; Runner.ToggleDraft(SelectedPawnId.Value); break;
+                case Key.R: if (!SelectedPawnId.HasValue) return false; ToggleSelectedDraft(); break;
                 default: return false;
             }
             return true;
         }
 
+        private void SelectAdjacentPawn(int direction)
+        {
+            var pawns=Runner.Session.World.Colonists;
+            if(pawns.Count==0)return;
+            var index=-1;
+            for(var i=0;i<pawns.Count;i++)if(pawns[i].Id==SelectedPawnId)index=i;
+            index=index<0?(direction>0?0:pawns.Count-1):(index+direction+pawns.Count)%pawns.Count;
+            SelectPawn(pawns[index].Id);
+            FocusTarget(pawns[index].Position);
+        }
+
         private void LateUpdate()
         {
             if (Runner == null) return;
+            if(IsContextMenuOpen&&Mouse.current!=null&&(Mouse.current.leftButton.wasPressedThisFrame||Mouse.current.rightButton.wasPressedThisFrame)&&
+                !RectTransformUtility.RectangleContainsScreenPoint(contextMenu,Mouse.current.position.ReadValue()))
+            {
+                CloseContextMenu();MapInput.CancelGesture();
+            }
             if (feedbackSeconds > 0 && HasSettlement && !IsMenuOpen)
             {
                 feedbackSeconds -= Time.unscaledDeltaTime;
@@ -136,7 +165,7 @@ namespace RimworldTweak.Presentation
         }
         private void OnApplicationFocus(bool focused)
         {
-            if (!focused) { MapInput?.CancelGesture(); draftHeld = true; hadFocus = false; }
+            if (!focused) { CloseContextMenu(); MapInput?.CancelGesture(); draftHeld = true; hadFocus = false; }
         }
         private void OnDestroy() { if (Runner != null) Runner.SetUiBlocked(false); }
 
@@ -145,19 +174,23 @@ namespace RimworldTweak.Presentation
             var world = Runner.Session.World;
             if (!ReferenceEquals(displayed, world))
             {
-                Feedback=string.Empty;
+                Feedback=string.Empty;CloseContextMenu();
                 MapInput.CancelGesture(); CancelTool(); ClearSelection();
                 displayed = world; Map.Bind(world); BuildColonistBar();ClearAlerts();OpenTab(string.Empty);
             }
             if (SelectedPawnId.HasValue && !world.Colonists.Any(x => x.Id == SelectedPawnId)) ClearSelection();
             if (SelectedObjectId.HasValue && !ObjectExists(SelectedObjectId.Value)) ClearSelection();
             Map.Refresh(world, SelectedPawnId, SelectedObjectId, Runner.IsPaused || Runner.IsUiBlocked);
+            Map.ShowPawnSelections(selectedPawns,SelectedPawnId);
             RefreshPreview();
             RefreshAlerts();
             RefreshResources(world);
             RefreshPortraitTooltip();
             timeStatus.text = (Runner.IsPaused ? "일시정지" : Runner.SpeedMultiplier + "배속") + " · " + (world.Tick / 10) + "초";
             buttons["pause"].GetComponentInChildren<Text>().text = Runner.IsPaused ? "재생" : "정지";
+            SetButtonActive(buttons["pause"], Runner.IsPaused);
+            SetButtonActive(buttons["speed1"], !Runner.IsPaused && Runner.SpeedMultiplier == 1);
+            SetButtonActive(buttons["speed3"], !Runner.IsPaused && Runner.SpeedMultiplier == 3);
             feedbackLabel.text = Feedback;
             if (architectDescription != null) architectDescription.text = HasArchitectTool ? Feedback : string.Empty;
             foreach (var refresh in refreshers) refresh();
@@ -191,18 +224,22 @@ namespace RimworldTweak.Presentation
             resourceTooltip.gameObject.SetActive(showTooltip);
         }
 
-        public void SelectPawn(int id)
+        public void SelectPawn(int id, bool additive=false)
         {
             if (!Runner.Session.World.Colonists.Any(x=>x.Id==id)) return;
             OpenTab(string.Empty);
-            SelectedPawnId = id; SelectedObjectId = null; BuildInspector();
+            if(!additive)selectedPawns.Clear();
+            if(additive&&selectedPawns.Contains(id))selectedPawns.Remove(id);else selectedPawns.Add(id);
+            SelectedPawnId = selectedPawns.Count==0?(int?)null:selectedPawns.OrderBy(x=>x).First();
+            SelectedObjectId = null; BuildInspector();
         }
-        public void ClearSelection() { SelectedPawnId = null; SelectedObjectId = null; BuildInspector(); }
+        public void ClearSelection() { selectedPawns.Clear(); SelectedPawnId = null; SelectedObjectId = null; BuildInspector(); }
         public void SelectObject(int id) => SelectObject(id, null);
 
         private void SelectObject(int id, GridPosition? hitCell)
         {
             OpenTab(string.Empty);
+            selectedPawns.Clear();
             SelectedPawnId = null;
             SelectedObjectId = id;
             BuildInspector(hitCell);
@@ -213,13 +250,14 @@ namespace RimworldTweak.Presentation
             if (right)
             {
                 if (ActiveTool != Tool.None) { CancelTool(); return; }
-                if (SelectedPawnId.HasValue) Report(Runner.MoveColonist(SelectedPawnId.Value,position), "이동 명령을 보냈어.");
+                if(ObjectsAt(position).Count>0){ShowContextMenu(position);return;}
+                if (SelectedPawnId.HasValue)MoveSelectedPawns(position);
                 return;
             }
             if (ActiveTool == Tool.Building)
             {
                 var ok=Runner.PlaceBlueprint(buildingKind,position);
-                if(ok){CancelTool();var b=Runner.Session.World.Blueprints.Last(x=>x.Exists&&x.Position==position);SelectObject(b.Id);}
+
                 Report(ok,"건설을 지정했어."); return;
             }
             if (ActiveTool == Tool.Gather)
@@ -227,13 +265,26 @@ namespace RimworldTweak.Presentation
                 var node=Runner.Session.World.Gatherables.FirstOrDefault(x=>!x.Depleted&&x.Position==position);
                 Report(node!=null&&Runner.DesignateGather(node.Id,true),"채집을 지정했어."); return;
             }
-            var pawn=Runner.Session.World.Colonists.Where(x=>x.Position==position).OrderBy(x=>x.Id).FirstOrDefault();
-            if(pawn!=null){SelectPawn(pawn.Id);return;}
+            var world = Runner.Session.World;
+            var pawn = world.Colonists.Where(x =>
+            {
+                var rendered = WorldMapView.PawnPosition(x);
+                return Mathf.FloorToInt(rendered.x) == position.X && Mathf.FloorToInt(rendered.y) == position.Y;
+            }).OrderBy(x => x.Id).FirstOrDefault();
+            if(pawn!=null){SelectPawn(pawn.Id,ShiftHeld);return;}
             var ids=ObjectsAt(position);if(ids.Count>0)SelectObject(ids[0],position);else ClearSelection();
         }
         public void HandleRectangle(GridPosition first, GridPosition last)
         {
             if(IsInputBlocked)return;
+            if(ActiveTool==Tool.None)
+            {
+                if(first==last){HandleMapClick(last,false);return;}
+                var ids=Runner.Session.World.Colonists.Where(p=>InRectangle(p.Position,first,last)).Select(p=>p.Id).ToArray();
+                if(!ShiftHeld)ClearSelection();
+                foreach(var id in ids)if(!selectedPawns.Contains(id))SelectPawn(id,true);
+                return;
+            }
             if (ActiveTool == Tool.Gather)
             {
                 var count = 0;
@@ -243,8 +294,21 @@ namespace RimworldTweak.Presentation
                 return;
             }
             var ok=ActiveTool==Tool.Storage?Runner.CreateStorage(first,last):ActiveTool==Tool.Growing&&Runner.CreateGrowingZone(first,last);
-            if(ok)OpenTab(string.Empty);
             Report(ok,"구역을 지정했어.");
+        }
+        private void MoveSelectedPawns(GridPosition position)
+        {
+            var count=0;
+            foreach(var id in selectedPawns.OrderBy(x=>x))if(Runner.MoveColonist(id,position))count++;
+            Report(count>0,count+"명에게 이동 명령을 보냈어.");
+        }
+        private static bool ShiftHeld => Keyboard.current!=null&&(Keyboard.current.leftShiftKey.isPressed||Keyboard.current.rightShiftKey.isPressed);
+        private void ToggleSelectedDraft()
+        {
+            var world=Runner.Session.World;
+            var draft=world.Colonists.Any(p=>selectedPawns.Contains(p.Id)&&!p.IsDrafted);
+            foreach(var pawn in world.Colonists)
+                if(selectedPawns.Contains(pawn.Id)&&pawn.IsDrafted!=draft)Runner.ToggleDraft(pawn.Id);
         }
         private static bool InRectangle(GridPosition position, GridPosition first, GridPosition last)
         {
@@ -259,7 +323,13 @@ namespace RimworldTweak.Presentation
         private static string ToolName(Tool tool) => tool==Tool.Storage?"저장 구역":tool==Tool.Growing?"경작 구역":tool==Tool.Gather?"채집":"선택";
         private void RefreshPreview()
         {
-            if(IsInputBlocked||ActiveTool==Tool.None||!MapInput.HoverPosition.HasValue){Map.SetPreview(null,null,true);return;}
+            if(IsInputBlocked||!MapInput.HoverPosition.HasValue){Map.SetPreview(null,null,true);return;}
+            if(ActiveTool==Tool.None)
+            {
+                var start=MapInput.DragStart;var end=MapInput.HoverPosition.Value;
+                Map.SetPreview(start.HasValue&&start.Value!=end?start:null,start.HasValue&&start.Value!=end?end:(GridPosition?)null,true);
+                return;
+            }
             var last=MapInput.HoverPosition.Value;var first=MapInput.DragStart??last;var w=Runner.Session.World;
             var reason=string.Empty;
             var valid=ActiveTool==Tool.Building?w.CanPlaceBlueprint(buildingKind,last,out reason)

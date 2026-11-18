@@ -38,7 +38,7 @@ namespace RimworldTweak.Presentation
             var mouse = Mouse.current;
             suppressUntilRelease = mouse != null && (mouse.leftButton.isPressed || mouse.middleButton.isPressed || mouse.rightButton.isPressed);
             var keyboard = Keyboard.current;
-            suppressKeysUntilRelease = keyboard != null && (keyboard.wKey.isPressed || keyboard.aKey.isPressed || keyboard.sKey.isPressed || keyboard.dKey.isPressed);
+            suppressKeysUntilRelease = keyboard != null && NavigationKeysHeld(keyboard);
             HoverPosition = null;
             if (view != null) view.SetPreview(null, null, false);
             Hovered?.Invoke(null);
@@ -117,13 +117,22 @@ namespace RimworldTweak.Presentation
             if (keyboard == null || leftCaptured || middleCaptured || suppressUntilRelease) return;
             if (suppressKeysUntilRelease)
             {
-                if (!keyboard.wKey.isPressed && !keyboard.aKey.isPressed && !keyboard.sKey.isPressed && !keyboard.dKey.isPressed) suppressKeysUntilRelease = false;
+                if (!NavigationKeysHeld(keyboard)) suppressKeysUntilRelease = false;
                 return;
             }
-            var delta = new Vector2((keyboard.dKey.isPressed ? 1 : 0) - (keyboard.aKey.isPressed ? 1 : 0),
-                (keyboard.wKey.isPressed ? 1 : 0) - (keyboard.sKey.isPressed ? 1 : 0));
-            if (delta != Vector2.zero) view.Pan(delta.normalized * PanSpeed * Time.unscaledDeltaTime);
+            if(keyboard.pageDownKey.wasPressedThisFrame)view.Zoom(1.5f,view.MapCamera.pixelRect.center);
+            if(keyboard.pageUpKey.wasPressedThisFrame)view.Zoom(-1.5f,view.MapCamera.pixelRect.center);
+            var delta = new Vector2((keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed ? 1 : 0)
+                    - (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed ? 1 : 0),
+                (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed ? 1 : 0)
+                    - (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed ? 1 : 0));
+            var multiplier=keyboard.leftShiftKey.isPressed||keyboard.rightShiftKey.isPressed?2f:1f;
+            if (delta != Vector2.zero) view.Pan(delta.normalized * PanSpeed * multiplier * Time.unscaledDeltaTime);
         }
+        private static bool NavigationKeysHeld(Keyboard keyboard) =>
+            keyboard.wKey.isPressed||keyboard.aKey.isPressed||keyboard.sKey.isPressed||keyboard.dKey.isPressed||
+            keyboard.upArrowKey.isPressed||keyboard.downArrowKey.isPressed||keyboard.leftArrowKey.isPressed||keyboard.rightArrowKey.isPressed||
+            keyboard.pageUpKey.isPressed||keyboard.pageDownKey.isPressed;
         private void OnApplicationFocus(bool hasFocus) { if (!hasFocus) CancelGesture(); }
         private void OnDisable() { CancelGesture(); }
     }

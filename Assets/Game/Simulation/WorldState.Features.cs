@@ -86,7 +86,7 @@ namespace RimworldTweak.Simulation
         {
             var b=Building(o.StoveId);if(b==null||b.DemolitionDesignated)return WorkReasonCode.InvalidTarget;
             if(!o.Enabled)return WorkReasonCode.Disabled;
-            if(MealTotal>=o.TargetMeals)return WorkReasonCode.TargetReached;
+            if(!NeedsCooking(o, MealTotal))return WorkReasonCode.TargetReached;
             var output=CookingOutput(o.StoveId);
             if(output==null||output.Amount>=50)return WorkReasonCode.OutputFull;
             if(o.OwnerId.HasValue||output.OwnerId.HasValue)return WorkReasonCode.TargetReserved;

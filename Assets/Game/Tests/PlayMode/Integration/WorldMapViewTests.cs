@@ -395,6 +395,38 @@ namespace RimworldTweak.Tests.PlayMode
             MouseState(target, true); PumpInput(); yield return null; MouseState(target); PumpInput(); yield return null; Assert.That(clicks, Is.EqualTo(1), pointerEvidence);
         }
 
+        [UnityTest] public IEnumerator EdgeCellsCanBeCenteredWithoutChangingZoom()
+        {
+            Setup();world=WorldState.Create(WorkScenario.CreateTestMap());map.Bind(world);
+            var zoom=map.ZoomSize;
+            foreach(var cell in new[]{P(0,0),P(31,31)})
+            {
+                map.Focus(cell);
+                Assert.That(Vector2.Distance(map.GridToScreen(cell),map.MapCamera.pixelRect.center),Is.LessThan(.1f));
+                Assert.That(map.ZoomSize,Is.EqualTo(zoom));
+            }
+            yield return null;
+        }
+        [UnityTest] public IEnumerator PageZoomAndHeldArrowRespectModalSuppression()
+        {
+            Setup();UseManualInput();keyboard=InputSystem.AddDevice<Keyboard>();keyboard.MakeCurrent();
+            var blocked=false;var input=CreateInput();
+            input.Configure(map,()=>blocked,()=>false,()=>false,(p,r)=>{},(a,b)=>{},()=>{});
+            var before=map.ZoomSize;
+            InputSystem.QueueStateEvent(keyboard,new KeyboardState(Key.PageDown));PumpInput();yield return null;
+            Assert.That(map.ZoomSize,Is.EqualTo(before*Mathf.Pow(.85f,1.5f)).Within(.001f));
+            InputSystem.QueueStateEvent(keyboard,new KeyboardState());PumpInput();yield return null;
+            InputSystem.QueueStateEvent(keyboard,new KeyboardState(Key.PageUp));PumpInput();yield return null;
+            Assert.That(map.ZoomSize,Is.EqualTo(before).Within(.001f));
+            map.Zoom(20,map.GridToScreen(P(3,3)));map.Focus(P(3,3));
+            InputSystem.QueueStateEvent(keyboard,new KeyboardState(Key.RightArrow));PumpInput();yield return null;
+            blocked=true;PumpInput();yield return null;var position=map.MapCamera.transform.position;
+            blocked=false;PumpInput();yield return null;
+            Assert.That(map.MapCamera.transform.position,Is.EqualTo(position));
+            InputSystem.QueueStateEvent(keyboard,new KeyboardState());PumpInput();yield return null;
+            InputSystem.QueueStateEvent(keyboard,new KeyboardState(Key.RightArrow));PumpInput();yield return null;
+            Assert.That(map.MapCamera.transform.position.x,Is.GreaterThan(position.x));
+        }
         [UnityTest] public IEnumerator HeldCameraKeyDoesNotResumeUntilReleasedAfterBlock()
         {
             Setup(); UseManualInput(); keyboard = InputSystem.AddDevice<Keyboard>(); keyboard.MakeCurrent();

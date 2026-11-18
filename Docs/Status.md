@@ -4,6 +4,8 @@
 
 ## 현재 결론
 
+림월드의 지도 중심 배치와 조작 흐름을 현재 모던 HUD와 대조했다. 건축가 패널과 활성 도구 표시, 조리 계획서 편집 대상·계속 생산 상태, 이동 중인 폰의 선택, 우클릭 이동 조건을 보완했다. EditMode 200/200·PlayMode 120/120·Windows 빌드와 두 해상도 64화면 배치 검사를 통과했다. [세 관점 검토와 결과](Reviews/Modern-Hud-RimWorld-Audit.md)
+
 2026-11-18 휠 입력을120으로 중복 나누던 처리를 수정해 한 칸1.5줌 단계로 조정했다. PlayMode109/109, Windows 빌드 성공, 사용자 전체 정상 확인을 기록했다. [휠 개선](Plans/RimWorld-UI-Implementation.md).
 
 2026-11-18 확대 맵·드래그 채집·다중 조리 계획서의 구현과 사용자 전체 정상 확인을 완료했다. EditMode194/194, PlayMode108/108, Windows 빌드 성공. [검증과 수락](Verification/2026-11-18-test-map-cooking-bills.md).

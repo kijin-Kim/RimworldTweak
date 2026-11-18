@@ -58,8 +58,7 @@ namespace RimworldTweak.Simulation
             {
                 if(!o.Exists)continue;
                 var b=Building(o.StoveId);
-                var demand=o.RepeatMode==CookingRepeatMode.Forever ||
-                    (o.RepeatMode==CookingRepeatMode.RepeatCount ? o.RemainingCount>0 : meals+count<o.TargetMeals);
+                var demand=NeedsCooking(o, meals+count);
                 var allowed=b!=null&&!b.DemolitionDesignated&&o.Enabled&&demand;
                 if(busyStoves.Contains(o.StoveId))
                 {
@@ -106,6 +105,10 @@ namespace RimworldTweak.Simulation
                 }
             }
         }
+        private static bool NeedsCooking(CookingOrderState order, int meals) =>
+            order.RepeatMode == CookingRepeatMode.Forever ||
+            (order.RepeatMode == CookingRepeatMode.RepeatCount ? order.RemainingCount > 0 : meals < order.TargetMeals);
+
         public int AddCookingBill(int stoveId)
         {
             var building=Building(stoveId);
@@ -125,12 +128,22 @@ namespace RimworldTweak.Simulation
                 (workerId.HasValue&&!System.Linq.Enumerable.Any(Colonists,p=>p.Id==workerId.Value))||
                 (deliveryMode==CookingDeliveryMode.SpecificStorage&&(!destinationZoneId.HasValue||Zone(destinationZoneId.Value)==null)))
                 return Reject("InvalidCookingOrder");
+            var destination = deliveryMode == CookingDeliveryMode.SpecificStorage ? destinationZoneId : null;
+            var sameQuantity = repeatMode == CookingRepeatMode.Forever ||
+                amount == (repeatMode == CookingRepeatMode.RepeatCount ? order.RemainingCount : order.TargetMeals);
+            if (order.Enabled == enabled && order.RepeatMode == repeatMode && sameQuantity &&
+                order.WorkerId == workerId && order.AllowIngredients == allowIngredients &&
+                order.IngredientRadius == radius && order.DeliveryMode == deliveryMode && order.DestinationZoneId == destination)
+            {
+                LastCommandError = string.Empty;
+                return true;
+            }
             if(order.ActiveCycle){CancelProductionOwners(order.StoveId);order.ActiveCycle=false;}
             order.Enabled=enabled;order.RepeatMode=repeatMode;
             if(repeatMode==CookingRepeatMode.RepeatCount)order.RemainingCount=amount;
-            else order.TargetMeals=amount;
+            else if(repeatMode==CookingRepeatMode.TargetStock)order.TargetMeals=amount;
             order.WorkerId=workerId;order.AllowIngredients=allowIngredients;order.IngredientRadius=radius;
-            order.DeliveryMode=deliveryMode;order.DestinationZoneId=deliveryMode==CookingDeliveryMode.SpecificStorage?destinationZoneId:null;
+            order.DeliveryMode=deliveryMode;order.DestinationZoneId=destination;
             ReconcileCookingCycles(false);availabilityRevision++;LastCommandError=string.Empty;return true;
         }
         public bool MoveCookingBill(int billId,int direction)

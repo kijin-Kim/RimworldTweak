@@ -84,12 +84,12 @@ namespace RimworldTweak.Demo
                 yield return Capture("default");
                 shell.SelectPawn(runner.Session.World.Colonists[0].Id);yield return Capture("selected");
                 if(!Check(()=>{
-                    var directions=new[]{new GridPosition(1,2),new GridPosition(3,1),new GridPosition(1,1)};
+                    var directions=new[]{new GridPosition(0,1),new GridPosition(1,0),new GridPosition(0,-1)};
                     for(var index=0;index<3;index++)
                     {
                         var pawn=runner.Session.World.Colonists[index];
                         runner.ToggleDraft(pawn.Id);
-                        if(!runner.MoveColonist(pawn.Id,directions[index]))throw new InvalidOperationException("Direction sample move rejected.");
+                        if(!runner.MoveColonist(pawn.Id,new GridPosition(pawn.Position.X+directions[index].X,pawn.Position.Y+directions[index].Y)))throw new InvalidOperationException("Direction sample move rejected.");
                     }
                     runner.Session.Step(1);
                 }))yield break;
@@ -101,14 +101,17 @@ namespace RimworldTweak.Demo
                 var previewCell = new GridPosition(5,5);
                 if(!Check(()=>{
                     var world=runner.Session.World;
-                    var candidates=from y in Enumerable.Range(0,world.Height)
-                                   from x in Enumerable.Range(0,world.Width)
+                    var origin=world.Colonists[0].Position;
+                    var left=Math.Max(0,origin.X-14);
+                    var bottom=Math.Max(0,origin.Y-14);
+                    var candidates=from y in Enumerable.Range(bottom,Math.Min(world.Height,origin.Y+15)-bottom)
+                                   from x in Enumerable.Range(left,Math.Min(world.Width,origin.X+15)-left)
                                    let cell=new GridPosition(x,y)
                                    let point=shell.Map.GridToScreen(cell)
                                    where point.x>0&&point.x<Screen.width&&point.y>0&&point.y<Screen.height
                                        &&!shell.MapInput.IsPointerOverUI(point)
                                        &&world.CanPlaceBlueprint(BuildingKind.Wall,cell,out _)
-                                   orderby Math.Abs(x-5)+Math.Abs(y-5)
+                                   orderby Math.Abs(x-origin.X-4)+Math.Abs(y-origin.Y-4)
                                    select cell;
                     previewCell=candidates.First();
                     previousCaptureBackgroundBehavior=InputSystem.settings.backgroundBehavior;
@@ -134,6 +137,17 @@ namespace RimworldTweak.Demo
                 shell.SelectObject(runner.Session.World.Buildings.Single(b=>b.Exists).Id);
                 shell.Buttons["selection.detail"].onClick.Invoke();
                 yield return Capture("stove");
+                var stoveId=runner.Session.World.Buildings.Single(b=>b.Exists).Id;
+                runner.AddCookingBill(stoveId);runner.AddCookingBill(stoveId);
+                shell.SelectObject(stoveId);shell.Buttons["selection.detail"].onClick.Invoke();
+                yield return Capture("bills-three");
+                var firstBill=runner.Session.World.CookingOrders.First(b=>b.Exists&&b.StoveId==stoveId);
+                shell.Buttons["cook.rowdetails."+firstBill.Id].onClick.Invoke();
+                yield return Capture("bill-conditions");
+                shell.ProcessShortcut(Key.Escape);
+                shell.HandleMapClick(runner.Session.World.Buildings.Single(b=>b.Exists).Position,true);
+                yield return Capture("context-menu");
+                shell.ProcessShortcut(Key.Escape);
                 var ingredientTotal = shell.GetComponentsInChildren<Text>().Single(t => t.name == "Resource total Ingredients");
                 var resourcePoint = RectTransformUtility.WorldToScreenPoint(null,
                     ingredientTotal.rectTransform.TransformPoint(ingredientTotal.rectTransform.rect.center));
@@ -258,6 +272,11 @@ namespace RimworldTweak.Demo
                     }
                     File.WriteAllText(Path.Combine(output,"sample-five-state.json"),"{\"stateUnchanged\":true,\"spriteBoundsClearOfUi\":true}");
                 }))yield break;
+                runner.Initialize(WorkScenario.CreateTestMap());runner.SetPaused(true);
+                yield return null;yield return null;
+                shell.HandleRectangle(new GridPosition(0,0),new GridPosition(2,2));
+                shell.Buttons["locate"].onClick.Invoke();
+                yield return Capture("group-selection");
                 const int longNameId = 1234567890;
                 runner.Initialize(new ScenarioDefinition(8,8,Array.Empty<GridPosition>(),
                     new[]{new ColonistSeed(longNameId,new GridPosition(3,3))},Array.Empty<ResourceSeed>(), needsEnabled:false));
@@ -273,7 +292,7 @@ namespace RimworldTweak.Demo
                 {
                     var label = portrait.GetComponentInChildren<Text>();
                     var fullName = shell.GetComponentsInChildren<Text>().Single(text => text.name == "Full name");
-                    if (!label.text.EndsWith("…", StringComparison.Ordinal) || fullName.text != "정착민 " + longNameId)
+                    if (!label.text.EndsWith("…", StringComparison.Ordinal) || !fullName.text.StartsWith("정착민 " + longNameId+"\n", StringComparison.Ordinal))
                         throw new InvalidOperationException("Long portrait name did not truncate and disclose the full value.");
                 })) yield break;
             }
@@ -496,8 +515,11 @@ namespace RimworldTweak.Demo
             var report=new LayoutReport { screen=name,width=Screen.width,height=Screen.height,scale=result.scale };
             var canvas=shell.GetComponentInChildren<Canvas>();
             var canvasRect=(RectTransform)canvas.transform;
-            var workRows=canvas.GetComponentsInChildren<HorizontalLayoutGroup>()
-                .Where(row=>row.name=="Work row").ToArray();
+            var priorityButton=canvas.GetComponentsInChildren<Button>()
+                .FirstOrDefault(button=>button.name.StartsWith("priority.",StringComparison.Ordinal));
+            var workRows=priorityButton==null?Array.Empty<HorizontalLayoutGroup>():
+                priorityButton.transform.parent.parent.GetComponentsInChildren<HorizontalLayoutGroup>()
+                    .Where(row=>row.name=="Work row").ToArray();
             if(workRows.Length>1)
             {
                 var heading=workRows[0].transform;

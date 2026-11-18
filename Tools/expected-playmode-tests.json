@@ -107,5 +107,11 @@
   "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.GatherRectangleIncludesBothCornersAndSupportsReverseDrag",
   "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.CookingBillControlsChangeSelectedPlanAndKeepDetailsOpen",
   "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.NewSettlementUsesLargeMapAndPreservesDimensionsThroughSave",
-  "RimworldTweak.Tests.PlayMode.WorldMapViewTests.NormalizedWheelZoomsNoticeablyAndModalBlocksIt"
+  "RimworldTweak.Tests.PlayMode.WorldMapViewTests.NormalizedWheelZoomsNoticeablyAndModalBlocksIt",
+  "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.NavigationShortcutsCyclePawnsAndRespectMenus",
+  "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.RepeatedDesignationAndReverseWorkPriorityAffectOnlyTheirTargets",
+  "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.RectangleAndAdditiveSelectionDraftAndMoveAllSelectedPawns",
+  "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.ObjectContextMenuChangesDesignationAndEscapeKeepsSelection",
+  "RimworldTweak.Tests.PlayMode.WorldMapViewTests.PageZoomAndHeldArrowRespectModalSuppression",
+  "RimworldTweak.Tests.PlayMode.WorldMapViewTests.EdgeCellsCanBeCenteredWithoutChangingZoom"
 ]

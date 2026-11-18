@@ -10,6 +10,59 @@ namespace RimworldTweak.Presentation
     public sealed partial class SettlementShell
     {
         private RectTransform menuRoot, menuFrame, menuContent, menuActions;
+        private RectTransform contextMenu;
+        public bool IsContextMenuOpen => contextMenu!=null&&contextMenu.gameObject.activeSelf;
+
+        private void CloseContextMenu()
+        {
+            if(contextMenu==null)return;
+            contextMenu.gameObject.SetActive(false);
+            Clear(contextMenu);
+        }
+        private void ShowContextMenu(RimworldTweak.Simulation.GridPosition position)
+        {
+            CloseContextMenu();
+            if(contextMenu==null)
+            {
+                contextMenu=Box("Context actions",canvasRoot);
+                var layout=contextMenu.gameObject.AddComponent<VerticalLayoutGroup>();
+                layout.padding=new RectOffset(8,8,8,8);layout.spacing=6;
+                layout.childControlWidth=true;layout.childControlHeight=true;
+                layout.childForceExpandWidth=true;layout.childForceExpandHeight=false;
+            }
+            contextMenu.gameObject.SetActive(true);contextMenu.SetAsLastSibling();
+            var count=0;
+            Action<string,string,Action> add=(key,label,action)=>{
+                RowButton(contextMenu,"context."+key,label,()=>{CloseContextMenu();action();},36);
+                count++;
+            };
+            var world=Runner.Session.World;
+            if (SelectedPawnId.HasValue)
+            {
+                var drafted = world.Colonists.Count(pawn => selectedPawns.Contains(pawn.Id) && pawn.IsDrafted);
+                add("move", drafted == 0 ? "소집 후 이동 가능" :
+                    drafted == selectedPawns.Count ? "선택한 정착민 이동" : $"소집된 {drafted}명 이동", () => MoveSelectedPawns(position));
+                buttons["context.move"].interactable = drafted > 0;
+            }
+            foreach(var id in ObjectsAt(position))
+            {
+                var target=id;
+                add("select."+id,AlertTargetName(id)+" 선택",()=>SelectObject(target,position));
+                var node=world.Gatherables.FirstOrDefault(n=>n.Id==id&&!n.Depleted);
+                if(node!=null)add("gather."+id,node.Designated?"채집 지정 취소":"채집 지정",()=>Report(Runner.DesignateGather(target,!node.Designated),"채집 지정을 변경했어."));
+                var blueprint=world.Blueprints.FirstOrDefault(b=>b.Id==id&&b.Exists);
+                if(blueprint!=null)add("cancel."+id,"건설 취소",()=>Report(Runner.CancelBlueprint(target),"건설을 취소했어."));
+                var building=world.Buildings.FirstOrDefault(b=>b.Id==id&&b.Exists);
+                if(building!=null)add("demolish."+id,building.DemolitionDesignated?"철거 취소":"철거 지정",
+                    ()=>Report(Runner.SetDemolition(target,!building.DemolitionDesignated),"철거 지정을 변경했어."));
+            }
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRoot,Map.GridToScreen(position),null,out var point);
+            var height=count*42+16;var width=Mathf.Min(280,canvasRoot.rect.width-16);
+            Place(contextMenu,Mathf.Clamp(point.x-canvasRoot.rect.xMin,8,canvasRoot.rect.width-width-8),
+                Mathf.Clamp(canvasRoot.rect.yMax-point.y,8,Mathf.Max(8,canvasRoot.rect.height-height-8)),width,height);
+            MapInput.CancelGesture();
+        }
+
         private Text menuTitle, menuStatus;
         private float menuPreferredHeight;
         private bool pauseMenuLayout;
@@ -20,6 +73,7 @@ namespace RimworldTweak.Presentation
 
         private void OpenMenu(string title, Action back, bool pauseLayout = false, float preferredHeight = 780)
         {
+            CloseContextMenu();
             MapInput?.CancelGesture();
             if(menuRoot==null)
             {

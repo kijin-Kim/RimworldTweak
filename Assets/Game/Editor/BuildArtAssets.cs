@@ -38,7 +38,7 @@ namespace RimworldTweak.Editor
             entries.Add(new VisualDefinition("building.wall", entries.Find(e => e.Key == "building.wall.0").Sprite,
                 Vector2.one, new Vector2(.5f,.5f),Color.white,true,"Original procedural connected wall / BuildArtAssets"));
             AddStructural(entries,"terrain.blocked","blocked",c => { Fill(c,0,0,128,128,Ink); Fill(c,7,7,114,114,new Color(.37f,.39f,.36f)); },true);
-            AddStructural(entries,"ui.panel","panel",c => { Fill(c,0,0,128,128,new Color(.08f,.12f,.13f,.97f)); Border(c,0,0,128,128,4,new Color(.37f,.48f,.46f)); },true);
+            AddStructural(entries, "ui.panel", "panel", RoundedSurface, true);
             AddStructural(entries,"overlay.selection","selection",c => Border(c,4,4,120,120,5,new Color(1,.82f,.35f)),true);
             AddStructural(entries,"overlay.storage","storage",c => { Fill(c,0,0,128,128,new Color(.3f,.65f,.8f,.14f)); Border(c,0,0,128,128,3,new Color(.4f,.75f,.9f,.6f)); },true);
             AddStructural(entries,"overlay.growing","growing",c => { Fill(c,0,0,128,128,new Color(.45f,.65f,.25f,.17f)); Border(c,0,0,128,128,3,new Color(.6f,.8f,.35f,.6f)); },true);
@@ -90,11 +90,26 @@ namespace RimworldTweak.Editor
             importer.spritePixelsPerUnit=128; importer.alphaIsTransparency=true; importer.mipmapEnabled=false;
             importer.filterMode=FilterMode.Bilinear; importer.wrapMode=TextureWrapMode.Clamp;
             importer.textureCompression=TextureImporterCompression.Uncompressed; importer.maxTextureSize=512;
-            importer.isReadable=false; importer.spriteBorder=panel?new Vector4(4,4,4,4):Vector4.zero;
+            importer.isReadable=false; importer.spriteBorder=panel?new Vector4(12,12,12,12):Vector4.zero;
             var settings=new TextureImporterSettings(); importer.ReadTextureSettings(settings);
             settings.spriteAlignment=(int)SpriteAlignment.Center; settings.spritePivot=new Vector2(.5f,.5f);
             settings.spriteMeshType=SpriteMeshType.FullRect; importer.SetTextureSettings(settings); importer.SaveAndReimport();
             return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        }
+
+        private static void RoundedSurface(Color[] pixels)
+        {
+            const float radius = 9f;
+            for (var y = 0; y < 128; y++)
+            for (var x = 0; x < 128; x++)
+            {
+                var dx = Mathf.Max(0, Mathf.Abs(x - 63.5f) - (64 - radius));
+                var dy = Mathf.Max(0, Mathf.Abs(y - 63.5f) - (64 - radius));
+                var edge = Mathf.Min(64 - Mathf.Max(Mathf.Abs(x - 63.5f), Mathf.Abs(y - 63.5f)),
+                    radius - Mathf.Sqrt(dx * dx + dy * dy));
+                var tone = Mathf.Lerp(1.8f, 1f, Mathf.InverseLerp(1f, 2.5f, edge));
+                pixels[y * 128 + x] = new Color(.55f * tone, .55f * tone, .55f * tone, Mathf.Clamp01(edge + .5f));
+            }
         }
 
         private static void Wall(Color[] c,int mask)
