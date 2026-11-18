@@ -28,6 +28,68 @@ namespace RimworldTweak.Tests.PlayMode
         private static GridPosition P(int x,int y)=>new GridPosition(x,y);
 
 
+        [UnityTest]
+        public IEnumerator PawnMovesBetweenSimulationTicksAndFreezesAtItsRenderedPosition()
+        {
+            Setup();
+            runner.Initialize(new ScenarioDefinition(12, 12, Array.Empty<GridPosition>(),
+                new[] { new ColonistSeed(1, P(3,3)), new ColonistSeed(2, P(3,4)) },
+                Array.Empty<ResourceSeed>(), needsEnabled: false));
+            runner.SetPaused(true);
+            yield return null;
+            var world = runner.Session.World;
+            Assert.That(world.SetDrafted(1, true), Is.True);
+            Assert.That(world.SetDrafted(2, true), Is.True);
+            Assert.That(runner.MoveColonist(1, P(7,3)), Is.True);
+            Assert.That(runner.MoveColonist(2, P(7,4)), Is.True);
+            shell.HandleRectangle(P(3,3), P(3,4));
+            runner.SetSpeed(1);
+            runner.AdvanceTime(.1m);
+            var mapContent = shell.Map.transform.Find("World map content");
+            Vector3 Position(int id) => mapContent.Find("pawn." + id).position;
+            shell.SendMessage("LateUpdate");
+            var positions = new System.Collections.Generic.List<float> { Position(1).x };
+            var tick = world.Tick;
+            for (var frame = 0; frame < 5; frame++)
+            {
+                runner.AdvanceTime(.016m);
+                shell.SendMessage("LateUpdate");
+                positions.Add(Position(1).x);
+            }
+            TestContext.WriteLine("1x frame positions at tick "+tick+": "+string.Join(", ",positions));
+            Assert.That(world.Tick, Is.EqualTo(tick));
+            for (var i = 1; i < positions.Count; i++)
+                Assert.That(positions[i] - positions[i-1], Is.EqualTo(.032f).Within(.0001f));
+            var route = mapContent.Find("Selected route").GetComponent<LineRenderer>();
+            Assert.That(route.GetPosition(0), Is.EqualTo(Position(1)));
+            var groupOutline = mapContent.Find("Selected pawn 2").GetComponent<LineRenderer>();
+            var groupCenter = (groupOutline.GetPosition(0) + groupOutline.GetPosition(2)) * .5f;
+            Assert.That(Vector3.Distance(groupCenter, Position(2)), Is.LessThan(.0001f));
+
+            runner.SetPaused(true);
+            var paused = Position(1);
+            runner.AdvanceTime(.2m);
+            shell.SendMessage("LateUpdate");
+            Assert.That(Position(1), Is.EqualTo(paused));
+            runner.SetSpeed(3);
+            runner.AdvanceTime(.016m);
+            shell.SendMessage("LateUpdate");
+            Assert.That(Position(1).x - paused.x, Is.EqualTo(.096f).Within(.0001f));
+            runner.AdvanceTime(.016m);
+            shell.SendMessage("LateUpdate");
+            Assert.That(world.Colonists[0].Position, Is.EqualTo(P(3,3)));
+            Assert.That(Position(1).x, Is.GreaterThan(4f));
+            shell.ClearSelection();
+            shell.HandleMapClick(P(4,3), false);
+            Assert.That(shell.SelectedPawnId, Is.EqualTo(1));
+            for (var i = 0; i < 20; i++) runner.AdvanceTime(.016m);
+            shell.SendMessage("LateUpdate");
+            Assert.That(world.Colonists[0].Position, Is.EqualTo(P(5,3)));
+            Assert.That(Position(1).x, Is.GreaterThan(5.5f));
+            runner.AdvanceTime(1m);
+            shell.SendMessage("LateUpdate");
+            Assert.That(Position(1).x, Is.EqualTo(7.5f));
+        }
         [Test]
         public void GatherRectangleIncludesBothCornersAndSupportsReverseDrag()
         {

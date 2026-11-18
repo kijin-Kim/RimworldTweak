@@ -145,10 +145,11 @@ namespace RimworldTweak.Presentation
             RebuildGround();
         }
 
-        public void Refresh(WorldState world, int? selectedPawnId, int? selectedObjectId, bool paused)
+        public void Refresh(WorldState world, int? selectedPawnId, int? selectedObjectId, bool paused, decimal pendingSeconds = 0m)
         {
             Bind(world);
             if (world == null) return;
+            var tickFraction = (float)(pendingSeconds / SimulationSession.SecondsPerTick);
             if (terrainRevision != world.MapRevision) RebuildGround();
             foreach (var mark in marks.Values) mark.Root.SetActive(false);
             VisibleEntityCount = 0;
@@ -200,7 +201,7 @@ namespace RimworldTweak.Presentation
                     Draw("resource." + item.Id, VisualCatalog.ResourceKey(item.Kind), CellCenter(item.Position), Color.white, Sort(CellCenter(item.Position).y, 25), "×" + item.Amount);
             foreach (var pawn in world.Colonists)
             {
-                var position = PawnPosition(pawn);
+                var position = PawnPosition(pawn, tickFraction, world.NeedsEnabled);
                 if (pawn.Status == MovementStatus.Moving && pawn.Path.Count > 0)
                     pawnDirections[pawn.Id] = new Vector2(pawn.Path[0].X - pawn.Position.X, pawn.Path[0].Y - pawn.Position.Y);
                 var direction = pawnDirections.TryGetValue(pawn.Id, out var facing) ? facing : Vector2.down;
@@ -218,11 +219,12 @@ namespace RimworldTweak.Presentation
             {
                 foreach (var pawn in world.Colonists) if (pawn.Id == selectedPawnId.Value)
                 {
-                    DrawBox(selection, PawnPosition(pawn), new Vector2(.92f, .92f));
+                    var position = PawnPosition(pawn, tickFraction, world.NeedsEnabled);
+                    DrawBox(selection, position, new Vector2(.92f, .92f));
                     route.positionCount = pawn.Path.Count > 0 ? pawn.Path.Count + 1 : 0;
                     if (route.positionCount > 0)
                     {
-                        route.SetPosition(0, PawnPosition(pawn));
+                        route.SetPosition(0, position);
                         for (var i = 0; i < pawn.Path.Count; i++) route.SetPosition(i + 1, CellCenter(pawn.Path[i]));
                     }
                     break;
@@ -360,11 +362,19 @@ namespace RimworldTweak.Presentation
         }
 
         public static Vector2 CellCenter(GridPosition cell) => new Vector2(cell.X + .5f, cell.Y + .5f);
-        public static Vector2 PawnPosition(ColonistState pawn)
+        public static Vector2 PawnPosition(ColonistState pawn, float tickFraction = 0f, bool needsEnabled = false)
         {
             var origin = CellCenter(pawn.Position);
             if (pawn.Status != MovementStatus.Moving || pawn.Path.Count == 0) return origin;
-            return Vector2.Lerp(origin, CellCenter(pawn.Path[0]), Mathf.Clamp01((float)pawn.MovementProgress / Math.Max(1, pawn.MovementTicksPerTile)));
+            var progress = (pawn.MovementProgress + Mathf.Clamp01(tickFraction)) / pawn.MovementTicksForNextTick(needsEnabled);
+            return Vector2.Lerp(origin, CellCenter(pawn.Path[0]), progress);
+        }
+
+        internal Vector2 DisplayedPawnPosition(WorldState world, ColonistState pawn)
+        {
+            if (ReferenceEquals(world, displayedWorld) && marks.TryGetValue("pawn." + pawn.Id, out var mark))
+                return mark.Root.transform.position;
+            return PawnPosition(pawn);
         }
         public static Color PawnColor(int id)
         {
@@ -489,7 +499,7 @@ namespace RimworldTweak.Presentation
                     line=CreateLine("Selected pawn "+id,new Color(1,.86f,.3f),32000,.045f);
                     pawnSelections.Add(id,line);
                 }
-                DrawBox(line,PawnPosition(pawn),new Vector2(.92f,.92f));
+                DrawBox(line,DisplayedPawnPosition(displayedWorld,pawn),new Vector2(.92f,.92f));
             }
         }
         private LineRenderer CreateLine(string name, Color color, int order, float width)

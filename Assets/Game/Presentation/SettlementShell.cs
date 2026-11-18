@@ -180,7 +180,7 @@ namespace RimworldTweak.Presentation
             }
             if (SelectedPawnId.HasValue && !world.Colonists.Any(x => x.Id == SelectedPawnId)) ClearSelection();
             if (SelectedObjectId.HasValue && !ObjectExists(SelectedObjectId.Value)) ClearSelection();
-            Map.Refresh(world, SelectedPawnId, SelectedObjectId, Runner.IsPaused || Runner.IsUiBlocked);
+            Map.Refresh(world, SelectedPawnId, SelectedObjectId, Runner.IsPaused || Runner.IsUiBlocked, Runner.Session.PendingSeconds);
             Map.ShowPawnSelections(selectedPawns,SelectedPawnId);
             RefreshPreview();
             RefreshAlerts();
@@ -268,7 +268,7 @@ namespace RimworldTweak.Presentation
             var world = Runner.Session.World;
             var pawn = world.Colonists.Where(x =>
             {
-                var rendered = WorldMapView.PawnPosition(x);
+                var rendered = Map.DisplayedPawnPosition(world, x);
                 return Mathf.FloorToInt(rendered.x) == position.X && Mathf.FloorToInt(rendered.y) == position.Y;
             }).OrderBy(x => x.Id).FirstOrDefault();
             if(pawn!=null){SelectPawn(pawn.Id,ShiftHeld);return;}

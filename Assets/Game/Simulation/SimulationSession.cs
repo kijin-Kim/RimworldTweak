@@ -4,7 +4,7 @@ namespace RimworldTweak.Simulation
 {
     public sealed partial class SimulationSession
     {
-        private const decimal SecondsPerTick = 0.1m;
+        public const decimal SecondsPerTick = 0.1m;
         private readonly ScenarioDefinition scenario;
 
         public SimulationSession(ScenarioDefinition scenario)

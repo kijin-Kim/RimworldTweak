@@ -75,10 +75,17 @@ namespace RimworldTweak.Simulation
         {
             Destination = null; path.Clear(); MovementProgress = 0; MovementTicksPerTile = 5; Status = MovementStatus.Idle;
         }
+        private const int NutritionPerTick = 10;
+        private static int TileMovementTicks(bool starving) => starving ? 10 : 5;
+
+        public int MovementTicksForNextTick(bool needsEnabled) => MovementProgress > 0
+            ? MovementTicksPerTile
+            : TileMovementTicks(needsEnabled && Nutrition <= NutritionPerTick);
+
         internal void AdvanceMovement(bool starving = false)
         {
             if (Status != MovementStatus.Moving) return;
-            if (MovementProgress == 0) MovementTicksPerTile = starving ? 10 : 5;
+            if (MovementProgress == 0) MovementTicksPerTile = TileMovementTicks(starving);
             MovementProgress++;
             if (MovementProgress < MovementTicksPerTile) return;
             Position = path[0]; path.RemoveAt(0); MovementProgress = 0;
@@ -86,7 +93,7 @@ namespace RimworldTweak.Simulation
         }
         internal void UpdateNeeds()
         {
-            Nutrition = Math.Max(0, Nutrition - 10);
+            Nutrition = Math.Max(0, Nutrition - NutritionPerTick);
             Rest = IsSleeping ? Math.Min(10000, Rest + (LifeActivity == Activity.SleepingInBed ? 50 : 25)) : Math.Max(0, Rest - 5);
             if (Nutrition == 0) StarvationTicks++;
         }
