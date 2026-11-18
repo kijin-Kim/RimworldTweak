@@ -109,7 +109,7 @@ namespace RimworldTweak.Runtime
                 {created=true;stream.Write(bytes,0,bytes.Length);stream.Flush(true);}
                 var roundTrip=Decode(Read(temporary));valid=ValidateForWrite(roundTrip);
                 if(!valid.IsValid)return new SaveFileResult(false,valid.ErrorCode);
-                if(File.Exists(full))File.Replace(temporary,full,null);else File.Move(temporary,full);
+                if(File.Exists(full))ReplaceValidatedFile(temporary,full);else File.Move(temporary,full);
                 created=false;return new SaveFileResult(true);
             }
             catch(SizeLimitException){return new SaveFileResult(false,"SaveInvalidData");}
@@ -223,3 +223,4 @@ namespace RimworldTweak.Runtime
         }
     }
 }
+

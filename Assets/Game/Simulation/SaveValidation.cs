@@ -105,10 +105,14 @@ namespace RimworldTweak.Simulation
                 Check(o.TargetMeals>=0&&o.TargetMeals<=99&&o.InputIngredients>=0&&o.InputIngredients<=2&&o.Progress>=0&&o.Progress<40&&o.CompletedMeals>=0&&o.RequestOrder>=0&&o.RequestOrder<=w.RequestSequence&&Defined<WorkReasonCode>(o.Reason),"CookingOrder.Values");
                 Check(buildings.TryGetValue(o.StoveId,out var b)&&b.Kind==nameof(BuildingKind.Stove),"CookingOrder.StoveId");
                 Check(o.ServiceCell.X==b.Position.X&&o.ServiceCell.Y==b.Position.Y-1,"CookingOrder.ServiceCell");
+                Check(Enum.IsDefined(typeof(CookingRepeatMode),o.RepeatMode)&&Enum.IsDefined(typeof(CookingDeliveryMode),o.DeliveryMode)
+                    &&o.RemainingCount>=0&&o.RemainingCount<=99&&o.Priority>=0&&(!o.IngredientRadius.HasValue||(o.IngredientRadius>=0&&o.IngredientRadius<=999)),"CookingOrder.BillSettings");
+                Check(!o.WorkerId.HasValue||w.Colonists.Any(p=>p.Id==o.WorkerId.Value),"CookingOrder.Worker");
+                Check(o.DeliveryMode!=(int)CookingDeliveryMode.SpecificStorage||o.DestinationZoneId.HasValue,"CookingOrder.Destination");
                 // Deleted order records still reference the same physical building claim.
                 Check(Same(o.Claim,b.Claim),"CookingOrder.SharedClaim");
             }
-            Unique(w.CookingOrders.Where(o=>o.Exists).Select(o=>o.StoveId),"CookingOrder.StoveDuplicate");
+            Unique(w.CookingOrders.Where(o=>o.Exists&&o.ActiveCycle).Select(o=>o.StoveId),"CookingOrder.ActiveStoveDuplicate");
             foreach(var o in w.CookingOutputs){add(o.Id,"CookingOutput.Id");Position(o.Position,w.Width,w.Height,"CookingOutput.Position");claim(o.Claim,"CookingOutput.Claim");Check(buildings.TryGetValue(o.StoveId,out var b)&&b.Kind==nameof(BuildingKind.Stove)&&o.Position.X==b.Position.X&&o.Position.Y==b.Position.Y-1,"CookingOutput.StoveId");}
             Unique(w.CookingOutputs.Where(o=>o.Exists).Select(o=>o.StoveId),"CookingOutput.StoveDuplicate");
             Check(w.NextEntityId>maxId,"World.NextEntityId");

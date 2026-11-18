@@ -1,5 +1,8 @@
 namespace RimworldTweak.Simulation
 {
+    public enum CookingRepeatMode { TargetStock, RepeatCount, Forever }
+    public enum CookingDeliveryMode { BestStorage, DropOnFloor, SpecificStorage }
+
     public sealed partial class CookingOrderState
     {
         internal CookingOrderState(int id, int stoveId, GridPosition serviceCell, InteractionClaim claim)
@@ -10,6 +13,14 @@ namespace RimworldTweak.Simulation
         public GridPosition ServiceCell { get; }
         public bool Exists { get; internal set; } = true;
         public bool Enabled { get; internal set; }
+        public CookingRepeatMode RepeatMode { get; internal set; }
+        public int RemainingCount { get; internal set; } = 1;
+        public int Priority { get; internal set; }
+        public int? WorkerId { get; internal set; }
+        public bool AllowIngredients { get; internal set; } = true;
+        public int IngredientRadius { get; internal set; } = 999;
+        public CookingDeliveryMode DeliveryMode { get; internal set; }
+        public int? DestinationZoneId { get; internal set; }
         public int TargetMeals { get; internal set; } = 12;
         public int InputIngredients { get; internal set; }
         public int Progress { get; internal set; }

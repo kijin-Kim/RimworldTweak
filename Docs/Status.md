@@ -4,6 +4,9 @@
 
 ## 현재 결론
 
+2026-11-18 확대 맵·드래그 채집·다중 조리 계획서의 구현과 사용자 전체 정상 확인을 완료했다. EditMode194/194, PlayMode108/108, Windows 빌드 성공. [검증과 수락](Verification/2026-11-18-test-map-cooking-bills.md).
+
+
 사용자가 [4개 기능별 커밋 구성](Plans/FeatureCommits-Construction-To-Save.md)을 승인했다. 각 중간 상태의 EditMode/PlayMode·Windows 빌드·Player 검사를 통과했고 4개 커밋으로 저장한다. 최종 제품232개 해시와 전체 제품 파일 집합은 승인 당시 상태와 일치한다. 추가 직접 확인은 필요 없다. 최신 결과는 [커밋 검증 기록](Verification/2026-11-16-four-feature-commits.md)을 따른다. 아래 구현 당시의 “커밋하지 않았다” 기록은 당시 상태이며 현재 커밋 상태와 구분한다.
 
 **저장·불러오기 구현과 통합 자동 검증을 완료했다.** 한 슬롯에 진행 중 작업·점유·예약·물자·개인 설정·시간을 저장하고, 검증된 후보만 현재 정착지와 교체한다. 실제 JSON 단계별 왕복을 포함한 EditMode165/PlayMode60, Windows 빌드 오류0·경고0, 실제 Player·확인창/복원 PNG 확인 완료. 2026-11-16 사용자가 저장·불러오기까지 모두 정상으로 확인했다. [결과·실행·확인 순서](Verification/2026-11-16-save-load.md), [공통 계약·소유권](Plans/Sessions/SaveLoad-Handoff.md). 커밋하지 않았다.

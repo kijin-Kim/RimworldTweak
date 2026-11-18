@@ -11,7 +11,9 @@ namespace RimworldTweak.Simulation
         public int CookingConsumedIngredients { get; private set; }
         public int CookingProducedMeals { get; private set; }
         public int CookingInputTotal { get { var n=0; foreach(var o in cookingOrders) if(o.Exists)n+=o.InputIngredients;return n; } }
-        private CookingOrderState CookingOrder(int stoveId) => cookingOrders.Find(o=>o.Exists&&o.StoveId==stoveId);
+        private CookingOrderState CookingOrder(int stoveId) =>
+            cookingOrders.Find(o=>o.Exists&&o.StoveId==stoveId&&o.ActiveCycle)
+            ?? cookingOrders.Find(o=>o.Exists&&o.StoveId==stoveId);
         private CookingOutputState CookingOutput(int stoveId) => cookingOutputs.Find(o=>o.Exists&&o.StoveId==stoveId);
         private int MealTotal => ResourceTotal(ResourceKind.Meal,false)+ResourceTotal(ResourceKind.Meal,true)+CargoTotal(ResourceKind.Meal);
         private void InitializeStove(BuildingState b)
@@ -31,26 +33,40 @@ namespace RimworldTweak.Simulation
         public bool DeleteCookingOrder(int stoveId)
         {
             var o=CookingOrder(stoveId);if(o==null)return Reject("InvalidCookingOrder");
-            CancelProductionOwners(stoveId);
+            return DeleteCookingBill(o.Id);
+        }
+        public bool DeleteCookingBill(int billId)
+        {
+            var o=cookingOrders.Find(x=>x.Exists&&x.Id==billId);
+            if(o==null)return Reject("InvalidCookingOrder");
+            if(o.ActiveCycle)CancelProductionOwners(o.StoveId);
             if(o.InputIngredients>0)SpawnResource(ResourceKind.Ingredients,o.InputIngredients,o.ServiceCell);
             o.InputIngredients=0;o.Progress=0;o.ActiveCycle=false;o.Exists=false;
             availabilityRevision++;LastCommandError=string.Empty;return true;
         }
         private void RemoveStove(BuildingState b)
         {
-            if(CookingOrder(b.Id)!=null)DeleteCookingOrder(b.Id);
+            foreach(var order in cookingOrders.ToArray()) if(order.Exists&&order.StoveId==b.Id)DeleteCookingBill(order.Id);
             var output=CookingOutput(b.Id);
             if(output!=null) {if(output.Stack!=null){CancelProductionOwners(output.Stack.Id);output.Stack.DetachStorage();}output.Exists=false;}
         }
         private void ReconcileCookingCycles(bool allowStart)
         {
-            cookingOrders.Sort((a,b)=>{var n=a.StoveId.CompareTo(b.StoveId);return n!=0?n:a.Id.CompareTo(b.Id);});
-            var count=0;var meals=MealTotal;
+            cookingOrders.Sort((a,b)=>{var n=a.StoveId.CompareTo(b.StoveId);return n!=0?n:a.Priority!=b.Priority?a.Priority.CompareTo(b.Priority):a.Id.CompareTo(b.Id);});
+            var count=0;var meals=MealTotal;var busyStoves=new HashSet<int>();
             foreach(var o in cookingOrders)
             {
                 if(!o.Exists)continue;
                 var b=Building(o.StoveId);
-                var allowed=b!=null&&!b.DemolitionDesignated&&o.Enabled&&meals+count<o.TargetMeals;
+                var demand=o.RepeatMode==CookingRepeatMode.Forever ||
+                    (o.RepeatMode==CookingRepeatMode.RepeatCount ? o.RemainingCount>0 : meals+count<o.TargetMeals);
+                var allowed=b!=null&&!b.DemolitionDesignated&&o.Enabled&&demand;
+                if(busyStoves.Contains(o.StoveId))
+                {
+                    if(o.ActiveCycle){CancelProductionOwners(o.StoveId);o.ActiveCycle=false;}
+                    o.Reason=WorkReasonCode.TargetReserved;
+                    continue;
+                }
                 if(!allowed)
                 {
                     if(o.ActiveCycle){CancelProductionOwners(o.StoveId);o.ActiveCycle=false;}
@@ -59,13 +75,24 @@ namespace RimworldTweak.Simulation
                 }
                 var feasible=AnyWorkerReaches(WorkCategory.Cook,o.ServiceCell,false);
                 var staffed=false;foreach(var policy in workPolicies)if(policy.GetPriority(WorkCategory.Cook)>0)staffed=true;
+                if(o.WorkerId.HasValue)
+                {
+                    staffed=false;feasible=false;
+                    foreach(var policy in workPolicies)
+                        if(policy.PawnId==o.WorkerId.Value&&policy.GetPriority(WorkCategory.Cook)>0)staffed=true;
+                    foreach(var pawn in Colonists)
+                        if(pawn.Id==o.WorkerId.Value&&!pawn.IsDrafted&&FindPath(pawn.Position,o.ServiceCell)!=null)feasible=true;
+                }
                 if(!staffed||!feasible)
                 {if(o.ActiveCycle){CancelProductionOwners(o.StoveId);o.ActiveCycle=false;}o.Reason=!staffed?WorkReasonCode.NoWorker:WorkReasonCode.Unreachable;continue;}
-                if(o.ActiveCycle)count++;
+                if(o.ActiveCycle){count++;busyStoves.Add(o.StoveId);}
                 else if(allowStart)
                 {
                     var output=CookingOutput(o.StoveId);
                     if(output==null||output.Amount>=CookingOutputState.Capacity){o.Reason=WorkReasonCode.OutputFull;continue;}
+                    if(o.InputIngredients<2&&!HasCookingMaterial(o)){o.Reason=WorkReasonCode.MissingMaterials;continue;}
+                    if(o.WorkerId.HasValue && !System.Linq.Enumerable.Any(Colonists,p=>p.Id==o.WorkerId.Value))
+                    {o.Reason=WorkReasonCode.NoWorker;continue;}
                     var material=o.InputIngredients;
                     foreach(var resource in Resources)if(resource.Exists&&resource.Kind==ResourceKind.Ingredients)material+=resource.Amount;
                     foreach(var pawn in Colonists)if(pawn.CargoKind==ResourceKind.Ingredients)material+=pawn.CargoAmount;
@@ -75,15 +102,67 @@ namespace RimworldTweak.Simulation
                         var materialReason=MaterialDiagnostic(WorkCategory.Cook,ResourceKind.Ingredients,o.ServiceCell,false);
                         if(materialReason!=WorkReasonCode.None){o.Reason=materialReason;continue;}
                     }
-                    o.ActiveCycle=true;o.RequestOrder=++requestSequence;count++;
+                    o.ActiveCycle=true;o.RequestOrder=++requestSequence;count++;busyStoves.Add(o.StoveId);
                 }
             }
+        }
+        public int AddCookingBill(int stoveId)
+        {
+            var building=Building(stoveId);
+            if(building==null||building.Kind!=BuildingKind.Stove){Reject("InvalidCookingOrder");return -1;}
+            var priority=0;
+            foreach(var bill in cookingOrders)if(bill.Exists&&bill.StoveId==stoveId)priority=Math.Max(priority,bill.Priority+1);
+            var order=new CookingOrderState(NewId(),stoveId,ConstructionRules.ServiceCell(building.Position),building.Claim)
+            {Priority=priority,Enabled=true,RepeatMode=CookingRepeatMode.RepeatCount,RequestOrder=++requestSequence};
+            cookingOrders.Add(order);availabilityRevision++;LastCommandError=string.Empty;return order.Id;
+        }
+        public bool ConfigureCookingBill(int billId,bool enabled,CookingRepeatMode repeatMode,int amount,
+            int? workerId,bool allowIngredients,int radius,CookingDeliveryMode deliveryMode,int? destinationZoneId)
+        {
+            var order=cookingOrders.Find(o=>o.Exists&&o.Id==billId);
+            if(order==null||!Enum.IsDefined(typeof(CookingRepeatMode),repeatMode)||
+                !Enum.IsDefined(typeof(CookingDeliveryMode),deliveryMode)||amount<0||amount>99||radius<0||radius>999||
+                (workerId.HasValue&&!System.Linq.Enumerable.Any(Colonists,p=>p.Id==workerId.Value))||
+                (deliveryMode==CookingDeliveryMode.SpecificStorage&&(!destinationZoneId.HasValue||Zone(destinationZoneId.Value)==null)))
+                return Reject("InvalidCookingOrder");
+            if(order.ActiveCycle){CancelProductionOwners(order.StoveId);order.ActiveCycle=false;}
+            order.Enabled=enabled;order.RepeatMode=repeatMode;
+            if(repeatMode==CookingRepeatMode.RepeatCount)order.RemainingCount=amount;
+            else order.TargetMeals=amount;
+            order.WorkerId=workerId;order.AllowIngredients=allowIngredients;order.IngredientRadius=radius;
+            order.DeliveryMode=deliveryMode;order.DestinationZoneId=deliveryMode==CookingDeliveryMode.SpecificStorage?destinationZoneId:null;
+            ReconcileCookingCycles(false);availabilityRevision++;LastCommandError=string.Empty;return true;
+        }
+        public bool MoveCookingBill(int billId,int direction)
+        {
+            var order=cookingOrders.Find(o=>o.Exists&&o.Id==billId);
+            if(order==null||(direction!=-1&&direction!=1))return Reject("InvalidCookingOrder");
+            var list=cookingOrders.FindAll(o=>o.Exists&&o.StoveId==order.StoveId);
+            list.Sort((a,b)=>a.Priority!=b.Priority?a.Priority.CompareTo(b.Priority):a.Id.CompareTo(b.Id));
+            var index=list.IndexOf(order);var next=index+direction;
+            if(next<0||next>=list.Count)return false;
+            list.RemoveAt(index);list.Insert(next,order);
+            for(var i=0;i<list.Count;i++)list[i].Priority=i;
+            availabilityRevision++;LastCommandError=string.Empty;return true;
+        }
+        private bool CookingMaterialAllowed(CookingOrderState order,ResourceState resource)
+        {
+            var dx=resource.Position.X-order.ServiceCell.X;var dy=resource.Position.Y-order.ServiceCell.Y;
+            return order.AllowIngredients&&(long)dx*dx+(long)dy*dy<=(long)order.IngredientRadius*order.IngredientRadius;
+        }
+        private bool HasCookingMaterial(CookingOrderState order)
+        {
+            var amount=order.InputIngredients;
+            foreach(var resource in Resources)
+                if(resource.Exists&&resource.Kind==ResourceKind.Ingredients&&!resource.OwnerId.HasValue&&CookingMaterialAllowed(order,resource)
+                    &&FindPath(resource.Position,order.ServiceCell)!=null)amount+=resource.Amount;
+            return amount>=2;
         }
         private void PrepareCookingOptions(WorkReadContext context,ColonistState pawn,List<FeatureWorkOption> options)
         {
             foreach(var o in cookingOrders)
             {
-                if(!o.Exists||!o.ActiveCycle)continue;
+                if(!o.Exists||!o.ActiveCycle||(o.WorkerId.HasValue&&o.WorkerId.Value!=pawn.Id))continue;
                 if(o.OwnerId.HasValue){o.Reason=WorkReasonCode.TargetReserved;continue;}
                 var route=FindPath(pawn.Position,o.ServiceCell);
                 if(route==null){o.Reason=WorkReasonCode.Unreachable;continue;}
@@ -98,7 +177,7 @@ namespace RimworldTweak.Simulation
                     ResourceState best=null;IReadOnlyList<GridPosition> bestRoute=null;
                     foreach(var resource in Resources)
                     {
-                        if(!resource.Exists||resource.Kind!=ResourceKind.Ingredients||resource.Amount<=0||resource.OwnerId.HasValue||resource.CreatedTick>=Tick)continue;
+                        if(!resource.Exists||resource.Kind!=ResourceKind.Ingredients||resource.Amount<=0||resource.OwnerId.HasValue||resource.CreatedTick>=Tick||!CookingMaterialAllowed(o,resource))continue;
                         var path=FindPath(pawn.Position,resource.Position);
                         if(path==null||FindPath(resource.Position,o.ServiceCell)==null)continue;
                         if(best==null||path.Count<bestRoute.Count||path.Count==bestRoute.Count&&resource.Id<best.Id){best=resource;bestRoute=path;}
@@ -119,7 +198,7 @@ namespace RimworldTweak.Simulation
             }
             else
             {
-                if(o.InputIngredients<2)return false;
+                if(o.InputIngredients<2||(o.WorkerId.HasValue&&o.WorkerId.Value!=pawn.Id))return false;
                 EndLife(pawn);o.Claim.Acquire(pawn.Id,pawn.ActionId);pawn.WorkTargetId=o.StoveId;pawn.WorkActivity=WorkActivity.GoingToFeature;
             }
             pawn.FeatureStep=candidate.Step;pawn.SetRoute(candidate.WorkCell,candidate.Route);pawn.WorkReason=string.Empty;availabilityRevision++;return true;
@@ -136,6 +215,18 @@ namespace RimworldTweak.Simulation
                 return o.Claim.Matches(pawn.Id,pawn.ActionId)&&pawn.CargoAmount>0;
             }
             return o.InputIngredients>=2&&o.Claim.Matches(pawn.Id,pawn.ActionId);
+        }
+        private void DeliverCookingOutput(ColonistState pawn,CookingOrderState order,CookingOutputState output)
+        {
+            if(order.DeliveryMode==CookingDeliveryMode.DropOnFloor)return;
+            if(order.DeliveryMode==CookingDeliveryMode.SpecificStorage&&!order.DestinationZoneId.HasValue)return;
+            var slot=ChooseStorage(ResourceKind.Meal,pawn.Position,out var route,
+                order.DeliveryMode==CookingDeliveryMode.SpecificStorage?order.DestinationZoneId:null);
+            if(slot==null||!slot.Claim.Acquire(pawn.Id,pawn.ActionId))return;
+            output.Stack.TransferOut(1);
+            pawn.CargoKind=ResourceKind.Meal;pawn.CargoAmount=1;pawn.IsCookingDelivery=true;
+            pawn.WorkTargetId=slot.Id;pawn.WorkActivity=WorkActivity.GoingToStore;
+            pawn.SetRoute(slot.Position,route);
         }
         private void ProgressCookingWork(ColonistState pawn)
         {
@@ -171,8 +262,11 @@ namespace RimworldTweak.Simulation
                 {output.Stack=SpawnResource(ResourceKind.Meal,0,output.Position);output.Stack.AttachClaim(output.Claim);}
                 output.Stack.TransferIn(1);output.Stack.CreatedTick=Tick;output.Claim.Release(pawn.Id,pawn.ActionId);
                 o.InputIngredients-=2;o.Progress=0;o.ActiveCycle=false;o.CompletedMeals++;
+                if(o.RepeatMode==CookingRepeatMode.RepeatCount)o.RemainingCount--;
                 CookingConsumedIngredients+=2;CookingProducedMeals++;produced[ResourceKind.Meal]=ProducedAmount(ResourceKind.Meal)+1;
-                FinishProduction(pawn);ReconcileCookingCycles(false);
+                FinishProduction(pawn);
+                DeliverCookingOutput(pawn,o,output);
+                ReconcileCookingCycles(false);
             }
             else o.Progress=result.Progress;
         }

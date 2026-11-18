@@ -175,12 +175,12 @@ namespace RimworldTweak.Simulation
                 if (pawn.IsWorking && !pawn.IsDrafted && (pawn.Rest <= 2000 || pawn.HasSleepIntent ||
                     pawn.Nutrition <= 3000 && HasFoodAfterWorkCancellation(pawn))) EndLife(pawn);
         }
-        private StorageSlotState ChooseStorage(ResourceKind kind, GridPosition start, out IReadOnlyList<GridPosition> route)
+        private StorageSlotState ChooseStorage(ResourceKind kind, GridPosition start, out IReadOnlyList<GridPosition> route, int? zoneId = null)
         {
             StorageSlotState best = null; route = null;
             foreach (var zone in storageZones)
             {
-                if (!zone.Allows(kind)) continue;
+                if (!zone.Allows(kind) || (zoneId.HasValue && zone.Id != zoneId.Value)) continue;
                 foreach (var slot in zone.Slots)
                 {
                     if (slot.OwnerId.HasValue || slot.Amount >= StorageSlotState.Capacity || slot.Amount > 0 && slot.Stack.Kind != kind) continue;

@@ -27,6 +27,7 @@ namespace RimworldTweak.Simulation
             HasSleepIntent=HasSleepIntent,
             WorkActivity=WorkActivity.ToString(),
             WorkTargetId=WorkTargetId,
+            IsCookingDelivery=IsCookingDelivery,
             FeatureStep=FeatureStep?.ToString(),
             PendingDeliveryTargetId=PendingDeliveryTargetId,
             CargoKind=CargoKind.ToString(),
@@ -69,6 +70,7 @@ namespace RimworldTweak.Simulation
             v.HasSleepIntent=d.HasSleepIntent;
             v.WorkActivity=SaveState.Enum<WorkActivity>(d.WorkActivity);
             v.WorkTargetId=d.WorkTargetId;
+            v.IsCookingDelivery=d.IsCookingDelivery;
             v.FeatureStep=d.FeatureStep==null?(WorkStep?)null:SaveState.Enum<WorkStep>(d.FeatureStep);
             v.PendingDeliveryTargetId=d.PendingDeliveryTargetId;
             v.CargoKind=SaveState.Enum<ResourceKind>(d.CargoKind);
@@ -296,6 +298,9 @@ namespace RimworldTweak.Simulation
     {
         internal CookingOrderSaveData CaptureSave() => new CookingOrderSaveData
         {Id=Id,
+            RepeatMode=(int)RepeatMode, RemainingCount=RemainingCount, Priority=Priority,
+            WorkerId=WorkerId, AllowIngredients=AllowIngredients, IngredientRadius=IngredientRadius,
+            DeliveryMode=(int)DeliveryMode, DestinationZoneId=DestinationZoneId,
             StoveId=StoveId,
             ServiceCell=PositionSaveData.From(ServiceCell),
             Exists=Exists,
@@ -311,6 +316,10 @@ namespace RimworldTweak.Simulation
         internal static CookingOrderState RestoreSave(CookingOrderSaveData d,InteractionClaim claim)
         {
             var v=new CookingOrderState(d.Id,d.StoveId,d.ServiceCell.ToPosition(),claim);
+            v.RepeatMode=(CookingRepeatMode)d.RepeatMode; v.RemainingCount=d.RemainingCount;
+            v.Priority=d.Priority; v.WorkerId=d.WorkerId; v.AllowIngredients=d.AllowIngredients??true;
+            v.IngredientRadius=d.IngredientRadius??999;
+            v.DeliveryMode=(CookingDeliveryMode)d.DeliveryMode; v.DestinationZoneId=d.DestinationZoneId;
             v.Exists=d.Exists;
             v.Enabled=d.Enabled;
             v.TargetMeals=d.TargetMeals;

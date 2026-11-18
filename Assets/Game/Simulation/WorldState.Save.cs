@@ -127,6 +127,8 @@ namespace RimworldTweak.Simulation
                 RequireSave(r.Reservations.Count==1&&r.Reservations.TryGetValue(pawn.Id,out var reserved)&&reserved>0&&reserved<=10&&!r.IsInUse);
                 if(delivery)RequireSave(r.Kind==(pawn.FeatureStep==WorkStep.DeliverBuild?ResourceKind.Wood:ResourceKind.Ingredients));
             }
+            if(pawn.IsCookingDelivery)RequireSave(!pawn.FeatureStep.HasValue&&pawn.CargoKind==ResourceKind.Meal&&pawn.CargoAmount==1&&
+                (pawn.WorkActivity==WorkActivity.GoingToStore||pawn.WorkActivity==WorkActivity.Storing));
             if(!pawn.IsWorking)RequireSave(!pawn.WorkTargetId.HasValue);
             if(!pawn.IsLifeBusy)RequireSave(!pawn.LifeTargetId.HasValue&&pawn.ActionDuration==0&&pawn.ActionProgress==0);
             if(pawn.LifeActivity==LifeActivity.GoingToFood||pawn.LifeActivity==LifeActivity.Eating)

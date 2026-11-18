@@ -10,3 +10,4 @@
 공유 테스트 파일과 기대 목록은 기능별로 인덱스에서 구성한다. 작업 폴더의 다른 변경은 유지한다. 분리 인덱스를 검사 폴더로 내보내 PlayMode를 직렬 실행한다. 최종 사용자 수락 빌드는20261118T004226900Z-build, PlayMode109/109, EditMode194/194다. 일반 창 PNG 단색 한계는 기존 검증 기록대로 유지한다.
 시험 맵 분리본 PlayMode106/106 통과: ui-commit-stage1/TestResults/20261118T005639895Z-8f5468da.
 드래그 채집 분리본 PlayMode107/107 통과: ui-commit-stage1/TestResults/20261118T005809340Z-d38b53a1.
+조리 계획서 분리본 PlayMode108/108 통과: ui-commit-stage1/TestResults/20261118T005939477Z-555b7466.

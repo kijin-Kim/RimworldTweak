@@ -10,6 +10,7 @@ namespace RimworldTweak.Simulation
         private WorkPolicyState PolicyFor(int pawnId) => workPolicies.Find(p => p.PawnId == pawnId);
         private WorkCategory CurrentWorkCategory(ColonistState pawn)
         {
+            if(pawn.IsCookingDelivery)return WorkCategory.Cook;
             if (pawn.FeatureStep == WorkStep.DeliverCook || pawn.FeatureStep == WorkStep.Cook) return WorkCategory.Cook;
             if (pawn.FeatureStep == WorkStep.Sow || pawn.FeatureStep == WorkStep.Harvest) return WorkCategory.Farm;
             if (pawn.FeatureStep.HasValue) return WorkCategory.Build;

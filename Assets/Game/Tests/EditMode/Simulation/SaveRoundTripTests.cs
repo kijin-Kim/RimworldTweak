@@ -98,6 +98,31 @@ namespace RimworldTweak.Tests.EditMode
         }
 
         [Test]
+        public void MultipleCookingBillsAndCookDeliveryResumeAfterFileRoundTrip()
+        {
+            var session=new SimulationSession(Scenario());var w=session.World;
+            w.PlaceBlueprint(BuildingKind.Stove,P(4,4));
+            Until(session,()=>w.Buildings.Any(x=>x.Exists&&x.Kind==BuildingKind.Stove));
+            var stove=w.Buildings.Single(x=>x.Exists&&x.Kind==BuildingKind.Stove);
+            var first=w.CookingOrders.Single(x=>x.Exists);
+            w.ConfigureCookingBill(first.Id,true,CookingRepeatMode.Forever,1,null,false,5,CookingDeliveryMode.DropOnFloor,null);
+            w.QueueCreateStorage(P(7,7),P(7,7));var zone=w.StorageZones.Single();
+            var second=w.AddCookingBill(stove.Id);
+            w.ConfigureCookingBill(second,true,CookingRepeatMode.RepeatCount,2,1,true,20,CookingDeliveryMode.SpecificStorage,zone.Id);
+            Only(w,WorkCategory.Cook);
+            Until(session,()=>w.CookingProducedMeals==1&&w.Colonists[0].CargoKind==ResourceKind.Meal&&w.Colonists[0].CargoAmount==1);
+            var restored=Restore(session);
+            var bill=restored.World.CookingOrders.Single(x=>x.Id==second);
+            Assert.That(bill.RepeatMode,Is.EqualTo(CookingRepeatMode.RepeatCount));
+            Assert.That(bill.RemainingCount,Is.EqualTo(1));
+            Assert.That(bill.WorkerId,Is.EqualTo(1));
+            Assert.That(bill.IngredientRadius,Is.EqualTo(20));
+            Assert.That(bill.DestinationZoneId,Is.EqualTo(zone.Id));
+            Equivalent(session,restored,300);
+            Assert.That(restored.World.ResourceTotal(ResourceKind.Meal,true),Is.EqualTo(2));
+        }
+
+        [Test]
         public void PendingMovesAndPartialTileTravelContinueAtExactlyTheSameTime()
         {
             var s = new SimulationSession(Scenario()); s.AdvanceTime(.03m); s.World.ToggleDraft(1);

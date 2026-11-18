@@ -29,6 +29,69 @@ namespace RimworldTweak.Tests.EditMode
         private static int Total(WorldState w,ResourceKind kind)=>w.ResourceTotal(kind,false)+w.ResourceTotal(kind,true)+w.CargoTotal(kind);
         private static int Ingredients(WorldState w)=>Total(w,ResourceKind.Ingredients)+w.CookingOrders.Where(o=>o.Exists).Sum(o=>o.InputIngredients);
 
+        [Test] public void PausingReorderingAndDeletingPartialBillPreservesMaterials()
+        {
+            var w=World();var stove=BuildStove(w);var first=Order(w,stove);
+            w.SetCookingOrder(stove.Id,true,2);
+            Until(w,()=>first.Progress==10);
+            var second=w.AddCookingBill(stove.Id);
+            w.ConfigureCookingBill(first.Id,false,CookingRepeatMode.TargetStock,2,null,true,999,CookingDeliveryMode.DropOnFloor,null);
+            Assert.That(w.MoveCookingBill(second,-1),Is.True);
+            Until(w,()=>w.CookingProducedMeals==1);
+            Assert.That(first.Progress,Is.EqualTo(10));
+            Assert.That(first.InputIngredients,Is.EqualTo(2));
+            Assert.That(w.DeleteCookingBill(first.Id),Is.True);
+            Assert.That(Ingredients(w),Is.EqualTo(10));
+            Assert.That(w.DeleteCookingBill(first.Id),Is.False);
+            Assert.That(Ingredients(w),Is.EqualTo(10));
+        }
+        [Test] public void DraftedAssignedWorkerAllowsNextBillToRun()
+        {
+            var w=World(pawns:2);var stove=BuildStove(w);var first=Order(w,stove);
+            w.ToggleDraft(1);
+            w.ConfigureCookingBill(first.Id,true,CookingRepeatMode.Forever,1,1,true,999,CookingDeliveryMode.DropOnFloor,null);
+            var second=w.AddCookingBill(stove.Id);
+            w.ConfigureCookingBill(second,true,CookingRepeatMode.RepeatCount,1,2,true,999,CookingDeliveryMode.DropOnFloor,null);
+            Until(w,()=>w.CookingProducedMeals==1);
+            Assert.That(first.CompletedMeals,Is.Zero);
+            Assert.That(w.CookingOrders.Single(o=>o.Id==second).CompletedMeals,Is.EqualTo(1));
+        }
+        [Test] public void CookDeliversProductToSpecifiedStorageWithoutHaulPriority()
+        {
+            var w=World();var stove=BuildStove(w);var order=Order(w,stove);
+            w.QueueCreateStorage(P(8,8),P(8,8));var destination=w.StorageZones.Single();
+            w.SetWorkPriority(1,WorkCategory.Haul,0);
+            Assert.That(w.ConfigureCookingBill(order.Id,true,CookingRepeatMode.RepeatCount,1,null,true,999,CookingDeliveryMode.SpecificStorage,destination.Id),Is.True);
+            Until(w,()=>w.ResourceTotal(ResourceKind.Meal,true)==1);
+            Assert.That(destination.Slots.Sum(x=>x.Amount),Is.EqualTo(1));
+            Assert.That(w.CookingProducedMeals,Is.EqualTo(1));
+            Assert.That(Ingredients(w),Is.EqualTo(10));
+        }
+        [Test] public void MultipleBillsSkipDisallowedIngredientsAndFinishRepeatCount()
+        {
+            var w=World();var stove=BuildStove(w);var first=Order(w,stove);
+            Assert.That(w.ConfigureCookingBill(first.Id,true,CookingRepeatMode.Forever,1,null,false,999,CookingDeliveryMode.BestStorage,null),Is.True);
+            var second=w.AddCookingBill(stove.Id);
+            Assert.That(w.ConfigureCookingBill(second,true,CookingRepeatMode.RepeatCount,2,1,true,999,CookingDeliveryMode.BestStorage,null),Is.True);
+            Until(w,()=>w.CookingProducedMeals==2);
+            w.Step(150);
+            Assert.That(w.CookingProducedMeals,Is.EqualTo(2));
+            Assert.That(w.CookingOrders.Single(o=>o.Id==second).RemainingCount,Is.Zero);
+            Assert.That(first.CompletedMeals,Is.Zero);
+            Assert.That(w.MoveCookingBill(second,-1),Is.True);
+            Assert.That(w.CookingOrders.Single(o=>o.Id==second).Priority,Is.Zero);
+            Assert.That(w.DeleteCookingBill(second),Is.True);
+            Assert.That(Ingredients(w),Is.EqualTo(8));
+        }
+        [Test] public void IngredientRadiusPreventsStartingUntilExpanded()
+        {
+            var w=World();var stove=BuildStove(w);var order=Order(w,stove);
+            Assert.That(w.ConfigureCookingBill(order.Id,true,CookingRepeatMode.RepeatCount,1,null,true,0,CookingDeliveryMode.BestStorage,null),Is.True);
+            w.Step(150);Assert.That(w.CookingProducedMeals,Is.Zero);
+            Assert.That(w.ConfigureCookingBill(order.Id,true,CookingRepeatMode.RepeatCount,1,null,true,999,CookingDeliveryMode.BestStorage,null),Is.True);
+            Until(w,()=>w.CookingProducedMeals==1);
+            Assert.That(order.RemainingCount,Is.Zero);
+        }
         [Test] public void ConstructedStoveStartsDisabledAndOrderChangesAreImmediate()
         {
             var w=World();var b=BuildStove(w);var o=Order(w,b);var tick=w.Tick;
@@ -168,6 +231,8 @@ namespace RimworldTweak.Tests.EditMode
         [Test] public void ReusedOutputStackIsNotHaulableUntilTickAfterProduction()
         {
             var w=World(ingredients:6,pawns:2);var b=BuildStove(w);w.SetCookingOrder(b.Id,true,1);
+            var order=Order(w,b);
+            w.ConfigureCookingBill(order.Id,true,CookingRepeatMode.TargetStock,1,null,true,999,CookingDeliveryMode.DropOnFloor,null);
             Until(w,()=>w.CookingProducedMeals==1);var output=Output(w,b);var stack=output.Stack;
             w.QueueCreateStorage(P(8,8),P(8,8));var storage=w.StorageZones.Single();
             w.QueueStorageFilter(storage.Id,ResourceKind.Wood,false);w.QueueStorageFilter(storage.Id,ResourceKind.Ingredients,false);

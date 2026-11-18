@@ -220,7 +220,7 @@ namespace RimworldTweak.Simulation
             foreach(var b in blueprints) b.Claim.Release(pawn.Id,pawn.ActionId);
             foreach(var b in buildings) b.Claim.Release(pawn.Id,pawn.ActionId);
             foreach(var c in crops) c.Claim.Release(pawn.Id,pawn.ActionId);
-            pawn.FeatureStep=null; pawn.PendingDeliveryTargetId=null;
+            pawn.FeatureStep=null; pawn.PendingDeliveryTargetId=null; pawn.IsCookingDelivery=false;
         }
         private bool ValidProductionWork(ColonistState pawn)
         {

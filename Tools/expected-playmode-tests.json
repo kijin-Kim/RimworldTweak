@@ -105,5 +105,6 @@
   "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.DevelopmentPanelStepsOnlyWhilePausedAndResetsThroughTheCurrentShell",
   "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.CommandFeedbackExpiresWhilePausedButActiveToolKeepsInstructions",
   "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.NewSettlementUsesLargeMapAndPreservesDimensionsThroughSave",
-  "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.GatherRectangleIncludesBothCornersAndSupportsReverseDrag"
+  "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.GatherRectangleIncludesBothCornersAndSupportsReverseDrag",
+  "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.CookingBillControlsChangeSelectedPlanAndKeepDetailsOpen"
 ]

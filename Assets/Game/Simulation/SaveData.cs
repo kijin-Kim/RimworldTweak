@@ -149,6 +149,7 @@ namespace RimworldTweak.Simulation
         [DataMember(Name="HasSleepIntent", IsRequired=true)] public bool HasSleepIntent;
         [DataMember(Name="WorkActivity", IsRequired=true)] public string WorkActivity;
         [DataMember(Name="WorkTargetId", IsRequired=true)] public int? WorkTargetId;
+        [DataMember(EmitDefaultValue=false)] public bool IsCookingDelivery;
         [DataMember(Name="FeatureStep", IsRequired=true)] public string FeatureStep;
         [DataMember(Name="PendingDeliveryTargetId", IsRequired=true)] public int? PendingDeliveryTargetId;
         [DataMember(Name="CargoKind", IsRequired=true)] public string CargoKind;
@@ -284,6 +285,14 @@ namespace RimworldTweak.Simulation
     [DataContract]
     public sealed class CookingOrderSaveData
     {
+        [DataMember(EmitDefaultValue=false)] public int RepeatMode;
+        [DataMember(EmitDefaultValue=false)] public int RemainingCount;
+        [DataMember(EmitDefaultValue=false)] public int Priority;
+        [DataMember(EmitDefaultValue=false)] public int? WorkerId;
+        [DataMember(EmitDefaultValue=false)] public bool? AllowIngredients;
+        [DataMember(EmitDefaultValue=false)] public int? IngredientRadius;
+        [DataMember(EmitDefaultValue=false)] public int DeliveryMode;
+        [DataMember(EmitDefaultValue=false)] public int? DestinationZoneId;
         [DataMember(Name="Id", IsRequired=true)] public int Id;
         [DataMember(Name="StoveId", IsRequired=true)] public int StoveId;
         [DataMember(Name="ServiceCell", IsRequired=true)] public PositionSaveData ServiceCell;

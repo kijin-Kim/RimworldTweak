@@ -26,20 +26,6 @@ namespace RimworldTweak.Tests.PlayMode
         private string directory;
         private Keyboard keyboard;
         private static GridPosition P(int x,int y)=>new GridPosition(x,y);
-        [UnityTest]
-        public IEnumerator NewSettlementUsesLargeMapAndPreservesDimensionsThroughSave()
-        {
-            Setup();runner.StartNewSettlement();
-            yield return null;
-            var w=runner.Session.World;
-            Assert.That(w.Width,Is.EqualTo(32));Assert.That(w.Height,Is.EqualTo(32));
-            Assert.That(w.Gatherables.Any(x=>x.Position.X>20&&x.Position.Y>20),Is.True);
-            var captured=runner.Session.CaptureSaveData(true,1);
-            Assert.That(captured.Success,Is.True);
-            Assert.That(SimulationSession.TryRestoreSave(captured.Data,out var restored,out var error),Is.True,error);
-            Assert.That(restored.World.Width,Is.EqualTo(32));
-            Assert.That(restored.World.Gatherables.Count,Is.EqualTo(w.Gatherables.Count));
-        }
         [Test]
         public void GatherRectangleIncludesBothCornersAndSupportsReverseDrag()
         {
@@ -58,6 +44,48 @@ namespace RimworldTweak.Tests.PlayMode
             shell.CancelTool();
             shell.HandleRectangle(P(0,0), P(7,7));
             Assert.That(nodes.Single(n => n.Id == 304).Designated, Is.False);
+        }
+        [UnityTest]
+        public IEnumerator CookingBillControlsChangeSelectedPlanAndKeepDetailsOpen()
+        {
+            Setup();
+            runner.Initialize(new ScenarioDefinition(12,12,Array.Empty<GridPosition>(),
+                new[]{new ColonistSeed(1,P(1,1),10000,10000)},
+                new[]{new ResourceSeed(101,ResourceKind.Wood,40,P(1,1)),new ResourceSeed(102,ResourceKind.Ingredients,12,P(2,1))}));
+            var w=runner.Session.World;
+            w.PlaceBlueprint(BuildingKind.Stove,P(4,4));
+            for(var i=0;i<1000&&!w.Buildings.Any(b=>b.Exists);i++)runner.Session.Step(1);
+            var stove=w.Buildings.Single(b=>b.Exists);
+            w.QueueCreateStorage(P(10,10),P(10,10));
+            yield return null;
+            shell.SelectObject(stove.Id);Click("selection.detail");
+            Click("cook.add");
+            var second=w.CookingOrders.Where(o=>o.Exists).OrderBy(o=>o.Id).Last();
+            Click("cook.bill."+second.Id);
+            Click("cook.more");Assert.That(second.RemainingCount,Is.EqualTo(2));
+            Click("cook.worker");Assert.That(second.WorkerId,Is.EqualTo(1));
+            Click("cook.ingredients");Assert.That(second.AllowIngredients,Is.False);
+            Click("cook.radius");Assert.That(second.IngredientRadius,Is.Zero);
+            Click("cook.zone."+w.StorageZones.Single().Id);
+            Assert.That(second.DeliveryMode,Is.EqualTo(CookingDeliveryMode.SpecificStorage));
+            Click("cook.up");Assert.That(second.Priority,Is.Zero);
+            Click("cook.toggle");Assert.That(second.Enabled,Is.False);
+            Click("cook.delete");Assert.That(second.Exists,Is.False);
+            yield return null;
+        }
+        [UnityTest]
+        public IEnumerator NewSettlementUsesLargeMapAndPreservesDimensionsThroughSave()
+        {
+            Setup();runner.StartNewSettlement();
+            yield return null;
+            var w=runner.Session.World;
+            Assert.That(w.Width,Is.EqualTo(32));Assert.That(w.Height,Is.EqualTo(32));
+            Assert.That(w.Gatherables.Any(x=>x.Position.X>20&&x.Position.Y>20),Is.True);
+            var captured=runner.Session.CaptureSaveData(true,1);
+            Assert.That(captured.Success,Is.True);
+            Assert.That(SimulationSession.TryRestoreSave(captured.Data,out var restored,out var error),Is.True,error);
+            Assert.That(restored.World.Width,Is.EqualTo(32));
+            Assert.That(restored.World.Gatherables.Count,Is.EqualTo(w.Gatherables.Count));
         }
         private void Setup(bool developmentUi = false)
         {

@@ -186,5 +186,11 @@
   "RimworldTweak.Tests.EditMode.SaveRoundTripTests.InvalidWorkAndLifeRoutesCancelOnlyRestoredCandidatesAndDropCargoOnceThroughBothFiles",
   "RimworldTweak.Tests.EditMode.SaveTests.InvalidPlayerRoutesRebuildOrWaitWithoutMutatingSavedFiles",
   "RimworldTweak.Tests.EditMode.SaveRepositoryTests.RepeatedSettingsReplacementRetainsLastSuccessfulFileOnIoFailure",
-  "RimworldTweak.Tests.EditMode.SaveRepositoryTests.SettingsReplacementRetriesOnlyIntactFileErrorAndStopsAfterThreeAttempts"
+  "RimworldTweak.Tests.EditMode.SaveRepositoryTests.SettingsReplacementRetriesOnlyIntactFileErrorAndStopsAfterThreeAttempts",
+  "RimworldTweak.Tests.EditMode.CookingTests.MultipleBillsSkipDisallowedIngredientsAndFinishRepeatCount",
+  "RimworldTweak.Tests.EditMode.CookingTests.IngredientRadiusPreventsStartingUntilExpanded",
+  "RimworldTweak.Tests.EditMode.CookingTests.CookDeliversProductToSpecifiedStorageWithoutHaulPriority",
+  "RimworldTweak.Tests.EditMode.SaveRoundTripTests.MultipleCookingBillsAndCookDeliveryResumeAfterFileRoundTrip",
+  "RimworldTweak.Tests.EditMode.CookingTests.PausingReorderingAndDeletingPartialBillPreservesMaterials",
+  "RimworldTweak.Tests.EditMode.CookingTests.DraftedAssignedWorkerAllowsNextBillToRun"
 ]

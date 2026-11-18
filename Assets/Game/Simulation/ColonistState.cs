@@ -28,6 +28,7 @@ namespace RimworldTweak.Simulation
         public bool HasSleepIntent { get; internal set; }
         public WorkActivity WorkActivity { get; internal set; }
         public int? WorkTargetId { get; internal set; }
+        public bool IsCookingDelivery { get; internal set; }
         public WorkStep? FeatureStep { get; internal set; }
         public int? PendingDeliveryTargetId { get; internal set; }
         public ResourceKind CargoKind { get; internal set; }

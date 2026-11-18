@@ -64,6 +64,13 @@ namespace RimworldTweak.Runtime
         public bool SetStorageFilter(int id, ResourceKind kind, bool allowed) => PlayerCommand(() => Session.World.QueueStorageFilter(id, kind, allowed));
         public bool DeleteStorage(int id) => PlayerCommand(() => Session.World.QueueDeleteStorage(id));
         public bool SetCookingOrder(int stoveId, bool enabled, int targetMeals) => PlayerCommand(() => Session.World.SetCookingOrder(stoveId, enabled, targetMeals));
+        public bool AddCookingBill(int stoveId) => PlayerCommand(() => Session.World.AddCookingBill(stoveId)>0);
+        public bool DeleteCookingBill(int billId) => PlayerCommand(() => Session.World.DeleteCookingBill(billId));
+        public bool MoveCookingBill(int billId,int direction) => PlayerCommand(() => Session.World.MoveCookingBill(billId,direction));
+        public bool ConfigureCookingBill(int billId,bool enabled,CookingRepeatMode repeatMode,int amount,
+            int? workerId,bool allowIngredients,int radius,CookingDeliveryMode deliveryMode,int? destinationZoneId)
+            => PlayerCommand(() => Session.World.ConfigureCookingBill(billId,enabled,repeatMode,amount,
+                workerId,allowIngredients,radius,deliveryMode,destinationZoneId));
         public bool DeleteCookingOrder(int stoveId) => PlayerCommand(() => Session.World.DeleteCookingOrder(stoveId));
         public bool SetWorkPriority(int pawnId, WorkCategory category, int priority) => PlayerCommand(() => Session.World.SetWorkPriority(pawnId, category, priority));
         public bool PlaceBlueprint(BuildingKind kind, GridPosition position) => PlayerCommand(() => Session.World.PlaceBlueprint(kind,position));

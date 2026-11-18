@@ -698,17 +698,72 @@ namespace RimworldTweak.Presentation
             AddSelectionNavigation(() => position);
         }
 
+        private void RebuildCookingInspector()
+        {
+            BuildInspector();
+            detailOpen=true;
+            UpdateInspectorVisibility();
+        }
+        private int? selectedCookingBill;
+        private static string RepeatName(CookingRepeatMode mode) =>
+            mode==CookingRepeatMode.RepeatCount?"횟수 지정":mode==CookingRepeatMode.Forever?"계속 생산":"목표 재고";
         private void BuildCookingInspector(int stove)
         {
-            Func<CookingOrderState> order=()=>Runner.Session.World.CookingOrders.FirstOrDefault(x=>x.Exists&&x.StoveId==stove);
-            BoundLabel(inspectContent,()=>{
-                var o=order();var output=Runner.Session.World.CookingOutputs.FirstOrDefault(x=>x.Exists&&x.StoveId==stove);
-                return o==null?"조리 주문 없음":"목표 "+o.TargetMeals+" · "+(o.Enabled?"가동":"중지")+"\n입력 "+o.InputIngredients+"/2 · 조리 "+o.Progress+"/40 · 출력 "+(output?.Amount??0)+"/50\n"+WorkDiagnostics.GetReasonText(Runner.Session.World.GetWorkDiagnostic(WorkCategory.Cook,stove));
-            },detailRefreshers,108);
-            BoundButton(inspectContent,"cook.toggle",()=>order()==null?"주문 재생성":order().Enabled?"조리 중지":"조리 가동",()=>{var o=order();Runner.SetCookingOrder(stove,o==null?false:!o.Enabled,o?.TargetMeals??12);},detailRefreshers);
-            RowButton(inspectContent,"cook.more","목표 +1",()=>{var o=order();if(o!=null)Runner.SetCookingOrder(stove,o.Enabled,Math.Min(99,o.TargetMeals+1));});
-            RowButton(inspectContent,"cook.less","목표 -1",()=>{var o=order();if(o!=null)Runner.SetCookingOrder(stove,o.Enabled,Math.Max(0,o.TargetMeals-1));});
-            RowButton(inspectContent,"cook.delete","주문 삭제",()=>Runner.DeleteCookingOrder(stove));
+            var world=Runner.Session.World;
+            var bills=world.CookingOrders.Where(x=>x.Exists&&x.StoveId==stove).OrderBy(x=>x.Priority).ThenBy(x=>x.Id).ToList();
+            var selected=bills.FirstOrDefault(x=>x.Id==selectedCookingBill)??bills.FirstOrDefault();
+            selectedCookingBill=selected?.Id;
+            RowButton(inspectContent,"cook.add","계획서 추가 · 식사 조리",()=>{Runner.AddCookingBill(stove);RebuildCookingInspector();});
+            foreach(var bill in bills)
+            {
+                var id=bill.Id;
+                BoundButton(inspectContent,"cook.bill."+id,()=>"#"+id+" 식사 · "+RepeatName(bill.RepeatMode)+" · "+(bill.Enabled?"가동":"중지"),
+                    ()=>{selectedCookingBill=id;RebuildCookingInspector();},detailRefreshers);
+            }
+            if(selected==null)
+            {
+                RowButton(inspectContent,"cook.toggle","주문 재생성",()=>{Runner.SetCookingOrder(stove,false,12);RebuildCookingInspector();});
+                return;
+            }
+            var o=selected;
+            // All callbacks submit a complete settings value. Runtime state is only changed by Runner commands.
+            Action<bool,CookingRepeatMode,int,int?,bool,int,CookingDeliveryMode,int?> configure=
+                (enabled,mode,amount,worker,allow,radius,delivery,zone)=>{
+                    Runner.ConfigureCookingBill(o.Id,enabled,mode,amount,worker,allow,radius,delivery,zone);
+                };
+            Func<int> amount=()=>o.RepeatMode==CookingRepeatMode.RepeatCount?o.RemainingCount:o.TargetMeals;
+            BoundLabel(inspectContent,()=>"#"+o.Id+" 식사 조리 · "+RepeatName(o.RepeatMode)+" "+amount()+
+                "\n입력 "+o.InputIngredients+"/2 · 조리 "+o.Progress+"/40 · 완성 "+o.CompletedMeals+
+                "\n"+WorkDiagnostics.GetReasonText(o.Reason),detailRefreshers,108);
+            BoundButton(inspectContent,"cook.toggle",()=>o.Enabled?"계획서 일시중지":"계획서 재개",
+                ()=>configure(!o.Enabled,o.RepeatMode,amount(),o.WorkerId,o.AllowIngredients,o.IngredientRadius,o.DeliveryMode,o.DestinationZoneId),detailRefreshers);
+            BoundButton(inspectContent,"cook.mode",()=>"반복 · "+RepeatName(o.RepeatMode),
+                ()=>configure(o.Enabled,(CookingRepeatMode)(((int)o.RepeatMode+1)%3),amount(),o.WorkerId,o.AllowIngredients,o.IngredientRadius,o.DeliveryMode,o.DestinationZoneId),detailRefreshers);
+            RowButton(inspectContent,"cook.more","수량 +1",()=>configure(o.Enabled,o.RepeatMode,Math.Min(99,amount()+1),o.WorkerId,o.AllowIngredients,o.IngredientRadius,o.DeliveryMode,o.DestinationZoneId));
+            RowButton(inspectContent,"cook.less","수량 -1",()=>configure(o.Enabled,o.RepeatMode,Math.Max(0,amount()-1),o.WorkerId,o.AllowIngredients,o.IngredientRadius,o.DeliveryMode,o.DestinationZoneId));
+            BoundButton(inspectContent,"cook.worker",()=>"작업자 · "+(o.WorkerId.HasValue?"정착민 #"+o.WorkerId.Value:"누구나"),()=>{
+                var ids=world.Colonists.Select(x=>(int?)x.Id).ToList();ids.Insert(0,null);
+                configure(o.Enabled,o.RepeatMode,amount(),ids[(ids.IndexOf(o.WorkerId)+1)%ids.Count],o.AllowIngredients,o.IngredientRadius,o.DeliveryMode,o.DestinationZoneId);
+            },detailRefreshers);
+            BoundButton(inspectContent,"cook.ingredients",()=>"식재료 · "+(o.AllowIngredients?"허용":"금지"),
+                ()=>configure(o.Enabled,o.RepeatMode,amount(),o.WorkerId,!o.AllowIngredients,o.IngredientRadius,o.DeliveryMode,o.DestinationZoneId),detailRefreshers);
+            BoundButton(inspectContent,"cook.radius",()=>"재료 탐색 거리 · "+(o.IngredientRadius==999?"무제한":o.IngredientRadius+"칸"),()=>{
+                var radii=new[]{0,5,10,20,40,999};var index=Array.IndexOf(radii,o.IngredientRadius);
+                configure(o.Enabled,o.RepeatMode,amount(),o.WorkerId,o.AllowIngredients,radii[(index+1)%radii.Length],o.DeliveryMode,o.DestinationZoneId);
+            },detailRefreshers);
+            BoundButton(inspectContent,"cook.delivery",()=>"완성품 · "+(o.DeliveryMode==CookingDeliveryMode.DropOnFloor?"바닥에 두기":o.DeliveryMode==CookingDeliveryMode.SpecificStorage?"저장 구역 #"+o.DestinationZoneId:"가까운 저장 구역"),()=>{
+                var mode=o.DeliveryMode==CookingDeliveryMode.DropOnFloor?CookingDeliveryMode.BestStorage:CookingDeliveryMode.DropOnFloor;
+                configure(o.Enabled,o.RepeatMode,amount(),o.WorkerId,o.AllowIngredients,o.IngredientRadius,mode,null);
+            },detailRefreshers);
+            foreach(var zone in world.StorageZones.Where(x=>x.Exists))
+            {
+                var zoneId=zone.Id;
+                RowButton(inspectContent,"cook.zone."+zoneId,"운반 위치 · 저장 구역 #"+zoneId,
+                    ()=>configure(o.Enabled,o.RepeatMode,amount(),o.WorkerId,o.AllowIngredients,o.IngredientRadius,CookingDeliveryMode.SpecificStorage,zoneId));
+            }
+            RowButton(inspectContent,"cook.up","위로",()=>{Runner.MoveCookingBill(o.Id,-1);RebuildCookingInspector();});
+            RowButton(inspectContent,"cook.down","아래로",()=>{Runner.MoveCookingBill(o.Id,1);RebuildCookingInspector();});
+            RowButton(inspectContent,"cook.delete","계획서 삭제",()=>{Runner.DeleteCookingBill(o.Id);RebuildCookingInspector();});
         }
         private static string PawnAction(ColonistState p)
         {
@@ -743,3 +798,4 @@ namespace RimworldTweak.Presentation
         }
     }
 }
+
