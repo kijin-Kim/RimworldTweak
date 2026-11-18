@@ -68,7 +68,7 @@ namespace RimworldTweak.Presentation
             Map.Initialize(visuals);
             Map.Bind(Runner.Session.World);
             MapInput = Map.gameObject.AddComponent<WorldMapInput>();
-            MapInput.Configure(Map, () => IsInputBlocked, () => ActiveTool != Tool.None, () => ActiveTool == Tool.Storage || ActiveTool == Tool.Growing, HandleMapClick, HandleRectangle, CancelTool);
+            MapInput.Configure(Map, () => IsInputBlocked, () => ActiveTool != Tool.None, () => ActiveTool == Tool.Storage || ActiveTool == Tool.Growing || ActiveTool == Tool.Gather, HandleMapClick, HandleRectangle, CancelTool);
             displayed = Runner.Session.World;
             HasSettlement = !startAtMenu;
             RefreshLayout();
@@ -234,9 +234,22 @@ namespace RimworldTweak.Presentation
         public void HandleRectangle(GridPosition first, GridPosition last)
         {
             if(IsInputBlocked)return;
+            if (ActiveTool == Tool.Gather)
+            {
+                var count = 0;
+                foreach (var node in Runner.Session.World.Gatherables)
+                    if (!node.Depleted && InRectangle(node.Position, first, last) && Runner.DesignateGather(node.Id, true)) count++;
+                Report(count > 0, "채집 대상 " + count + "개를 지정했어.");
+                return;
+            }
             var ok=ActiveTool==Tool.Storage?Runner.CreateStorage(first,last):ActiveTool==Tool.Growing&&Runner.CreateGrowingZone(first,last);
             if(ok)OpenTab(string.Empty);
             Report(ok,"구역을 지정했어.");
+        }
+        private static bool InRectangle(GridPosition position, GridPosition first, GridPosition last)
+        {
+            return position.X >= Math.Min(first.X, last.X) && position.X <= Math.Max(first.X, last.X)
+                && position.Y >= Math.Min(first.Y, last.Y) && position.Y <= Math.Max(first.Y, last.Y);
         }
         public void BeginTool(Tool tool, BuildingKind kind=BuildingKind.Wall)
         {
@@ -252,8 +265,8 @@ namespace RimworldTweak.Presentation
             var valid=ActiveTool==Tool.Building?w.CanPlaceBlueprint(buildingKind,last,out reason)
                 :ActiveTool==Tool.Storage?w.CanCreateStorage(first,last)
                 :ActiveTool==Tool.Growing?w.CanCreateGrowingZone(first,last)
-                :w.Gatherables.Any(x=>!x.Depleted&&x.Position==last);
-            Map.SetPreview(ActiveTool==Tool.Building||ActiveTool==Tool.Gather?last:first,last,valid,ActiveTool==Tool.Building ? buildingKind : (BuildingKind?)null);
+                :w.Gatherables.Any(x=>!x.Depleted&&InRectangle(x.Position,first,last));
+            Map.SetPreview(ActiveTool==Tool.Building?last:first,last,valid,ActiveTool==Tool.Building ? buildingKind : (BuildingKind?)null);
             Feedback=valid?"지정 가능 · "+(ActiveTool==Tool.Building?ConstructionPanel.Name(buildingKind)+" · 목재 "+ConstructionRules.Cost(buildingKind):ToolName(ActiveTool))+" · 우클릭 취소"
                 :reason=="OccupiedServiceCell"?"조리대 아래 사용 칸도 비어 있어야 해.":"지정 불가 · 대상이나 다른 구역이 없는 유효한 칸을 선택해줘.";
         }

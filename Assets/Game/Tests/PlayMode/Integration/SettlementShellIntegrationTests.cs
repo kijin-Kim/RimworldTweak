@@ -40,6 +40,25 @@ namespace RimworldTweak.Tests.PlayMode
             Assert.That(restored.World.Width,Is.EqualTo(32));
             Assert.That(restored.World.Gatherables.Count,Is.EqualTo(w.Gatherables.Count));
         }
+        [Test]
+        public void GatherRectangleIncludesBothCornersAndSupportsReverseDrag()
+        {
+            Setup();
+            runner.Initialize(WorkScenario.Create());
+            shell.BeginTool(SettlementShell.Tool.Gather);
+            shell.HandleRectangle(P(2,6), P(1,5));
+            var nodes = runner.Session.World.Gatherables;
+            Assert.That(nodes.Single(n => n.Id == 301).Designated, Is.True);
+            Assert.That(nodes.Single(n => n.Id == 302).Designated, Is.True);
+            Assert.That(nodes.Single(n => n.Id == 303).Designated, Is.False);
+            shell.HandleRectangle(P(4,6), P(4,6));
+            Assert.That(nodes.Single(n => n.Id == 303).Designated, Is.True);
+            shell.HandleRectangle(P(0,0), P(0,0));
+            Assert.That(nodes.Single(n => n.Id == 304).Designated, Is.False);
+            shell.CancelTool();
+            shell.HandleRectangle(P(0,0), P(7,7));
+            Assert.That(nodes.Single(n => n.Id == 304).Designated, Is.False);
+        }
         private void Setup(bool developmentUi = false)
         {
             directory=Path.GetFullPath(Path.Combine(Application.dataPath,"..","TestResults","ShellIntegration",Guid.NewGuid().ToString("N")));
