@@ -4,6 +4,8 @@
 
 ## 현재 결론
 
+2026-11-18 휠 입력을120으로 중복 나누던 처리를 수정해 한 칸1.5줌 단계로 조정했다. PlayMode109/109, Windows 빌드 성공, 사용자 전체 정상 확인을 기록했다. [휠 개선](Plans/RimWorld-UI-Implementation.md).
+
 2026-11-18 확대 맵·드래그 채집·다중 조리 계획서의 구현과 사용자 전체 정상 확인을 완료했다. EditMode194/194, PlayMode108/108, Windows 빌드 성공. [검증과 수락](Verification/2026-11-18-test-map-cooking-bills.md).
 
 

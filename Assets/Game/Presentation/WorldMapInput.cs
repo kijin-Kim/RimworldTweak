@@ -103,7 +103,14 @@ namespace RimworldTweak.Presentation
                 if (onMap && !leftCaptured && !middleCaptured)
                 {
                     var wheel = mouse.scroll.ReadValue().y;
-                    if (Math.Abs(wheel) > .01f) view.Zoom(Mathf.Clamp(wheel / 120f, -3, 3), screen);
+                    if (Math.Abs(wheel) > .01f)
+                    {
+                        // Uniform input already reports notches. Legacy Windows input reports 120 per notch.
+                        var legacyWindows = InputSystem.settings.scrollDeltaBehavior == InputSettings.ScrollDeltaBehavior.KeepPlatformSpecificInputRange
+                            && (Application.platform == RuntimePlatform.WindowsPlayer || Application.platform == RuntimePlatform.WindowsEditor);
+                        var notches = legacyWindows ? wheel / 120f : wheel;
+                        view.Zoom(Mathf.Clamp(notches * 1.5f, -4.5f, 4.5f), screen);
+                    }
                 }
             }
             var keyboard = Keyboard.current;

@@ -321,6 +321,32 @@ namespace RimworldTweak.Tests.PlayMode
             world.Step(3); Assert.That(WorldMapView.PawnPosition(pawn), Is.EqualTo(new Vector2(4.5f, 3.5f)));
         }
 
+        [UnityTest] public IEnumerator NormalizedWheelZoomsNoticeablyAndModalBlocksIt()
+        {
+            Setup(); MouseDevice();
+            var blocked=false;var input=CreateInput();
+            input.Configure(map,()=>blocked,()=>false,()=>false,(p,r)=>{},(a,b)=>{},()=>{});
+            var previous=InputSystem.settings.scrollDeltaBehavior;
+            try
+            {
+                InputSystem.settings.scrollDeltaBehavior=InputSettings.ScrollDeltaBehavior.UniformAcrossAllPlatforms;
+                var screen=map.GridToScreen(P(3,3));
+                MouseState(screen);PumpInput();yield return null;
+                var before=map.ZoomSize;
+                InputSystem.QueueStateEvent(mouse,new MouseState{position=screen,scroll=new Vector2(0,1)});
+                PumpInput();yield return null;
+                Assert.That(map.ZoomSize,Is.EqualTo(before*Mathf.Pow(.85f,1.5f)).Within(.001f));
+                InputSystem.QueueStateEvent(mouse,new MouseState{position=screen,scroll=new Vector2(0,-1)});
+                PumpInput();yield return null;
+                Assert.That(map.ZoomSize,Is.EqualTo(before).Within(.001f));
+                blocked=true;
+                InputSystem.QueueStateEvent(mouse,new MouseState{position=screen,scroll=new Vector2(0,1)});
+                PumpInput();yield return null;
+                Assert.That(map.ZoomSize,Is.EqualTo(before).Within(.001f));
+            }
+            finally {InputSystem.settings.scrollDeltaBehavior=previous;}
+        }
+
         [UnityTest] public IEnumerator ActualMousePressReleaseSelectsOnceAndRectanglePreservesEndpoints()
         {
             Setup(); MouseDevice(); var clicks = 0; var rectangles = 0; var isRectangle = false;

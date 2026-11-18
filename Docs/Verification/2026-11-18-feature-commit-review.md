@@ -11,3 +11,4 @@
 시험 맵 분리본 PlayMode106/106 통과: ui-commit-stage1/TestResults/20261118T005639895Z-8f5468da.
 드래그 채집 분리본 PlayMode107/107 통과: ui-commit-stage1/TestResults/20261118T005809340Z-d38b53a1.
 조리 계획서 분리본 PlayMode108/108 통과: ui-commit-stage1/TestResults/20261118T005939477Z-555b7466.
+최종 휠 분리본 PlayMode109/109 통과: ui-commit-stage1/TestResults/20261118T010117208Z-7600a97a. 기능 코드/테스트의 최종 인덱스와 사용자 수락 작업 파일은 줄끝 차이를 제외하고 일치한다. 기존 최종 EditMode194/194와 Windows 빌드 성공 기록은 수락 검증 문서에 있다.
