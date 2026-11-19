@@ -1,0 +1,391 @@
+{
+  "date": "2026-11-17",
+  "archive": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Assets.zip",
+  "archive_entries": 6132,
+  "texture_entries": 3418,
+  "samples": [
+    {
+      "key": "body-front",
+      "source": "C:\\Users\\kijin\\Downloads\\Ludeon public art assets\\Game art source\\Game art source - RimWorld\\Things\\Pawn\\Humanlike\\Bodies\\Naked_Male_south.png",
+      "archive": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Assets.zip",
+      "entry": "Resources/Textures/Things/Pawn/Humanlike/Bodies/Naked_Male_south.png.dds.split",
+      "bytes": 24156,
+      "crc32": "4314fa91",
+      "width": 128,
+      "height": 128,
+      "alpha_bounds": [
+        38,
+        43,
+        90,
+        108
+      ],
+      "preview": "local-reference/body-front.png",
+      "visual_review": "Contact sheet visually inspected 2026-11-17",
+      "status": "PNG/PSD composite read; reference only, not imported into game"
+    },
+    {
+      "key": "body-back",
+      "source": "C:\\Users\\kijin\\Downloads\\Ludeon public art assets\\Game art source\\Game art source - RimWorld\\Things\\Pawn\\Humanlike\\Bodies\\Naked_Male_north.png",
+      "archive": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Assets.zip",
+      "entry": "Resources/Textures/Things/Pawn/Humanlike/Bodies/Naked_Male_north.png.dds.split",
+      "bytes": 24141,
+      "crc32": "fe0a2e38",
+      "width": 128,
+      "height": 128,
+      "alpha_bounds": [
+        38,
+        43,
+        90,
+        108
+      ],
+      "preview": "local-reference/body-back.png",
+      "visual_review": "Contact sheet visually inspected 2026-11-17",
+      "status": "PNG/PSD composite read; reference only, not imported into game"
+    },
+    {
+      "key": "body-side",
+      "source": "C:\\Users\\kijin\\Downloads\\Ludeon public art assets\\Game art source\\Game art source - RimWorld\\Things\\Pawn\\Humanlike\\Bodies\\Naked_Male_east.png",
+      "archive": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Assets.zip",
+      "entry": "Resources/Textures/Things/Pawn/Humanlike/Bodies/Naked_Male_east.png.dds.split",
+      "bytes": 24253,
+      "crc32": "f871024f",
+      "width": 128,
+      "height": 128,
+      "alpha_bounds": [
+        42,
+        43,
+        86,
+        107
+      ],
+      "preview": "local-reference/body-side.png",
+      "visual_review": "Contact sheet visually inspected 2026-11-17",
+      "status": "PNG/PSD composite read; reference only, not imported into game"
+    },
+    {
+      "key": "head-front",
+      "source": "C:\\Users\\kijin\\Downloads\\Ludeon public art assets\\Game art source\\Game art source - RimWorld\\Things\\Pawn\\Humanlike\\Heads\\Male\\Male_Average_Normal_south.png",
+      "archive": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Assets.zip",
+      "entry": "Resources/Textures/Things/Pawn/Humanlike/Heads/Male/Male_Average_Normal_south.png.dds.split",
+      "bytes": 24320,
+      "crc32": "715b8747",
+      "width": 128,
+      "height": 128,
+      "alpha_bounds": [
+        41,
+        39,
+        87,
+        89
+      ],
+      "preview": "local-reference/head-front.png",
+      "visual_review": "Contact sheet visually inspected 2026-11-17",
+      "status": "PNG/PSD composite read; reference only, not imported into game"
+    },
+    {
+      "key": "bed",
+      "source": "C:\\Users\\kijin\\Downloads\\Ludeon public art assets\\Game art source\\Game art source - RimWorld\\Things\\Building\\Furniture\\Bed\\Bed_south.psd",
+      "archive": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Assets.zip",
+      "entry": "Resources/Textures/Things/Building/Furniture/Bed/Bed_south.psd.dds.split",
+      "bytes": 17273,
+      "crc32": "6b229594",
+      "width": 128,
+      "height": 128,
+      "alpha_bounds": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "preview": "local-reference/bed.png",
+      "visual_review": "PSD composite has abnormal colors; needs layer-aware export",
+      "status": "PNG/PSD composite read; reference only, not imported into game"
+    },
+    {
+      "key": "stove",
+      "source": "C:\\Users\\kijin\\Downloads\\Ludeon public art assets\\Game art source\\Game art source - RimWorld\\Things\\Building\\Production\\TableStoveFueled_south.psd",
+      "archive": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Assets.zip",
+      "entry": "Resources/Textures/Things/Building/Production/TableStoveFueled_south.psd.dds.split",
+      "bytes": 22303,
+      "crc32": "3066f460",
+      "width": 224,
+      "height": 96,
+      "alpha_bounds": [
+        16,
+        13,
+        208,
+        89
+      ],
+      "preview": "local-reference/stove.png",
+      "visual_review": "Contact sheet visually inspected 2026-11-17",
+      "status": "PNG/PSD composite read; reference only, not imported into game"
+    },
+    {
+      "key": "door",
+      "source": "C:\\Users\\kijin\\Downloads\\Ludeon public art assets\\Game art source\\Game art source - RimWorld\\Things\\Building\\Door\\DoorSimple_Mover.psd",
+      "archive": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Assets.zip",
+      "entry": "Resources/Textures/Things/Building/Door/DoorSimple_Mover.psd.dds.split",
+      "bytes": 5894,
+      "crc32": "86ebb342",
+      "width": 64,
+      "height": 64,
+      "alpha_bounds": [
+        0,
+        10,
+        34,
+        54
+      ],
+      "preview": "local-reference/door.png",
+      "visual_review": "Contact sheet visually inspected 2026-11-17",
+      "status": "PNG/PSD composite read; reference only, not imported into game"
+    },
+    {
+      "key": "wall-atlas",
+      "source": "C:\\Users\\kijin\\Downloads\\Ludeon public art assets\\Game art source\\Game art source - RimWorld\\Things\\Building\\Linked\\Wall\\Wall_Atlas_Planks.psd",
+      "archive": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Assets.zip",
+      "entry": "Resources/Textures/Things/Building/Linked/Wall/Wall_Atlas_Planks.psd.dds.split",
+      "bytes": 68468,
+      "crc32": "031f1db5",
+      "width": 320,
+      "height": 320,
+      "alpha_bounds": [
+        0,
+        0,
+        320,
+        320
+      ],
+      "preview": "local-reference/wall-atlas.png",
+      "visual_review": "Contact sheet visually inspected 2026-11-17",
+      "status": "PNG/PSD composite read; reference only, not imported into game"
+    },
+    {
+      "key": "tree",
+      "source": "C:\\Users\\kijin\\Downloads\\Ludeon public art assets\\Game art source\\Game art source - RimWorld\\Things\\Plant\\TreeOak\\TreeOakA.psd",
+      "archive": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Assets.zip",
+      "entry": "Resources/Textures/Things/Plant/TreeOak/TreeOakA.psd.dds.split",
+      "bytes": 17348,
+      "crc32": "49b0986f",
+      "width": 128,
+      "height": 128,
+      "alpha_bounds": [
+        5,
+        0,
+        116,
+        124
+      ],
+      "preview": "local-reference/tree.png",
+      "visual_review": "Contact sheet visually inspected 2026-11-17",
+      "status": "PNG/PSD composite read; reference only, not imported into game"
+    },
+    {
+      "key": "gather-plant",
+      "source": "C:\\Users\\kijin\\Downloads\\Ludeon public art assets\\Game art source\\Game art source - RimWorld\\Things\\Plant\\BerryPlant\\BerryBushA.psd",
+      "archive": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Assets.zip",
+      "entry": "Resources/Textures/Things/Plant/BerryPlant/BerryBushA.psd.dds.split",
+      "bytes": 17348,
+      "crc32": "65f0a65e",
+      "width": 128,
+      "height": 128,
+      "alpha_bounds": [
+        11,
+        32,
+        122,
+        128
+      ],
+      "preview": "local-reference/gather-plant.png",
+      "visual_review": "Contact sheet visually inspected 2026-11-17",
+      "status": "PNG/PSD composite read; reference only, not imported into game"
+    },
+    {
+      "key": "crop-mature",
+      "source": "C:\\Users\\kijin\\Downloads\\Ludeon public art assets\\Game art source\\Game art source - RimWorld\\Things\\Plant\\RicePlant\\RicePlantA.psd",
+      "archive": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Assets.zip",
+      "entry": "Resources/Textures/Things/Plant/RicePlant/RicePlantA.psd.dds.split",
+      "bytes": 4335,
+      "crc32": "b46a3702",
+      "width": 64,
+      "height": 64,
+      "alpha_bounds": [
+        0,
+        2,
+        64,
+        64
+      ],
+      "preview": "local-reference/crop-mature.png",
+      "visual_review": "Contact sheet visually inspected 2026-11-17",
+      "status": "PNG/PSD composite read; reference only, not imported into game"
+    },
+    {
+      "key": "crop-young",
+      "source": "C:\\Users\\kijin\\Downloads\\Ludeon public art assets\\Game art source\\Game art source - RimWorld\\Things\\Plant\\RicePlant_Immature\\RicePlantImmature.png",
+      "archive": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Assets.zip",
+      "entry": "Resources/Textures/Things/Plant/RicePlant_Immature/RicePlantImmature.png.dds.split",
+      "bytes": 6106,
+      "crc32": "a6514176",
+      "width": 64,
+      "height": 64,
+      "alpha_bounds": [
+        8,
+        17,
+        56,
+        52
+      ],
+      "preview": "local-reference/crop-young.png",
+      "visual_review": "Contact sheet visually inspected 2026-11-17",
+      "status": "PNG/PSD composite read; reference only, not imported into game"
+    },
+    {
+      "key": "wood",
+      "source": "C:\\Users\\kijin\\Downloads\\Ludeon public art assets\\Game art source\\Game art source - RimWorld\\Things\\Item\\Resource\\WoodLog\\WoodLog_a.psd",
+      "archive": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Assets.zip",
+      "entry": "Resources/Textures/Things/Item/Resource/WoodLog/WoodLog_a.psd.dds.split",
+      "bytes": 4643,
+      "crc32": "7d3b4e83",
+      "width": 64,
+      "height": 64,
+      "alpha_bounds": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "preview": "local-reference/wood.png",
+      "visual_review": "PSD composite has abnormal colors; needs layer-aware export",
+      "status": "PNG/PSD composite read; reference only, not imported into game"
+    },
+    {
+      "key": "ingredients",
+      "source": "C:\\Users\\kijin\\Downloads\\Ludeon public art assets\\Game art source\\Game art source - RimWorld\\Things\\Item\\Resource\\PlantFoodRaw\\Rice.psd",
+      "archive": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Assets.zip",
+      "entry": "Resources/Textures/Things/Item/Resource/PlantFoodRaw/Rice.psd.dds.split",
+      "bytes": 4410,
+      "crc32": "ec52d0f7",
+      "width": 64,
+      "height": 64,
+      "alpha_bounds": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "preview": "local-reference/ingredients.png",
+      "visual_review": "PSD composite has abnormal colors; needs layer-aware export",
+      "status": "PNG/PSD composite read; reference only, not imported into game"
+    },
+    {
+      "key": "meal",
+      "source": "C:\\Users\\kijin\\Downloads\\Ludeon public art assets\\Game art source\\Game art source - RimWorld\\Things\\Item\\Meal\\Simple\\Simple_a.png",
+      "archive": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Assets.zip",
+      "entry": "Resources/Textures/Things/Item/Meal/Simple/Simple_a.png.dds.split",
+      "bytes": 16092,
+      "crc32": "6c495be2",
+      "width": 128,
+      "height": 128,
+      "alpha_bounds": [
+        7,
+        25,
+        121,
+        105
+      ],
+      "preview": "local-reference/meal.png",
+      "visual_review": "Contact sheet visually inspected 2026-11-17",
+      "status": "PNG/PSD composite read; reference only, not imported into game"
+    },
+    {
+      "key": "soil",
+      "source": "C:\\Users\\kijin\\Downloads\\Ludeon public art assets\\Game art source\\Game art source - RimWorld\\Terrain\\Surfaces\\Soil.psd",
+      "archive": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Assets.zip",
+      "entry": "Resources/Textures/Terrain/Surfaces/Soil.psd.dds.split",
+      "bytes": 1333893,
+      "crc32": "d91660ac",
+      "width": 1024,
+      "height": 1024,
+      "alpha_bounds": [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "preview": "local-reference/soil.png",
+      "visual_review": "Contact sheet visually inspected 2026-11-17",
+      "status": "PNG/PSD composite read; reference only, not imported into game"
+    },
+    {
+      "key": "soil-rich",
+      "source": "C:\\Users\\kijin\\Downloads\\Ludeon public art assets\\Game art source\\Game art source - RimWorld\\Terrain\\Surfaces\\SoilRich.psd",
+      "archive": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Assets.zip",
+      "entry": "Resources/Textures/Terrain/Surfaces/SoilRich.psd.dds.split",
+      "bytes": 1313470,
+      "crc32": "6d5cdda1",
+      "width": 1024,
+      "height": 1024,
+      "alpha_bounds": [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "preview": "local-reference/soil-rich.png",
+      "visual_review": "Contact sheet visually inspected 2026-11-17",
+      "status": "PNG/PSD composite read; reference only, not imported into game"
+    },
+    {
+      "key": "button",
+      "source": "C:\\Users\\kijin\\Downloads\\Ludeon public art assets\\Game art source\\Game art source - RimWorld\\UI\\Widgets\\ButtonBG.psd",
+      "archive": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Assets.zip",
+      "entry": "Resources/Textures/UI/Widgets/ButtonBG.psd.dds.split",
+      "bytes": 4810,
+      "crc32": "67f0b2bf",
+      "width": 64,
+      "height": 64,
+      "alpha_bounds": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "preview": "local-reference/button.png",
+      "visual_review": "Contact sheet visually inspected 2026-11-17",
+      "status": "PNG/PSD composite read; reference only, not imported into game"
+    },
+    {
+      "key": "draft",
+      "source": "C:\\Users\\kijin\\Downloads\\Ludeon public art assets\\Game art source\\Game art source - RimWorld\\UI\\Commands\\Draft.png",
+      "archive": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Assets.zip",
+      "entry": "Resources/Textures/UI/Commands/Draft.png.dds.split",
+      "bytes": 22972,
+      "crc32": "914432af",
+      "width": 128,
+      "height": 128,
+      "alpha_bounds": [
+        1,
+        5,
+        127,
+        122
+      ],
+      "preview": "local-reference/draft.png",
+      "visual_review": "Contact sheet visually inspected 2026-11-17",
+      "status": "PNG/PSD composite read; reference only, not imported into game"
+    },
+    {
+      "key": "close",
+      "source": "C:\\Users\\kijin\\Downloads\\Ludeon public art assets\\Game art source\\Game art source - RimWorld\\UI\\Widgets\\CloseX.psd",
+      "archive": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Assets.zip",
+      "entry": "Resources/Textures/UI/Widgets/CloseX.psd.dds.split",
+      "bytes": 5842,
+      "crc32": "ff458162",
+      "width": 64,
+      "height": 64,
+      "alpha_bounds": [
+        0,
+        0,
+        64,
+        64
+      ],
+      "preview": "local-reference/close.png",
+      "visual_review": "Contact sheet visually inspected 2026-11-17",
+      "status": "PNG/PSD composite read; reference only, not imported into game"
+    }
+  ],
+  "source_root": "C:\\Users\\kijin\\Downloads\\Ludeon public art assets\\Game art source\\Game art source - RimWorld",
+  "scope": "Current Unity Assets, E:/Dev/RimworldTweak, Steam installation and Downloads public art folder. Not a whole-disk search.",
+  "archive_decode_note": "Direct DDS split decoding yielded visibly corrupt images and one truncation error. Discarded all such previews; current previews come from Downloads PNG/PSD originals."
+}
