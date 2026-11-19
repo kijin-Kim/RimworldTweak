@@ -22,7 +22,7 @@ namespace RimworldTweak.Presentation
             public Vector2 BodySize;
             public float Top;
 
-            public PawnVisual(Mark mark, int id)
+            public PawnVisual(Mark mark, PawnAppearance appearance)
             {
                 var pose = new GameObject("Pose", typeof(SortingGroup));
                 pose.layer = MapLayer;
@@ -33,7 +33,7 @@ namespace RimworldTweak.Presentation
                 Facing.SetParent(pose.transform, false);
                 mark.Sprite.transform.SetParent(Facing, false);
                 Parts = new List<SpriteRenderer>(5) { mark.Sprite };
-                Appearance = PawnAppearance.ForId(id);
+                Appearance = appearance;
             }
 
             public void Invalidate()
@@ -48,7 +48,44 @@ namespace RimworldTweak.Presentation
             bool working, WorkFeedback work, string caption, long tick, decimal pendingSeconds)
         {
             var mark = GetMark("pawn." + pawn.Id);
-            if (mark.Pawn == null) mark.Pawn = new PawnVisual(mark, pawn.Id);
+            var visual = ResolvePawnVisual(mark, PawnAppearance.ForId(pawn.Id), direction, PawnColor(pawn.Id), false);
+            mark.Root.transform.position = position + (inBed ? new Vector2(0, .04f) : Vector2.zero);
+            var pose = visual.Group.transform;
+            visual.Group.sortingOrder = Sort(position.y, 40);
+            visual.Facing.localScale = new Vector3(direction.x < 0 ? -1 : 1, 1, 1);
+            pose.localRotation = Quaternion.Euler(0, 0, sleeping && !inBed ? 75 : 0);
+            pose.localScale = inBed
+                ? new Vector3(.72f / visual.BodySize.x, .72f / visual.BodySize.y, 1)
+                : Vector3.one;
+            var labelHeight = visual.Top * pose.localScale.y;
+            if (working) AnimateWork(pose, direction, work.Kind, tick, pendingSeconds, pawn.Id);
+            SetMarkLabel(mark, caption, PawnColor(pawn.Id), labelHeight);
+        }
+
+        private void DrawRaider(RaiderState enemy, WorldState world)
+        {
+            var position = CellCenter(enemy.Position);
+            var direction = Vector2.left;
+            foreach (var pawn in world.Colonists)
+                if (pawn.Id == enemy.Attack.TargetId && pawn.Position != enemy.Position)
+                {
+                    direction = CellCenter(pawn.Position) - position;
+                    break;
+                }
+            var mark = GetMark("raider." + enemy.Id);
+            var labelColor = new Color(1f, .77f, .67f);
+            var visual = ResolvePawnVisual(mark, PawnAppearance.ForRaider(enemy.Id), direction, labelColor, true);
+            mark.Root.transform.position = position;
+            visual.Facing.localScale = new Vector3(direction.x < 0 ? -1 : 1, 1, 1);
+            visual.Group.sortingOrder = Sort(position.y, 45);
+            var caption = "습격자 #" + enemy.Id + " · " + enemy.Health +
+                (enemy.Attack.TargetId.HasValue ? " → #" + enemy.Attack.TargetId : "");
+            SetMarkLabel(mark, caption, labelColor, visual.Top);
+        }
+
+        private PawnVisual ResolvePawnVisual(Mark mark, PawnAppearance appearance, Vector2 direction, Color identityColor, bool hostile)
+        {
+            if (mark.Pawn == null) mark.Pawn = new PawnVisual(mark, appearance);
             var visual = mark.Pawn;
             if (visual.Catalog != catalog)
             {
@@ -70,23 +107,13 @@ namespace RimworldTweak.Presentation
                         if (catalog != null) catalog.TryGet(directionKey, out visual.Fallbacks[index]);
                     }
                 }
-                ApplyPawnArt(visual, index, PawnColor(pawn.Id));
+                ApplyPawnArt(visual, index, identityColor, hostile);
             }
 
-            mark.Root.transform.position = position + (inBed ? new Vector2(0, .04f) : Vector2.zero);
-            var pose = visual.Group.transform;
-            visual.Group.sortingOrder = Sort(position.y, 40);
-            visual.Facing.localScale = new Vector3(direction.x < 0 ? -1 : 1, 1, 1);
-            pose.localRotation = Quaternion.Euler(0, 0, sleeping && !inBed ? 75 : 0);
-            pose.localScale = inBed
-                ? new Vector3(.72f / visual.BodySize.x, .72f / visual.BodySize.y, 1)
-                : Vector3.one;
-            var labelHeight = visual.Top * pose.localScale.y;
-            if (working) AnimateWork(pose, direction, work.Kind, tick, pendingSeconds, pawn.Id);
-            SetMarkLabel(mark, caption, PawnColor(pawn.Id), labelHeight);
+            return visual;
         }
 
-        private void ApplyPawnArt(PawnVisual visual, int index, Color identityColor)
+        private void ApplyPawnArt(PawnVisual visual, int index, Color identityColor, bool hostile)
         {
             var layers = visual.Directions[index];
             var modular = layers.Length > 0;
@@ -111,7 +138,10 @@ namespace RimworldTweak.Presentation
                 part.enabled = true;
                 part.sprite = sprite;
                 part.sortingOrder = i;
-                part.color = (definition?.Tint ?? Color.white) * (modular ? Color.white : identityColor);
+                var tint = modular ? Color.white : identityColor;
+                if (hostile && modular && definition.Key.StartsWith("pawn.jacket.", StringComparison.Ordinal))
+                    tint = new Color(1f, .65f, .56f);
+                part.color = (definition?.Tint ?? Color.white) * tint;
                 part.transform.localScale = new Vector3(size.x / sprite.bounds.size.x, size.y / sprite.bounds.size.y, 1);
                 var pivot = new Vector2(sprite.pivot.x / sprite.rect.width, sprite.pivot.y / sprite.rect.height);
                 part.transform.localPosition = Vector2.Scale(pivot - anchor, size);

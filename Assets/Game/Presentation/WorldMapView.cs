@@ -188,9 +188,7 @@ namespace RimworldTweak.Presentation
                     Draw("gather." + node.Id, node.Kind == GatherKind.Tree ? "tree" : "plant.gather", CellCenter(node.Position),
                         node.Designated ? new Color(1, .85f, .65f) : Color.white, Sort(CellCenter(node.Position).y, 20), node.Designated ? "채집" : null);
             foreach (var enemy in world.Raiders)
-                Draw("raider." + enemy.Id, VisualCatalog.PawnKey(Vector2.left), CellCenter(enemy.Position),
-                    new Color(1f, .36f, .32f), Sort(CellCenter(enemy.Position).y, 45),
-                    "습격자 #" + enemy.Id + " · " + enemy.Health + (enemy.Attack.TargetId.HasValue ? " → #" + enemy.Attack.TargetId : ""));
+                DrawRaider(enemy, world);
             foreach (var bed in world.Beds)
                 if (bed.Exists && !HasBuilding(world, bed.Id)) Draw("bed." + bed.Id, "building.bed", CellCenter(bed.Position), Color.white, Sort(CellCenter(bed.Position).y, 10), null);
             foreach (var building in world.Buildings)

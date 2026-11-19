@@ -32,6 +32,8 @@ namespace RimworldTweak.Presentation
             }
         }
 
+        public static PawnAppearance ForRaider(int id) => (id & 1) == 0 ? BroadWithJacket : Round;
+
         public PawnAppearance WithJacket(bool hasJacket) =>
             HasJacket == hasJacket ? this : new PawnAppearance(Body, Hair, hasJacket);
 
