@@ -1,5 +1,49 @@
 # 병렬 작업 계획
 
+## 2026-11-17 기본 전투의 병렬화 계획 — 실행 전
+
+사용자가 건강·부상·방어구·구조·치료·회복 등 섞인 기능을 의존성 기준으로 분리해 병렬화 가능한 계획으로 정리하도록 요청했다. [기본 전투 병렬 계획](Plans/Combat-Baseline-Parallel.md)에 공통 계약 K, 기능 12개, 통합 S0+기능 SA/SB/SC의 예정 파일 소유권, P0~P3 묶음과 G0~G3 통합 검증을 정리했다. 현재는 계획이며 에이전트·worktree·제품 구현·Unity 실행을 시작하지 않았다.
+
+기본 전투 범위는 [점진 확장 계획](Plans/Combat-Baseline-Incremental.md)을 유지한다. 건강/부상/회복의 상태 쓰기는 SB, 공격/공간/적 행동은 SA, 장비/방어구 및 이후 의료 행동은 SC, 기존 World·생활/점유·저장·UI 연결과 실제 Unity 검사는 S0로 제안한다. 파일/자료/취소 계약을 고정하고 구현 승인·현재 공유 파일 인계 뒤에만 배정한다. 기존 UI·저장 담당의 현재 소유권을 이 계획으로 덮어쓰지 않는다. 실제 검사 전 모든 작성자의 입력 쓰기를 동결한다.
+
+## 목표 계속: 최초 검사 후 보완 배정
+
+EditMode182개 통과, PlayMode67개 중 맵 입력4개 실패 뒤 보완한다. ux_art_review는 WorldMapInput/WorldMapView와 WorldMapViewTests만, save_review는 새 SettlementShellIntegrationTests와 meta만 수정한다. root는 Shell·Simulation 미리보기·manifest·문서 통합을 담당한다. 기존 공개 API와 수락 기준을 공통 계약으로 유지한다. 통합 Unity 실행 전 다시 모든 쓰기를 동결한다. 아트 제작은 기준 장면 확인 뒤 확장한다.
+
+## 현재 요청: 수락 기준 문서 재검토
+
+현재 요청에서는 저장·UI/아트·검증 담당 세 에이전트가 기존 수락 기준을 읽기 전용으로 재검토하고 root만 문서를 수정한다. 아래 구현 배정의 기존 산출물은 보존하며 이번 문서 작업과 섞지 않는다. 공통 기준은 저장 안전성, 기존 명령 보존, 간결한 탑다운 2D, 자급 플레이테스트 제외다. 제품 코드·아트 수정과 Unity 실행은 이번 검토에 포함하지 않는다.
+
+## 2026-11-17 승인 후 구현 배정
+
+사용자가 검토된 수락 기준에 따라 구현·검증 반복을 승인했다. 공통 계약은 `SaveLoad-UX-Art-Acceptance.md`다. 이전 검토 담당을 아래 독립 기능 작성으로 배정하며 root가 통합·Unity 실행을 직렬 담당한다. 검사 시작 전 모든 작성자의 완료/동결을 확인한다. 커밋·게시 승인은 없다.
+
+| 담당 | 수정 소유권 | 공유 연결 |
+|---|---|---|
+| root | SimulationRunner 및 저장 연결, SettlementView/새 HUD·메뉴, Demo/Editor/Tools/asmdef/manifest/전체 문서/통합 검사 | 타 담당 파일은 작성 중 수정하지 않음 |
+| save_review | Runtime/SaveFileService.cs, 새 SaveRepository.cs·UserSettingsStore.cs, 전용 SaveRepositoryTests.cs 및 meta | Runner/기존 SaveTests는 root, 공개 API 먼저 전달 |
+| ux_art_review | 새 Presentation/WorldMapView.cs·WorldMapInput.cs, 전용 WorldMapViewTests.cs 및 meta | 기존 View 수정 없이 공개 API 전달, Catalog는 art 담당과 합의 |
+| verification_review | 새 Presentation/VisualCatalog.cs, Content/Visuals·Content/Art, 전용 Editor/BuildArtAssets.cs·VisualCatalogTests.cs 및 meta | 자연물 원화 생성은 제공 도구/skill 사용, Unity 실행은 root에게 요청 |
+
+root는 최초 테스트 전 현재 v1 저장 fixture 확보를 담당한다. 기능 작성과 검사는 분리하며 검토·빌드 통과만으로 사람 확인 항목을 완료 처리하지 않는다.
+
+## 2026-11-17 저장·UI·아트 요구사항 검토
+
+사용자의 여러 에이전트 검토 요청으로 root가 요구사항 초안을 작성하고 세 검토자가 독립 검토 후 반론을 교환한다. 공통 기준은 [전체 계획](Plans/SaveLoad-UX-Art.md), [아트 인계](Art/Handoff.md), 프로토타입 우선·자급 플레이테스트 제외·기존 게임 규칙 보존이다. 검토 대상은 `Docs/Plans/SaveLoad-UX-Art-Acceptance.md`이며 아직 실행된 검사로 취급하지 않는다.
+
+| 담당 | 검토 책임 | 파일 소유권 |
+|---|---|---|
+| root | 초안·통합·교차 질문·채택 판정·문서 검사 | 새 요구사항과 검토 기록, 전체 계획/Status/Decisions/Testing/README/이 배정 기록의 이번 범위만 수정 |
+| save-review | 저장 호환·실패 보존·메뉴/종료 상태 | 읽기와 의견 전달만 |
+| ux-art-review | UI 입력·맵 좌표·아트 교체·출처/임시와 최종 상태 | 읽기와 의견 전달만 |
+| verification-review | 요구사항→관측 결과→검사 추적, 범위/의존성/완료 판정 | 읽기와 의견 전달만 |
+
+검토자는 문서·코드·에셋을 수정하거나 Unity를 실행하지 않는다. root도 이번에는 제품·설정·아트를 변경하거나 Unity를 실행하지 않는다. 구현 병렬 배정/새 worktree/커밋/외부 게시 승인은 포함하지 않는다. 기존 사용자 변경은 보존한다.
+
+## 2026-11-17 프로토타입 우선 성능 지침 검토
+
+사용자 요청으로 최종 문서 확정 전 세 검토자가 독립 검토와 반론 교환을 수행한다. 공통 기준은 프로토타입 기능 구현 우선, 측정 전 최적화 도입 금지, 현재 동작과 상태 소유권 보존이다. 검토자는 파일 읽기와 의견 전달만 수행하며 제품 코드·문서·Unity 실행 권한을 갖지 않는다. 통합 root만 `Docs/Plans/RimWorld-Performance-Application.md`, `Docs/Reviews/2026-11-17-prototype-performance-review.md`, `Docs/Decisions.md`, `Docs/Architecture.md`, `Docs/Status.md`, `README.md`, 관련 계획 연결 문구와 이 배정 기록을 수정한다. 검토 역할은 구현 부담, 최소 구조 경계, 측정 전환 기준이며 최종 채택·보완·제외 이유는 검토 기록에 남긴다. 이번 범위는 문서이며 Unity 검사·제품 구현·커밋을 하지 않는다.
+
 ## 현재 범위와 세 세션
 
 건설·재배·조리·작업계획·파일 저장까지만 계획한다. [현재 3세션 계획](Plans/SettlementFiveFeatures.md)과 [현재 공통 계약](Contracts/SettlementFiveFeatures.md)이 아래 전체/과거 계획보다 우선한다. S0은 통합, SA는 건설→조리→저장, SB는 재배→작업계획→연결 검사를 맡는다. 별도 QA나 후반 기능 세션을 추가하지 않는다. 현재 문서만 작성했으며 공유 폴더 유지, 구현·세션/worktree 생성·커밋은 하지 않는다.

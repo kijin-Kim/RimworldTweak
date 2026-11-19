@@ -29,6 +29,8 @@ Tools/Run-Tests.ps1
 
 ## 코드 경계
 
+2026-11-17 적용 기준: 기존 아래 경계를 유지하는 것으로 프로토타입의 최소 확장성을 확보한다. 미래 성능만을 위한 검색 인터페이스·DI·캐시 관리자·변경 이벤트·계측 프레임워크를 추가하지 않는다. 기능 연결 후 대표 Player 측정에서 확인한 구간만 개선한다. 현재 규칙·예약·수명 오류는 즉시 수정하며, 기능 확인을 막는 실제 지연에는 좁은 측정과 최소 수정만 허용한다. 상세 판단은 [프로토타입 우선 지침](Plans/RimWorld-Performance-Application.md)을 따른다.
+
 | 영역 | 책임 | 참조 |
 |---|---|---|
 | Simulation | 상태·시간·작업·자원 규칙 | 표준 C#만 |
@@ -118,3 +120,8 @@ World는 ResourceState/BedState와 정착민 욕구·생활 상태를 독립 소
 ## 건설·재배 실행 연결
 
 S0의 WorldState.Production은 공간검사/명령/ID/스택→운반→현장 이전/권한/진행결과 적용/동적 침대/통행을 담당한다. SA/SB의 읽기 상태와 순수 Rules를 WorkReadContext.Options/ActiveWork로 연결한다. 성장은 생활·노동 판단 전에 갱신하고 완파종 Tick에는0이다. 산출은 기존 SpawnResource/CreatedTick 규칙을 사용한다. 동적 Bed 목록과 View의 침대 수 변경 감지를 추가했다. 전용 패널은 기존View에 S0이 연결하며 화면은 권한/현장/운반을 읽을 뿐 상태를 직접 변경하지 않는다.
+
+
+## 2026-11-18 선택·상황 UI 연결
+
+SettlementShell이 복수 선택 ID와 펼친 계획서·상황 메뉴 상태를 UI에서 관리한다. 그룹 소집·이동과 대상 상황 조작은 SimulationRunner의 기존 명령을 사용한다. 복수 선택은 저장 데이터가 아니며 월드 교체 시 해제한다. WorldMapView는 추가 선택 테두리를 표시하고 월드 교체 시 정리한다. [UI 대조 계획](Plans/RimWorld-UI-Experience-Audit.md).
