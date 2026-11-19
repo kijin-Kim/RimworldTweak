@@ -22,22 +22,33 @@ namespace RimworldTweak.Simulation
         private BuildingState Building(int id) => buildings.Find(b=>b.Id==id && b.Exists);
         private CropState Crop(int id) => crops.Find(c=>c.Id==id && c.Exists);
         private GrowingZoneState GrowingZone(int id) => growingZones.Find(z=>z.Id==id && z.Exists);
-        private bool ProductionOccupies(GridPosition p)
+        private bool CanUseArea(GridPosition first, GridPosition last, bool allowResources)
         {
-            foreach(var b in blueprints) if(b.Exists && (b.Position==p || b.Kind==BuildingKind.Stove && ConstructionRules.ServiceCell(b.Position)==p)) return true;
-            foreach(var b in buildings) if(b.Exists && (b.Position==p || b.Kind==BuildingKind.Stove && ConstructionRules.ServiceCell(b.Position)==p)) return true;
-            foreach(var c in crops) if(c.Exists && c.Position==p) return true;
-            return false;
-        }
-        private bool CanPlaceProduction(GridPosition p)
-        {
-            if(!InBounds(p) || blockedSet.Contains(p) || ProductionOccupies(p)) return false;
-            foreach(var r in Resources) if(r.Exists && r.Amount>0 && r.Position==p) return false;
-            foreach(var b in Beds) if(b.Exists && b.Position==p) return false;
-            foreach(var n in gatherables) if(!n.Depleted && n.Position==p) return false;
-            foreach(var z in storageZones) if(z.Exists) foreach(var slot in z.Slots) if(slot.Position==p) return false;
+            if (!InBounds(first) || !InBounds(last)) return false;
+            var left = Math.Min(first.X, last.X);
+            var right = Math.Max(first.X, last.X);
+            var bottom = Math.Min(first.Y, last.Y);
+            var top = Math.Max(first.Y, last.Y);
+            bool Contains(GridPosition p) => p.X >= left && p.X <= right && p.Y >= bottom && p.Y <= top;
+            bool ContainsBuilding(BuildingKind kind, GridPosition p) => Contains(p) ||
+                (kind == BuildingKind.Stove && Contains(ConstructionRules.ServiceCell(p)));
+
+            // Inspect the occupied cells once, including for a map-spanning drag.
+            foreach (var p in blockedTiles) if (Contains(p)) return false;
+            foreach (var b in blueprints) if (b.Exists && ContainsBuilding(b.Kind, b.Position)) return false;
+            foreach (var b in buildings) if (b.Exists && ContainsBuilding(b.Kind, b.Position)) return false;
+            foreach (var c in crops) if (c.Exists && Contains(c.Position)) return false;
+            foreach (var bed in Beds) if (bed.Exists && Contains(bed.Position)) return false;
+            foreach (var node in gatherables) if (!node.Depleted && Contains(node.Position)) return false;
+            foreach (var zone in storageZones)
+                if (zone.Exists)
+                    foreach (var slot in zone.Slots) if (Contains(slot.Position)) return false;
+            if (!allowResources)
+                foreach (var r in Resources) if (r.Exists && r.Amount > 0 && Contains(r.Position)) return false;
             return true;
         }
+
+        private bool CanPlaceProduction(GridPosition p) => CanUseArea(p, p, false);
         public bool PlaceBlueprint(BuildingKind kind, GridPosition position)
         {
             if(!CanPlaceBlueprint(kind, position, out var reason)) return Reject(reason);
@@ -51,14 +62,7 @@ namespace RimworldTweak.Simulation
                 : kind==BuildingKind.Stove && !CanPlaceProduction(ConstructionRules.ServiceCell(position)) ? "OccupiedServiceCell" : string.Empty;
             return reason.Length==0;
         }
-        public bool CanCreateGrowingZone(GridPosition first,GridPosition second)
-        {
-            if(!InBounds(first)||!InBounds(second)) return false;
-            for(var y=Math.Min(first.Y,second.Y);y<=Math.Max(first.Y,second.Y);y++)
-                for(var x=Math.Min(first.X,second.X);x<=Math.Max(first.X,second.X);x++)
-                    if(!CanPlaceProduction(new GridPosition(x,y))) return false;
-            return true;
-        }
+        public bool CanCreateGrowingZone(GridPosition first,GridPosition second) => CanUseArea(first, second, false);
         private void CancelProductionOwners(int targetId)
         {
             foreach(var pawn in Colonists)
@@ -179,9 +183,9 @@ namespace RimworldTweak.Simulation
                 var zone=GrowingZone(c.ZoneId);
                 if(c.Stage==CropStage.Growing) continue;
                 if(c.Stage==CropStage.Empty&&!zone.SowingEnabled) {c.Reason=WorkReasonCode.Disabled;continue;}
-                var route=FindPath(pawn.Position,c.Position); if(route==null) {c.Reason=WorkReasonCode.Unreachable;continue;}
+                var distance=FindPathLength(pawn.Position,c.Position); if(distance<0) {c.Reason=WorkReasonCode.Unreachable;continue;}
                 var step=c.Stage==CropStage.Empty?WorkStep.Sow:WorkStep.Harvest;
-                options.Add(new FeatureWorkOption(new WorkCandidate(context,WorkCategory.Farm,step,c.Id,null,c.Position,c.RequestOrder,route),WorkReasonCode.None));
+                options.Add(new FeatureWorkOption(new WorkCandidate(context,WorkCategory.Farm,step,c.Id,null,c.Position,c.RequestOrder,distance),WorkReasonCode.None));
             }
             PrepareCookingOptions(context,pawn,options);
             context.SetFeatureInputs(options);
@@ -189,6 +193,7 @@ namespace RimworldTweak.Simulation
         private bool StartProductionWork(ColonistState pawn,WorkCandidate candidate)
         {
             if(candidate.Step==WorkStep.Cook||candidate.Step==WorkStep.DeliverCook)return StartCookingWork(pawn,candidate);
+            var route = candidate.Route;
             InteractionClaim claim=null;
             if(candidate.Step==WorkStep.DeliverBuild)
             {
@@ -206,14 +211,21 @@ namespace RimworldTweak.Simulation
                 else if(candidate.Step==WorkStep.Demolish)
                 { var b=Building(candidate.TargetId); if(b==null||!b.DemolitionDesignated) return false; claim=b.Claim; }
                 else if(candidate.Step==WorkStep.Sow || candidate.Step==WorkStep.Harvest)
-                { var c=Crop(candidate.TargetId); if(c==null||c.Stage!=(candidate.Step==WorkStep.Sow?CropStage.Empty:CropStage.Mature)||candidate.Step==WorkStep.Sow&&!GrowingZone(c.ZoneId).SowingEnabled) return false; claim=c.Claim; }
+                {
+                    var c=Crop(candidate.TargetId);
+                    if(c==null||c.Stage!=(candidate.Step==WorkStep.Sow?CropStage.Empty:CropStage.Mature)||candidate.Step==WorkStep.Sow&&!GrowingZone(c.ZoneId).SowingEnabled) return false;
+                    // The caller already verified the candidate's tick, origin and terrain revision.
+                    route = ReadPath(pawn.Position,candidate.WorkCell);
+                    if(route==null || route.Count!=candidate.PathLength) return false;
+                    claim=c.Claim;
+                }
                 else return false;
                 if(claim.OwnerId.HasValue) return false;
                 EndLife(pawn); claim.Acquire(pawn.Id,pawn.ActionId);
                 var crop=Crop(candidate.TargetId); if(crop!=null) crop.Reason=WorkReasonCode.None;
                 pawn.FeatureStep=candidate.Step; pawn.WorkTargetId=candidate.TargetId; pawn.WorkActivity=WorkActivity.GoingToFeature;
             }
-            pawn.SetRoute(candidate.WorkCell,candidate.Route); pawn.WorkReason=string.Empty; availabilityRevision++; return true;
+            pawn.SetRoute(candidate.WorkCell,route); pawn.WorkReason=string.Empty; availabilityRevision++; return true;
         }
         private void ClearProductionWork(ColonistState pawn)
         {

@@ -193,6 +193,10 @@
   "RimworldTweak.Tests.EditMode.SaveRoundTripTests.MultipleCookingBillsAndCookDeliveryResumeAfterFileRoundTrip",
   "RimworldTweak.Tests.EditMode.CookingTests.PausingReorderingAndDeletingPartialBillPreservesMaterials",
   "RimworldTweak.Tests.EditMode.CookingTests.DraftedAssignedWorkerAllowsNextBillToRun",
+  "RimworldTweak.Tests.EditMode.CookingTests.FeedbackUsesOnlyTheActiveBillAndIgnoresOtherPawnsCandidateDiagnostics",
+  "RimworldTweak.Tests.EditMode.SaveRepositoryTests.OversizedWritePreservesReadableSlot",
+  "RimworldTweak.Tests.EditMode.SaveTests.SettlementMapKeepsStartingLayoutAndValidatesBothSavedDimensions",
+  "RimworldTweak.Tests.EditMode.SaveTests.LargeReversedZoneAndPathQueriesSurviveTerrainChangesAndRestore",
   "RimworldTweak.Tests.EditMode.VisualCatalogTests.MissingRequiredLayerFallsBackAsAWholeAndShirtOnlyNeedsNoJacket",
   "RimworldTweak.Tests.EditMode.VisualCatalogTests.AllPawnCombinationsUseAlignedFullCanvasSpritesAndStableIds"
 ]

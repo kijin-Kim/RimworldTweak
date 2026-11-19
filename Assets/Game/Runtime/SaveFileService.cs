@@ -39,8 +39,6 @@ namespace RimworldTweak.Runtime
         }
         private static DataContractJsonSerializer Serializer() => new DataContractJsonSerializer(typeof(SaveData),new DataContractJsonSerializerSettings {
             EmitTypeInformation=EmitTypeInformation.Never,MaxItemsInObjectGraph=1000000,UseSimpleDictionaryFormat=true });
-        private static byte[] Encode(SaveData data)
-        { using(var stream=new LimitedStream()){Serializer().WriteObject(stream,data);return stream.ToArray();} }
         private static SaveData Decode(byte[] bytes)
         {
             if(bytes.Length==0||bytes.Length>SaveValidation.MaximumFileBytes)throw new SizeLimitException();
@@ -103,7 +101,7 @@ namespace RimworldTweak.Runtime
             try
             {
                 var valid=ValidateForWrite(data);if(!valid.IsValid)return new SaveFileResult(false,valid.ErrorCode);
-                var bytes=Encode(data);var full=Path.GetFullPath(path);var directory=Path.GetDirectoryName(full);
+                var bytes=EncodeJson(data);var full=Path.GetFullPath(path);var directory=Path.GetDirectoryName(full);
                 Directory.CreateDirectory(directory);temporary=full+".tmp";
                 using(var stream=new FileStream(temporary,FileMode.Create,FileAccess.Write,FileShare.None))
                 {created=true;stream.Write(bytes,0,bytes.Length);stream.Flush(true);}
@@ -146,7 +144,13 @@ namespace RimworldTweak.Runtime
         {
             var serializer=new DataContractJsonSerializer(typeof(T),new DataContractJsonSerializerSettings {
                 EmitTypeInformation=EmitTypeInformation.Never,MaxItemsInObjectGraph=1000000,UseSimpleDictionaryFormat=true });
-            using(var stream=new LimitedStream()){serializer.WriteObject(stream,data);return stream.ToArray();}
+            using(var stream=new LimitedStream())
+            {
+                try { serializer.WriteObject(stream,data); }
+                catch(System.Reflection.TargetInvocationException error) when(error.GetBaseException() is SizeLimitException)
+                { throw new SizeLimitException(); }
+                return stream.ToArray();
+            }
         }
         internal static T DecodeJson<T>(byte[] bytes)
         {

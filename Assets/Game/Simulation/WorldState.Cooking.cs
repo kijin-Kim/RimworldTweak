@@ -15,6 +15,12 @@ namespace RimworldTweak.Simulation
             cookingOrders.Find(o=>o.Exists&&o.StoveId==stoveId&&o.ActiveCycle)
             ?? cookingOrders.Find(o=>o.Exists&&o.StoveId==stoveId);
         private CookingOutputState CookingOutput(int stoveId) => cookingOutputs.Find(o=>o.Exists&&o.StoveId==stoveId);
+        private static WorkReasonCode CookingOutputReason(CookingOutputState output)
+        {
+            if (output == null) return WorkReasonCode.InvalidTarget;
+            if (output.Amount >= CookingOutputState.Capacity) return WorkReasonCode.OutputFull;
+            return output.OwnerId.HasValue ? WorkReasonCode.TargetReserved : WorkReasonCode.None;
+        }
         private int MealTotal => ResourceTotal(ResourceKind.Meal,false)+ResourceTotal(ResourceKind.Meal,true)+CargoTotal(ResourceKind.Meal);
         private void InitializeStove(BuildingState b)
         {
@@ -180,9 +186,8 @@ namespace RimworldTweak.Simulation
                 var route=FindPath(pawn.Position,o.ServiceCell);
                 if(route==null){o.Reason=WorkReasonCode.Unreachable;continue;}
                 var output=CookingOutput(o.StoveId);
-                if(output.Amount>=CookingOutputState.Capacity){o.Reason=WorkReasonCode.OutputFull;continue;}
-                if(output.OwnerId.HasValue){o.Reason=WorkReasonCode.TargetReserved;continue;}
-                o.Reason=WorkReasonCode.None;
+                o.Reason=CookingOutputReason(output);
+                if(o.Reason!=WorkReasonCode.None)continue;
                 if(o.InputIngredients>=2)
                     options.Add(new FeatureWorkOption(new WorkCandidate(context,WorkCategory.Cook,WorkStep.Cook,o.StoveId,null,o.ServiceCell,o.RequestOrder,route),WorkReasonCode.None));
                 else
@@ -260,9 +265,9 @@ namespace RimworldTweak.Simulation
             }
             if(pawn.WorkActivity!=WorkActivity.WorkingFeature)return;
             var output=CookingOutput(o.StoveId);
-            var reason=output.Amount>=CookingOutputState.Capacity?WorkReasonCode.OutputFull:output.OwnerId.HasValue?WorkReasonCode.TargetReserved:WorkReasonCode.None;
+            var reason=CookingOutputReason(output);
             o.Reason=reason;
-            var snapshot=new FeatureWorkSnapshot(pawn.Id,pawn.ActionId,o.StoveId,WorkStep.Cook,o.Progress,40,2,reason);
+            var snapshot=new FeatureWorkSnapshot(pawn.Id,pawn.ActionId,o.StoveId,WorkStep.Cook,o.Progress,CookingRules.Duration,CookingRules.IngredientsPerMeal,reason);
             var context=new WorkReadContext(workContextToken,Tick,availabilityRevision,MapRevision,pawn);
             context.SetFeatureInputs(new List<FeatureWorkOption>(),snapshot);context.Seal(new List<WorkCandidate>(),reason);
             var result=CookingRules.EvaluateStep(context,pawn.Id);

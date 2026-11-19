@@ -1,7 +1,25 @@
+using System.Linq;
+
 namespace RimworldTweak.Simulation
 {
     public static class WorkScenario
     {
+        public const int SettlementSize = 250;
+
+        public static ScenarioDefinition CreateSettlement()
+        {
+            var startingArea = CreateTestMap();
+            var firstPawn = startingArea.Colonists[0].Position;
+            GridPosition NearCenter(GridPosition cell) => new GridPosition(
+                SettlementSize / 2 + cell.X - firstPawn.X, SettlementSize / 2 + cell.Y - firstPawn.Y);
+
+            return new ScenarioDefinition(SettlementSize, SettlementSize, startingArea.BlockedTiles.Select(NearCenter),
+                startingArea.Colonists.Select(p => new ColonistSeed(p.Id, NearCenter(p.Position), p.Nutrition, p.Rest)),
+                startingArea.Resources.Select(r => new ResourceSeed(r.Id, r.Kind, r.Amount, NearCenter(r.Position))),
+                startingArea.Beds.Select(b => new BedSeed(b.Id, NearCenter(b.Position))), startingArea.NeedsEnabled,
+                startingArea.Gatherables.Select(g => new GatherSeed(g.Id, g.Kind, NearCenter(g.Position))));
+        }
+
         public static ScenarioDefinition CreateTestMap()
         {
             var initial = Create();

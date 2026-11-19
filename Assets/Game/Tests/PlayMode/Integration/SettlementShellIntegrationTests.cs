@@ -27,7 +27,6 @@ namespace RimworldTweak.Tests.PlayMode
         private Keyboard keyboard;
         private static GridPosition P(int x,int y)=>new GridPosition(x,y);
 
-
         [UnityTest]
         public IEnumerator PawnMovesBetweenSimulationTicksAndFreezesAtItsRenderedPosition()
         {
@@ -154,12 +153,12 @@ namespace RimworldTweak.Tests.PlayMode
             Setup();runner.StartNewSettlement();
             yield return null;
             var w=runner.Session.World;
-            Assert.That(w.Width,Is.EqualTo(32));Assert.That(w.Height,Is.EqualTo(32));
+            Assert.That(w.Width,Is.EqualTo(250));Assert.That(w.Height,Is.EqualTo(250));
             Assert.That(w.Gatherables.Any(x=>x.Position.X>20&&x.Position.Y>20),Is.True);
             var captured=runner.Session.CaptureSaveData(true,1);
             Assert.That(captured.Success,Is.True);
             Assert.That(SimulationSession.TryRestoreSave(captured.Data,out var restored,out var error),Is.True,error);
-            Assert.That(restored.World.Width,Is.EqualTo(32));
+            Assert.That(restored.World.Width,Is.EqualTo(250));
             Assert.That(restored.World.Gatherables.Count,Is.EqualTo(w.Gatherables.Count));
         }
         [Test]
@@ -441,7 +440,23 @@ namespace RimworldTweak.Tests.PlayMode
             Assert.That(summary,Is.EqualTo("목재 20"));
         }
 
-
+        [UnityTest] public IEnumerator FarmNoticeGroupsAffectedCellsAndClearsAfterPolicyChange()
+        {
+            Setup();runner.SetPaused(true);
+            Assert.That(runner.SetWorkPriority(1,WorkCategory.Farm,0),Is.True);
+            Assert.That(runner.CreateGrowingZone(P(4,4),P(5,5)),Is.True);
+            yield return null;yield return null;
+            var world=runner.Session.World;
+            var first=world.GrowingZones.Single().Cells[0];
+            var key="alert."+first.Id+"."+WorkReasonCode.NoWorker;
+            Assert.That(shell.Buttons[key].GetComponentInChildren<Text>().text,Does.Contain("4칸"));
+            Assert.That(world.Crops.Count(c=>shell.Buttons.ContainsKey("alert."+c.Id+"."+WorkReasonCode.NoWorker)),Is.EqualTo(1));
+            Click(key);
+            Assert.That(shell.SelectedObjectId,Is.EqualTo(first.Id));
+            runner.SetWorkPriority(1,WorkCategory.Farm,1);
+            yield return null;yield return null;
+            Assert.That(shell.Buttons.ContainsKey(key),Is.False);
+        }
 
         [UnityTest] public IEnumerator ConstructionNoticeTracksMissingMaterialsAndBlockedAccess()
         {

@@ -8,6 +8,13 @@ namespace RimworldTweak.Simulation
         private bool advancingTick;
         private readonly List<GridPosition> blockedTiles;
         private readonly HashSet<GridPosition> blockedSet;
+        private GridPathSearch gridSearch;
+        // Several work candidates ask about different destinations from the same cell.
+        // Keep the breadth-first frontier until the start or the walkable map changes.
+        private readonly Queue<GridPosition> pathFrontier = new Queue<GridPosition>();
+        private readonly Dictionary<GridPosition, GridPosition> pathParents = new Dictionary<GridPosition, GridPosition>();
+        private GridPosition pathOrigin;
+        private long pathMapRevision = -1;
         private readonly Dictionary<int, ColonistState> colonistsById = new Dictionary<int, ColonistState>();
         private readonly List<MoveCommand> moveCommands = new List<MoveCommand>();
         private readonly List<TopologyCommand> topologyCommands = new List<TopologyCommand>();
@@ -130,34 +137,142 @@ namespace RimworldTweak.Simulation
             PathSearchCount++;
             return ReadPath(start,destination);
         }
+
+        // Candidate evaluation counts as a search even if the distance was already visited.
+        private int FindPathLength(GridPosition start, GridPosition destination)
+        {
+            PathSearchCount++;
+            if (!HasPath(start, destination)) return -1;
+            if (start == destination) return 0;
+            if (gridSearch != null) return gridSearch.Distance(destination);
+            var distance = 0;
+            for (var node = destination; node != start; node = pathParents[node]) distance++;
+            return distance;
+        }
         private IReadOnlyList<GridPosition> ReadPath(GridPosition start,GridPosition destination)
         {
+            if (!HasPath(start, destination)) return null;
+            if (start == destination) return Array.Empty<GridPosition>();
+            if (gridSearch != null) return gridSearch.BuildRoute(destination);
+            var route = new List<GridPosition>();
+            for (var node = destination; node != start; node = pathParents[node]) route.Add(node);
+            route.Reverse();
+            return route.AsReadOnly();
+        }
+
+        private bool HasPath(GridPosition start, GridPosition destination)
+        {
             if (!InBounds(start) || !InBounds(destination) || blockedSet.Contains(start) || blockedSet.Contains(destination))
-                return null;
-            if (start == destination) return new List<GridPosition>().AsReadOnly();
-            var frontier = new Queue<GridPosition>();
-            var previous = new Dictionary<GridPosition, GridPosition>();
-            frontier.Enqueue(start);
-            previous.Add(start, start);
-            while (frontier.Count > 0)
+                return false;
+            if (start == destination) return true;
+            if (Width <= WorkScenario.SettlementSize && Height <= WorkScenario.SettlementSize)
             {
-                var current = frontier.Dequeue();
+                if (gridSearch == null) gridSearch = new GridPathSearch(Width, Height);
+                return gridSearch.Reaches(start, destination, MapRevision, blockedTiles);
+            }
+            // Custom simulation scenarios can exceed the saveable size. Keep them sparse.
+            if (pathMapRevision != MapRevision || pathOrigin != start)
+            {
+                pathFrontier.Clear();
+                pathParents.Clear();
+                pathFrontier.Enqueue(start);
+                pathParents.Add(start, start);
+                pathOrigin = start;
+                pathMapRevision = MapRevision;
+            }
+            while (!pathParents.ContainsKey(destination))
+            {
+                if (pathFrontier.Count == 0) return false;
+                var current = pathFrontier.Dequeue();
+                // Finish all neighbors so the next query continues in the same deterministic order.
                 foreach (var direction in Directions)
                 {
                     var next = new GridPosition(current.X + direction.X, current.Y + direction.Y);
-                    if (!InBounds(next) || blockedSet.Contains(next) || previous.ContainsKey(next)) continue;
-                    previous.Add(next, current);
-                    if (next == destination)
-                    {
-                        var route = new List<GridPosition>();
-                        for (var node = destination; node != start; node = previous[node]) route.Add(node);
-                        route.Reverse();
-                        return route.AsReadOnly();
-                    }
-                    frontier.Enqueue(next);
+                    if (!InBounds(next) || blockedSet.Contains(next) || pathParents.ContainsKey(next)) continue;
+                    pathParents.Add(next, current);
+                    pathFrontier.Enqueue(next);
                 }
             }
-            return null;
+            return true;
+        }
+
+        private sealed class GridPathSearch
+        {
+            private readonly int stride;
+            private readonly int[] parents;
+            private readonly int[] distances;
+            private readonly int[] queue;
+            private int head;
+            private int tail;
+            private int origin;
+            private long mapRevision = -1;
+
+            public GridPathSearch(int width, int height)
+            {
+                stride = width + 2;
+                parents = new int[stride * (height + 2)];
+                distances = new int[parents.Length];
+                queue = new int[width * height];
+            }
+
+            private int Index(GridPosition p) => (p.Y + 1) * stride + p.X + 1;
+            public int Distance(GridPosition p) => distances[Index(p)];
+
+            public bool Reaches(GridPosition start, GridPosition destination, long revision, List<GridPosition> blocked)
+            {
+                var first = Index(start);
+                if (mapRevision != revision)
+                {
+                    // A blocked one-cell border allows the hot loop to use integer offsets.
+                    Array.Clear(parents, 0, parents.Length);
+                    var lastRow = parents.Length - stride;
+                    for (var x = 0; x < stride; x++) parents[x] = parents[lastRow + x] = -1;
+                    for (var row = stride; row < lastRow; row += stride)
+                        parents[row] = parents[row + stride - 1] = -1;
+                    foreach (var p in blocked) parents[Index(p)] = -1;
+                    tail = 0;
+                    origin = 0;
+                    mapRevision = revision;
+                }
+                if (origin != first)
+                {
+                    for (var i = 0; i < tail; i++) parents[queue[i]] = 0;
+                    head = 0;
+                    tail = 1;
+                    queue[0] = first;
+                    parents[first] = first;
+                    distances[first] = 0;
+                    origin = first;
+                }
+                var goal = Index(destination);
+                while (parents[goal] == 0 && head < tail)
+                {
+                    var current = queue[head++];
+                    // Match Directions above: east, north, west, south.
+                    Visit(current + 1, current);
+                    Visit(current + stride, current);
+                    Visit(current - 1, current);
+                    Visit(current - stride, current);
+                }
+                return parents[goal] > 0;
+            }
+
+            private void Visit(int cell, int from)
+            {
+                if (parents[cell] != 0) return;
+                parents[cell] = from;
+                distances[cell] = distances[from] + 1;
+                queue[tail++] = cell;
+            }
+
+            public IReadOnlyList<GridPosition> BuildRoute(GridPosition destination)
+            {
+                var route = new List<GridPosition>();
+                for (var cell = Index(destination); cell != origin; cell = parents[cell])
+                    route.Add(new GridPosition(cell % stride - 1, cell / stride - 1));
+                route.Reverse();
+                return route.AsReadOnly();
+            }
         }
 
         public void Step(long count)

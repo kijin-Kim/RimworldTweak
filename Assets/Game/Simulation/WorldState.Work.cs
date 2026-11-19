@@ -48,7 +48,7 @@ namespace RimworldTweak.Simulation
         }
         public bool QueueCreateStorage(GridPosition first, GridPosition second)
         {
-            if (!ValidStorageRectangle(first, second)) return Reject("InvalidStorageArea");
+            if (!CanCreateStorage(first, second)) return Reject("InvalidStorageArea");
             var zoneId = NewId(); var slots = new List<StorageSlotState>();
             for (var y = Math.Min(first.Y, second.Y); y <= Math.Max(first.Y, second.Y); y++)
                 for (var x = Math.Min(first.X, second.X); x <= Math.Max(first.X, second.X); x++)
@@ -56,22 +56,7 @@ namespace RimworldTweak.Simulation
             storageZones.Add(new StorageZoneState(zoneId, slots)); availabilityRevision++;
             LastCommandError = string.Empty; return true;
         }
-        private bool ValidStorageRectangle(GridPosition first, GridPosition second)
-        {
-            if (!InBounds(first) || !InBounds(second)) return false;
-            for (var y = Math.Min(first.Y, second.Y); y <= Math.Max(first.Y, second.Y); y++)
-                for (var x = Math.Min(first.X, second.X); x <= Math.Max(first.X, second.X); x++)
-                {
-                    var position = new GridPosition(x, y);
-                    if (blockedSet.Contains(position) || ProductionOccupies(position)) return false;
-                    foreach (var bed in Beds) if (bed.Exists && bed.Position == position) return false;
-                    foreach (var node in gatherables) if (!node.Depleted && node.Position == position) return false;
-                    foreach (var zone in storageZones) if (zone.Exists)
-                        foreach (var slot in zone.Slots) if (slot.Position == position) return false;
-                }
-            return true;
-        }
-        public bool CanCreateStorage(GridPosition first, GridPosition second) => ValidStorageRectangle(first,second);
+        public bool CanCreateStorage(GridPosition first, GridPosition second) => CanUseArea(first, second, true);
         public bool QueueStorageFilter(int zoneId, ResourceKind kind, bool allowed)
         {
             if (Zone(zoneId) == null || !Enum.IsDefined(typeof(ResourceKind), kind)) return Reject("InvalidStorageFilter");

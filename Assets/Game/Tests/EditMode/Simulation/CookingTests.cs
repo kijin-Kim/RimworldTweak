@@ -29,6 +29,44 @@ namespace RimworldTweak.Tests.EditMode
         private static int Total(WorldState w,ResourceKind kind)=>w.ResourceTotal(kind,false)+w.ResourceTotal(kind,true)+w.CargoTotal(kind);
         private static int Ingredients(WorldState w)=>Total(w,ResourceKind.Ingredients)+w.CookingOrders.Where(o=>o.Exists).Sum(o=>o.InputIngredients);
 
+        [Test] public void FeedbackUsesOnlyTheActiveBillAndIgnoresOtherPawnsCandidateDiagnostics()
+        {
+            var world = World(pawns: 2);
+            var stove = BuildStove(world);
+            var first = Order(world, stove);
+            world.ConfigureCookingBill(first.Id, true, CookingRepeatMode.Forever, 1, 1, true, 99, CookingDeliveryMode.DropOnFloor, null);
+            Until(world, () => first.Progress == 7);
+            var originalAction = first.OwnerActionId;
+            Assert.That(world.ConfigureCookingBill(first.Id, true, CookingRepeatMode.Forever, 99, 1, true, 99,
+                CookingDeliveryMode.DropOnFloor, null), Is.True);
+            Assert.That(first.OwnerActionId, Is.EqualTo(originalAction));
+            Assert.That(first.Progress, Is.EqualTo(7));
+            world.ConfigureCookingBill(first.Id, false, CookingRepeatMode.Forever, 1, 1, true, 99, CookingDeliveryMode.DropOnFloor, null);
+            var secondId = world.AddCookingBill(stove.Id);
+            world.ConfigureCookingBill(secondId, true, CookingRepeatMode.RepeatCount, 1, null, true, 99, CookingDeliveryMode.DropOnFloor, null);
+            var second = world.CookingOrders.Single(o => o.Id == secondId);
+            Until(world, () => second.Progress == 20);
+            var worker = second.OwnerId.Value;
+            var observer = world.Colonists.Single(p => p.Id != worker);
+            world.PrepareWorkContext(observer.Id);
+            Assert.That(second.Reason, Is.EqualTo(WorkReasonCode.TargetReserved));
+            var searches = world.PathSearchCount;
+            Assert.That(world.TryGetWorkFeedback(worker, out var work), Is.True);
+            Assert.That(work.PawnId, Is.EqualTo(worker));
+            Assert.That(work.ActionId, Is.EqualTo(second.OwnerActionId));
+            Assert.That(work.Kind, Is.EqualTo(WorkFeedbackKind.Cook));
+            Assert.That(work.TargetId, Is.EqualTo(stove.Id));
+            Assert.That(work.TargetCell, Is.EqualTo(stove.Position));
+            Assert.That(work.Progress, Is.EqualTo(20));
+            Assert.That(work.Duration, Is.EqualTo(40));
+            Assert.That(first.Progress, Is.EqualTo(7));
+            Assert.That(world.PathSearchCount, Is.EqualTo(searches));
+            Assert.That(second.Reason, Is.EqualTo(WorkReasonCode.TargetReserved));
+            Assert.That(world.TryGetWorkFeedback(observer.Id, out _), Is.False);
+            world.ToggleDraft(worker);
+            Assert.That(world.TryGetWorkFeedback(worker, out _), Is.False);
+        }
+
         [Test] public void PausingReorderingAndDeletingPartialBillPreservesMaterials()
         {
             var w=World();var stove=BuildStove(w);var first=Order(w,stove);
@@ -170,8 +208,15 @@ namespace RimworldTweak.Tests.EditMode
             var w=World();var b=BuildStove(w);var o=Order(w,b);w.SetCookingOrder(b.Id,true,2);
             Until(w,()=>w.CookingProducedMeals==1&&o.Progress>0);var output=Output(w,b);
             Assert.That(output.Stack.Reserve(999,1,1),Is.True);Assert.That(output.OwnerId,Is.EqualTo(999));
-            var consumed=w.CookingConsumedIngredients;w.Step(80);Assert.That(w.CookingProducedMeals,Is.EqualTo(1));Assert.That(w.CookingConsumedIngredients,Is.EqualTo(consumed));
-            output.Stack.Release(999,1);Until(w,()=>w.CookingProducedMeals==2);
+            var consumed=w.CookingConsumedIngredients;
+            var stoppedProgress=o.Progress;
+            Assert.That(w.TryGetWorkFeedback(1,out _),Is.False);
+            w.Step(80);Assert.That(w.CookingProducedMeals,Is.EqualTo(1));Assert.That(w.CookingConsumedIngredients,Is.EqualTo(consumed));
+            Assert.That(o.Progress,Is.EqualTo(stoppedProgress));
+            output.Stack.Release(999,1);
+            Assert.That(w.TryGetWorkFeedback(1,out var resumed),Is.True);
+            Assert.That(resumed.Progress,Is.EqualTo(stoppedProgress));
+            Until(w,()=>w.CookingProducedMeals==2);
         }
         [Test] public void StoveDemolitionReturnsWoodAndInputAndKeepsCompletedOutput()
         {

@@ -50,7 +50,8 @@ namespace RimworldTweak.Simulation
             foreach(var x in d.Blueprints)w.blueprints.Add(BlueprintState.RestoreSave(x));
             foreach(var x in d.Buildings)w.buildings.Add(BuildingState.RestoreSave(x));
             foreach(var x in d.Crops)w.crops.Add(CropState.RestoreSave(x));
-            foreach(var x in d.GrowingZones)w.growingZones.Add(GrowingZoneState.RestoreSave(x,x.CellIds.Select(id=>w.crops.Single(c=>c.Id==id)).ToList()));
+            var cropsById=w.crops.ToDictionary(c=>c.Id);
+            foreach(var x in d.GrowingZones)w.growingZones.Add(GrowingZoneState.RestoreSave(x,x.CellIds.Select(id=>cropsById[id]).ToList()));
             foreach(var x in d.CookingOrders)w.cookingOrders.Add(CookingOrderState.RestoreSave(x,w.buildings.Single(b=>b.Id==x.StoveId).Claim));
             foreach(var x in d.CookingOutputs)
             {

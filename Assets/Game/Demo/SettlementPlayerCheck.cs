@@ -305,15 +305,66 @@ namespace RimworldTweak.Demo
                 yield return CaptureSettlementArt();
                 if(finished)yield break;
             }
+            else if(mode=="map-performance")
+            {
+                if(!Check(()=>shell.Buttons["new"].onClick.Invoke()))yield break;
+                foreach(var size in new[]{32,250})
+                {
+                    yield return MeasureSettlement(size);
+                    if(finished)yield break;
+                }
+            }
+            else if(mode=="work-feedback")
+            {
+                if(!Check(()=>shell.Buttons["new"].onClick.Invoke()))yield break;
+                if(!Check(PrepareCookingScreen))yield break;
+                var world=runner.Session.World;
+                var order=world.CookingOrders.First(o=>o.Exists);
+                if(!Check(()=>runner.SetCookingOrder(order.StoveId,true,2)))yield break;
+                for(var i=0;i<300&&order.Progress==0;i++)runner.Session.Step(1);
+                if(!Check(()=>RequireSample(order.Progress==1,"First cooking tick missing")))yield break;
+                yield return Capture("cooking-start");
+                runner.Session.Step(19);
+                if(!Check(()=>RequireSample(order.Progress==20,"Half meal was not reached")))yield break;
+                yield return Capture("cooking-half");
+                runner.Session.Step(20);
+                if(!Check(()=>RequireSample(order.CompletedMeals==1,"Cooking completion missing")))yield break;
+                yield return Capture("cooking-done");
+                if(!Check(PrepareAdjacentWork))yield break;
+                yield return Capture("neighbor-work");
+                shell.SelectPawn(2);
+                shell.Map.Zoom(-20,shell.Map.MapCamera.pixelRect.center);
+                yield return Capture("distant-selected-work");
+                if(!Check(()=>RequireSample(shell.Map.GetComponentsInChildren<SpriteRenderer>().Any(r=>r.name=="Work bar 2"),
+                    "Selected distant work bar missing")))yield break;
+                if(!Check(PrepareConstructionRoute))yield break;
+                yield return null;yield return null;
+                shell.SelectPawn(2);
+                shell.Map.Focus(new GridPosition(125,130));
+                yield return Capture("construction-route");
+            }
+            else if(mode=="legacy-map")
+            {
+                if(!Check(()=>{
+                    var slot=runner.Slots.ListSlots().Slots.Single(s=>s.IsValid&&s.SlotId!=SaveRepository.LegacySlotId);
+                    if(!runner.LoadSlot(slot.SlotId)||runner.Session.World.Width!=32)throw new InvalidOperationException("32-cell slot restore failed");
+                    if(!runner.LoadSlot(SaveRepository.LegacySlotId)||runner.Session.World.Width!=10)throw new InvalidOperationException("Legacy map restore failed");
+                }))yield break;
+            }
             else if(mode=="save")
             {
                 if(!Check(()=>{
                     shell.Buttons["new"].onClick.Invoke();
-                    runner.Initialize(Simulation.SandboxScenario.Create());
+                    var world=runner.Session.World;
+                    if(world.Width!=250||world.Height!=250)throw new InvalidOperationException("Expected actual new settlement");
+                    var node=world.Gatherables.First(n=>n.Kind==GatherKind.Tree);
+                    world.QueueSetBlocked(new GridPosition(249,248),true);
+                    runner.DesignateGather(node.Id,true);
                     runner.ToggleDraft(1);
-                    if(!runner.MoveColonist(1,new Simulation.GridPosition(5,1)))
-                        throw new InvalidOperationException("Restart fixture move was rejected.");
-                    runner.Session.Step(17);runner.SetPaused(true);
+                    if(!runner.MoveColonist(1,new GridPosition(249,249)))throw new InvalidOperationException("Edge move rejected");
+                    for(var i=0;i<400&&node.Progress<3;i++)runner.Session.Step(1);
+                    if(node.Progress<3||node.Depleted)throw new InvalidOperationException("Expected an active gathering job");
+                    runner.SetPaused(true);
                     if(!runner.SaveSlot("재실행 확인"))throw new InvalidOperationException(runner.SaveMessage);
                     File.WriteAllText(Path.Combine(storage,"expected-state.txt"),Hash());
                     File.WriteAllText(Path.Combine(storage,"expected-slot.txt"),runner.ActiveSlotId);
@@ -571,12 +622,15 @@ namespace RimworldTweak.Demo
         }
         private void CompleteMovement()
         {
-            // Four straight tiles take 20 ticks. The saved fixture is at tick 17.
-            runner.Session.Step(3);
-            var pawn=runner.Session.World.Colonists[0];
-            result.movementCompleted=pawn.Position.Equals(new Simulation.GridPosition(5,1))
-                && pawn.Status==Simulation.MovementStatus.Arrived;
-            if(!result.movementCompleted)throw new InvalidOperationException("Saved movement did not finish at tick 20.");
+            var world=runner.Session.World;
+            var node=world.Gatherables.First(n=>n.Kind==GatherKind.Tree);
+            if(world.Width!=250||!world.BlockedTiles.Contains(new GridPosition(249,248))||node.Progress==0)
+                throw new InvalidOperationException("250-cell active work fixture missing");
+            for(var i=0;i<1600&&!node.Depleted;i++)runner.Session.Step(1);
+            var pawn=world.Colonists[0];
+            for(var i=0;i<2500&&pawn.Status==MovementStatus.Moving;i++)runner.Session.Step(1);
+            result.movementCompleted=node.Depleted&&pawn.Position.Equals(new GridPosition(249,249))&&pawn.Status==MovementStatus.Arrived;
+            if(!result.movementCompleted)throw new InvalidOperationException("Gather or edge movement did not complete.");
             result.continuedStateHash=Hash();
         }
         private void Finish(bool passed)

@@ -34,7 +34,12 @@ namespace RimworldTweak.Tests.EditMode
                 var node = w.Gatherables[0]; w.QueueDesignateGather(101, true); w.Step(1);
                 Assert.That(node.Progress, Is.Zero); Assert.That(node.OwnerId, Is.EqualTo(1));
                 w.Step(node.Duration - 1); Assert.That(Total(w, node.ResourceKind), Is.Zero);
+                Assert.That(w.TryGetWorkFeedback(1, out var work), Is.True);
+                Assert.That(work.Kind, Is.EqualTo(kind == GatherKind.Tree ? WorkFeedbackKind.FellTree : WorkFeedbackKind.GatherPlant));
+                Assert.That(work.TargetCell, Is.EqualTo(node.Position));
+                Assert.That(work.Progress, Is.EqualTo(node.Duration - 1)); Assert.That(work.Duration, Is.EqualTo(node.Duration));
                 w.Step(1); Assert.That(Total(w, node.ResourceKind), Is.EqualTo(node.Yield));
+                Assert.That(w.TryGetWorkFeedback(1, out _), Is.False);
                 Assert.That(node.Depleted, Is.True); w.Step(100);
                 Assert.That(Total(w, node.ResourceKind), Is.EqualTo(node.Yield)); Unowned(w);
             }

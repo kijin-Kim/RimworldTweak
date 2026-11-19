@@ -45,7 +45,7 @@ namespace RimworldTweak.Presentation
         }
 
         private void DrawPawn(ColonistState pawn, Vector2 position, Vector2 direction, bool inBed, bool sleeping,
-            string caption)
+            bool working, WorkFeedback work, string caption, long tick, decimal pendingSeconds)
         {
             var mark = GetMark("pawn." + pawn.Id);
             if (mark.Pawn == null) mark.Pawn = new PawnVisual(mark, pawn.Id);
@@ -82,6 +82,7 @@ namespace RimworldTweak.Presentation
                 ? new Vector3(.72f / visual.BodySize.x, .72f / visual.BodySize.y, 1)
                 : Vector3.one;
             var labelHeight = visual.Top * pose.localScale.y;
+            if (working) AnimateWork(pose, direction, work.Kind, tick, pendingSeconds, pawn.Id);
             SetMarkLabel(mark, caption, PawnColor(pawn.Id), labelHeight);
         }
 

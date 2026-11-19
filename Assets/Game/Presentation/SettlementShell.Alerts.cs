@@ -23,7 +23,12 @@ namespace RimworldTweak.Presentation
             foreach(var b in w.Buildings.Where(x=>x.Exists&&(x.Kind==BuildingKind.Stove||x.DemolitionDesignated)))
                 AddAlert(active,b.DemolitionDesignated?WorkCategory.Build:WorkCategory.Cook,b.Id,b.Position);
             foreach(var n in w.Gatherables.Where(x=>!x.Depleted&&x.Designated))AddAlert(active,WorkCategory.Gather,n.Id,n.Position);
-            foreach(var c in w.Crops.Where(x=>x.Exists&&x.Stage!=CropStage.Growing))AddAlert(active,WorkCategory.Farm,c.Id,c.Position);
+            foreach(var zone in w.GrowingZones)
+            {
+                if(!zone.Exists)continue;
+                var count=w.CountFarmAlerts(zone,out var first,out var reason);
+                if(count>0)ShowAlert(active,first.Id,first.Position,reason,"경작 구역 "+count+"칸");
+            }
             foreach(var r in w.Resources.Where(x=>x.Exists&&x.Amount>0&&!x.StorageSlotId.HasValue))AddAlert(active,WorkCategory.Haul,r.Id,r.Position);
             foreach(var key in alertRows.Keys.Where(x=>!active.Contains(x)).ToArray())
             {

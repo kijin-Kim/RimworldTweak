@@ -410,9 +410,102 @@ namespace RimworldTweak.Tests.PlayMode
             MouseState(target, true); PumpInput(); yield return null; MouseState(target); PumpInput(); yield return null; Assert.That(clicks, Is.EqualTo(1), pointerEvidence);
         }
 
+        [UnityTest] public IEnumerator SettlementCameraAndTerrainUpdatesStayLocal()
+        {
+            Setup();
+            world = WorldState.Create(WorkScenario.CreateSettlement());
+            map.Refresh(world, null, null, true);
+            var camera = map.MapCamera;
+            Assert.That(map.ZoomSize, Is.InRange(5f, 12f));
+            Assert.That(Vector2.Distance(camera.pixelRect.center, map.GridToScreen(world.Colonists[0].Position)), Is.LessThan(1));
+            foreach (var pawn in world.Colonists) Assert.That(camera.pixelRect.Contains(map.GridToScreen(pawn.Position)), Is.True);
+            Assert.That(world.Resources.Any(r => camera.pixelRect.Contains(map.GridToScreen(r.Position))), Is.True);
+            var tiles = map.GetComponentInChildren<UnityEngine.Tilemaps.Tilemap>();
+            var corner = P(249, 249);
+            var tilePosition = new Vector3Int(249, 249, 0);
+            var soil = tiles.GetTile(tilePosition);
+            Assert.That(soil, Is.Not.Null);
+            var initialChanges = map.ChangedTerrainCells;
+            Assert.That(world.QueueSetBlocked(corner, true), Is.True);
+            world.Step(1); map.Refresh(world, null, null, true);
+            Assert.That(tiles.GetTile(tilePosition), Is.Not.SameAs(soil));
+            Assert.That(world.QueueSetBlocked(corner, false), Is.True);
+            world.Step(1); map.Refresh(world, null, null, true);
+            Assert.That(tiles.GetTile(tilePosition), Is.SameAs(soil));
+            Assert.That(map.FullTerrainUpdates, Is.EqualTo(1));
+            Assert.That(map.ChangedTerrainCells, Is.EqualTo(initialChanges + 2));
+            var previousMarks = map.MarkerObjectCount;
+            Assert.That(world.QueueCreateStorage(P(180, 180), P(219, 219)), Is.True);
+            map.Refresh(world, null, null, true);
+            var zoneId = world.StorageZones.Last().Id;
+            var zoneMap = map.GetComponentsInChildren<UnityEngine.Tilemaps.Tilemap>().Single(t => t.name == "Zone tiles " + zoneId);
+            Assert.That(zoneMap.HasTile(new Vector3Int(219, 219, 0)), Is.True);
+            Assert.That(map.MarkerObjectCount, Is.EqualTo(previousMarks + 1));
+            Assert.That(world.QueueDeleteStorage(zoneId), Is.True);
+            map.Refresh(world, null, null, true);
+            Assert.That(zoneMap.gameObject.activeSelf, Is.False);
+            yield return null;
+        }
 
-
-
+        [UnityTest] public IEnumerator CookingBarAndFootPoseFollowSavedSimulationTime()
+        {
+            Setup();
+            var runner = Own(new GameObject("Visual simulation clock")).AddComponent<RimworldTweak.Runtime.SimulationRunner>();
+            runner.enabled = false;
+            runner.Initialize(new ScenarioDefinition(8, 8, Array.Empty<GridPosition>(), new[] { new ColonistSeed(1, P(1, 1)) },
+                new[] { new ResourceSeed(101, ResourceKind.Wood, 20, P(1, 1)), new ResourceSeed(102, ResourceKind.Ingredients, 8, P(2, 1)) }, null, false));
+            world = runner.Session.World;
+            Assert.That(world.PlaceBlueprint(BuildingKind.Stove, P(4, 4)), Is.True);
+            for (int i = 0; i < 600 && world.Buildings.Count == 0; i++) world.Step(1);
+            var stove = world.Buildings.Single();
+            Assert.That(world.SetCookingOrder(stove.Id, true, 1), Is.True);
+            var order = world.CookingOrders.Single();
+            for (int i = 0; i < 600 && order.Progress != 20; i++) world.Step(1);
+            Assert.That(order.Progress, Is.EqualTo(20));
+            var replacement = ScriptableObject.CreateInstance<VisualCatalog>();
+            var texture = new Texture2D(32, 64);
+            var sprite = Sprite.Create(texture, new Rect(0, 0, 32, 64), new Vector2(.2f, .8f), 32);
+            var foot = new Vector2(.37f, .09f);
+            try
+            {
+                replacement.SetEntries(new[] { new VisualDefinition("pawn.back", sprite, new Vector2(.9f, 1.1f), foot, Color.white, false, "test") });
+                map.SetCatalog(replacement);
+                runner.SetSpeed(3); runner.AdvanceTime(.02m); runner.SetPaused(true);
+                void Refresh() => map.Refresh(world, 1, null, runner.IsPaused, runner.Session.PendingSeconds);
+                Refresh();
+                var body = PawnBody(1);
+                var bar = map.GetComponentsInChildren<SpriteRenderer>().Single(r => r.name == "Work bar 1");
+                var fill = bar.transform.Find("Fill");
+                Assert.That(body.sprite, Is.SameAs(sprite), "The stove is north of its service cell.");
+                var widthPx = bar.transform.localScale.x * map.MapCamera.pixelHeight / (2f * map.ZoomSize);
+                Assert.That(fill.localScale.x / (1 - 2 / widthPx), Is.EqualTo(.5f).Within(.001f));
+                var anchor = (Vector2.Scale(foot, sprite.rect.size) - sprite.pivot) / sprite.pixelsPerUnit;
+                var footPx = map.MapCamera.WorldToScreenPoint(body.transform.TransformPoint(anchor));
+                Assert.That(Vector2.Distance(footPx, map.GridToScreen(world.Colonists[0].Position)), Is.LessThanOrEqualTo(1));
+                var scale = PawnGroup(1).transform.localScale;
+                var location = bar.transform.position;
+                runner.AdvanceTime(2); Refresh();
+                Assert.That(PawnGroup(1).transform.localScale, Is.EqualTo(scale));
+                Assert.That(bar.transform.position, Is.EqualTo(location));
+                var captured = runner.Session.CaptureSaveData(true, 3);
+                Assert.That(SimulationSession.TryRestoreSave(captured.Data, out var restored, out var error), Is.True, error);
+                runner.StepOnce(); Refresh(); Assert.That(order.Progress, Is.EqualTo(21));
+                runner.SetSpeed(1); runner.AdvanceTime(.03m); Refresh();
+                var expectedScale = PawnGroup(1).transform.localScale;
+                restored.Step(1); restored.AdvanceTime(.03m);
+                map.Refresh(restored.World, 1, null, false, restored.PendingSeconds);
+                Assert.That(PawnGroup(1).transform.localScale, Is.EqualTo(expectedScale));
+                Assert.That(restored.World.SetDrafted(1, true), Is.True);
+                map.Refresh(restored.World, 1, null, true, restored.PendingSeconds);
+                Assert.That(map.GetComponentsInChildren<SpriteRenderer>().Any(r => r.name == "Work bar 1"), Is.False);
+            }
+            finally
+            {
+                map.SetCatalog(null);
+                UnityEngine.Object.Destroy(sprite); UnityEngine.Object.Destroy(texture); UnityEngine.Object.Destroy(replacement);
+            }
+            yield return null;
+        }
 
         [UnityTest] public IEnumerator ModularPawnsKeepTheirLayersTogetherAcrossDirectionsAndCatalogChanges()
         {
@@ -474,7 +567,36 @@ namespace RimworldTweak.Tests.PlayMode
             yield return null;
         }
 
-
+        [UnityTest] public IEnumerator ConstructionFacesItsTargetFromEverySide()
+        {
+            Setup();
+#if UNITY_EDITOR
+            var catalog = UnityEditor.AssetDatabase.LoadAssetAtPath<VisualCatalog>(VisualCatalog.DefaultAssetPath);
+            map.SetCatalog(catalog);
+            var site = P(4, 4);
+            foreach (var direction in new[] { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right })
+            {
+                var station = P(site.X - direction.x, site.Y - direction.y);
+                world = WorldState.Create(new ScenarioDefinition(8, 8, Array.Empty<GridPosition>(),
+                    new[] { new ColonistSeed(1, station) }, new[] { new ResourceSeed(101, ResourceKind.Wood, 5, station) }, null, false));
+                Assert.That(world.PlaceBlueprint(BuildingKind.Wall, site), Is.True);
+                for (int i = 0; i < 300 && world.Blueprints[0].Progress < 5; i++) world.Step(1);
+                Assert.That(world.Blueprints[0].Progress, Is.EqualTo(5));
+                Assert.That(world.Colonists[0].Position, Is.EqualTo(station));
+                map.Refresh(world, 1, null, true);
+                var body = PawnBody(1);
+                var definition = PawnBodyDefinition(catalog,1,VisualCatalog.PawnKey(direction).Substring(5));
+                Assert.That(body.sprite, Is.SameAs(definition.Sprite));
+                Assert.That(body.transform.parent.localScale.x < 0, Is.EqualTo(direction == Vector2Int.left));
+                var local = (Vector2.Scale(definition.GroundAnchorNormalized, body.sprite.rect.size) - body.sprite.pivot) / body.sprite.pixelsPerUnit;
+                Assert.That(Vector2.Distance(map.MapCamera.WorldToScreenPoint(body.transform.TransformPoint(local)), map.GridToScreen(station)), Is.LessThanOrEqualTo(1));
+                var bar = map.GetComponentsInChildren<SpriteRenderer>().Single(r => r.name == "Work bar 1");
+                Assert.That(bar.transform.position.x, Is.EqualTo(site.X + .5f).Within(.01f));
+                Assert.That(bar.transform.position.y, Is.GreaterThan(site.Y + .5f));
+            }
+#endif
+            yield return null;
+        }
 
         [UnityTest] public IEnumerator EdgeCellsCanBeCenteredWithoutChangingZoom()
         {

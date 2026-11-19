@@ -15,9 +15,10 @@ namespace RimworldTweak.Presentation
         {
             public GameObject Root;
             public SpriteRenderer Sprite;
-            public PawnVisual Pawn;
             public TextMesh Label;
             public TextMesh Shadow;
+            public bool Drawn;
+            public PawnVisual Pawn;
         }
 
         private readonly Dictionary<string, Mark> marks = new Dictionary<string, Mark>();
@@ -35,6 +36,10 @@ namespace RimworldTweak.Presentation
         private Font labelFont;
         private WorldState displayedWorld;
         private long terrainRevision = -1;
+        private HashSet<GridPosition> renderedBlocked = new HashSet<GridPosition>();
+        private HashSet<GridPosition> nextBlocked = new HashSet<GridPosition>();
+        public int FullTerrainUpdates { get; private set; }
+        public int ChangedTerrainCells { get; private set; }
         private VisualCatalog catalog;
         private Rect viewport = new Rect(0, 0, 1, 1);
 
@@ -51,7 +56,6 @@ namespace RimworldTweak.Presentation
         public void Initialize(VisualCatalog visuals = null)
         {
             catalog = visuals;
-            foreach (var mark in marks.Values) mark.Pawn?.Invalidate();
             if (MapCamera != null) return;
             content = new GameObject("World map content").transform;
             content.SetParent(transform, false);
@@ -104,11 +108,13 @@ namespace RimworldTweak.Presentation
         public void SetCatalog(VisualCatalog visuals)
         {
             catalog = visuals;
+            foreach (var mark in marks.Values) mark.Pawn?.Invalidate();
             if (soilTile != null)
             {
                 UpdateGroundVisuals();
             }
-            terrainRevision = -1;
+            if (ground != null) ground.RefreshAllTiles();
+            RefreshZoneTiles();
         }
 
         private void UpdateGroundVisuals()
@@ -129,11 +135,16 @@ namespace RimworldTweak.Presentation
             Initialize(catalog);
             if (ReferenceEquals(displayedWorld, world)) return;
             ClearMarks();
+            ClearWorkBars();
+            ClearZoneTiles();
             foreach(var line in pawnSelections.Values)Destroy(line.gameObject);
             pawnSelections.Clear();
             displayedWorld = world;
             pawnDirections.Clear();
             terrainRevision = -1;
+            renderedBlocked.Clear();
+            nextBlocked.Clear();
+            FullTerrainUpdates = ChangedTerrainCells = 0;
             selection.positionCount = preview.positionCount = route.positionCount = 0;
             placementGhost.enabled = false;
             ground.ClearAllTiles();
@@ -142,6 +153,11 @@ namespace RimworldTweak.Presentation
             MaximumZoom = Math.Max(MinimumZoom, Math.Max(world.Height * .6f, world.Width / CameraAspect * .6f));
             MapCamera.orthographicSize = Mathf.Clamp(Math.Max(world.Height * .52f, world.Width / CameraAspect * .52f), MinimumZoom, MaximumZoom);
             MapCamera.transform.position = new Vector3(world.Width / 2f, world.Height / 2f, -10);
+            if (world.Width == WorkScenario.SettlementSize && world.Height == WorkScenario.SettlementSize && world.Colonists.Count > 0)
+            {
+                MapCamera.orthographicSize = Mathf.Clamp(8, MinimumZoom, MaximumZoom);
+                Focus(world.Colonists[0].Position);
+            }
             RebuildGround();
         }
 
@@ -149,33 +165,24 @@ namespace RimworldTweak.Presentation
         {
             Bind(world);
             if (world == null) return;
+            // The remainder belongs to simulation time. It stays fixed when the clock is paused.
             var tickFraction = (float)(pendingSeconds / SimulationSession.SecondsPerTick);
-            if (terrainRevision != world.MapRevision) RebuildGround();
-            foreach (var mark in marks.Values) mark.Root.SetActive(false);
+            if (terrainRevision != world.MapRevision) UpdateBlockedCells();
+            foreach (var mark in marks.Values) mark.Drawn = false;
+            workBarsThisFrame.Clear();
+            foreach (var zoneTiles in zoneLayers.Values) zoneTiles.Drawn = false;
             VisibleEntityCount = 0;
             foreach (var zone in world.StorageZones)
             {
                 if (!zone.Exists) continue;
-                var first = true;
-                foreach (var slot in zone.Slots)
-                {
-                    Draw("stock." + slot.Id, "overlay.storage", CellCenter(slot.Position), new Color(.4f,.70f,1f,.62f),
-                        -29000, first ? "저장 구역" : null, new Vector2(.94f,.94f));
-                    first = false;
-                }
+                if (zone.Slots.Count > 0) DrawStorageZone(zone);
             }
             foreach (var zone in world.GrowingZones)
             {
                 if (!zone.Exists) continue;
-                var first = true;
-                foreach (var cell in zone.Cells)
-                {
-                    if (!cell.Exists) continue;
-                    Draw("field." + cell.Id, "overlay.growing", CellCenter(cell.Position), new Color(.70f,.90f,.42f,.6f),
-                        -28900, first ? "경작 구역" : null, new Vector2(.94f,.94f));
-                    first = false;
-                }
+                if (zone.Cells.Count > 0) DrawGrowingZone(zone);
             }
+            RemoveDeletedZoneTiles();
             foreach (var node in world.Gatherables)
                 if (!node.Depleted)
                     Draw("gather." + node.Id, node.Kind == GatherKind.Tree ? "tree" : "plant.gather", CellCenter(node.Position),
@@ -205,11 +212,18 @@ namespace RimworldTweak.Presentation
                 if (pawn.Status == MovementStatus.Moving && pawn.Path.Count > 0)
                     pawnDirections[pawn.Id] = new Vector2(pawn.Path[0].X - pawn.Position.X, pawn.Path[0].Y - pawn.Position.Y);
                 var direction = pawnDirections.TryGetValue(pawn.Id, out var facing) ? facing : Vector2.down;
+                var working = world.TryGetWorkFeedback(pawn.Id, out var work);
+                if (working)
+                {
+                    direction = new Vector2(work.TargetCell.X - pawn.Position.X, work.TargetCell.Y - pawn.Position.Y);
+                    if (direction == Vector2.zero) direction = Vector2.down;
+                }
                 var inBed = pawn.LifeActivity == LifeActivity.SleepingInBed;
                 var sleeping = inBed || pawn.LifeActivity == LifeActivity.SleepingOnFloor;
                 if (inBed) direction = Vector2.down;
                 var label = "정착민 " + pawn.Id + (pawn.IsDrafted ? " [R]" : sleeping ? " Zz" : pawn.IsWorking ? " · 작업" : "");
-                DrawPawn(pawn, position, direction, inBed, sleeping, label);
+                DrawPawn(pawn, position, direction, inBed, sleeping, working, work, label, world.Tick, pendingSeconds);
+                if (working) workBarsThisFrame.Add((pawn.Id, work));
                 if (pawn.CargoAmount > 0)
                     Draw("cargo." + pawn.Id, VisualCatalog.ResourceKey(pawn.CargoKind), position + new Vector2(.28f, .08f), Color.white,
                         Sort(position.y, 45), pawn.CargoAmount.ToString(), new Vector2(.28f, .28f));
@@ -233,14 +247,16 @@ namespace RimworldTweak.Presentation
             else if (selectedObjectId.HasValue && TryFindPosition(world, selectedObjectId.Value, out var selected))
                 DrawBox(selection, CellCenter(selected), new Vector2(.98f, .98f));
             removedMarks.Clear();
-            foreach (var pair in marks) if (!pair.Value.Root.activeSelf) removedMarks.Add(pair.Key);
-            foreach (var key in removedMarks) { Destroy(marks[key].Root); marks.Remove(key); }
+            foreach (var pair in marks) if (!pair.Value.Drawn) removedMarks.Add(pair.Key);
+            foreach (var key in removedMarks) { marks[key].Root.SetActive(false); Destroy(marks[key].Root); marks.Remove(key); }
+            LayoutWorkBars(selectedPawnId);
             ArrangeLabels();
         }
 
         private void ArrangeLabels()
         {
             placedLabels.Clear();
+            placedLabels.AddRange(workBarRects);
             var screen=MapCamera.pixelRect;
             for (var index = 1; index < route.positionCount; index++)
             {
@@ -259,6 +275,11 @@ namespace RimworldTweak.Presentation
                     if(labelFont.GetCharacterInfo(character,out var glyph,label.fontSize))
                         width+=glyph.advance*16f/label.fontSize;
                 var anchor=MapCamera.WorldToScreenPoint(label.transform.position);
+                if (!screen.Contains(MapCamera.WorldToScreenPoint(mark.Root.transform.position)) && !screen.Contains(anchor))
+                {
+                    label.gameObject.SetActive(false);
+                    continue;
+                }
                 var candidate=new Rect(Mathf.Clamp(anchor.x-width/2,screen.xMin,screen.xMax-width),anchor.y,width,20);
                 for(var attempt=0;attempt<=placedLabels.Count;attempt++)
                 {
@@ -407,13 +428,32 @@ namespace RimworldTweak.Presentation
         }
         private void RebuildGround()
         {
-            ground.ClearAllTiles();
-            for (var y = 0; y < displayedWorld.Height; y++)
-                for (var x = 0; x < displayedWorld.Width; x++) ground.SetTile(new Vector3Int(x, y, 0), soilTile);
-            var stoveCells = displayedWorld.Buildings.Where(b => b.Exists && b.Kind == BuildingKind.Stove).Select(b => b.Position).ToHashSet();
-            foreach (var p in displayedWorld.BlockedTiles)
-                if (!stoveCells.Contains(p)) ground.SetTile(new Vector3Int(p.X, p.Y, 0), blockedTile);
+            var bounds = new BoundsInt(0, 0, 0, displayedWorld.Width, displayedWorld.Height, 1);
+            var tiles = new TileBase[displayedWorld.Width * displayedWorld.Height];
+            Array.Fill(tiles, soilTile);
+            ground.SetTilesBlock(bounds, tiles);
+            FullTerrainUpdates++;
+            UpdateBlockedCells();
+        }
+        private void UpdateBlockedCells()
+        {
+            nextBlocked.Clear();
+            nextBlocked.UnionWith(displayedWorld.BlockedTiles);
+            // The stove sprite already identifies this occupied cell; show the soil through its outline.
+            foreach (var building in displayedWorld.Buildings)
+                if (building.Exists && building.Kind == BuildingKind.Stove)
+                    nextBlocked.Remove(building.Position);
+            foreach (var p in renderedBlocked)
+                if (!nextBlocked.Contains(p)) SetGroundTile(p, soilTile);
+            foreach (var p in nextBlocked)
+                if (!renderedBlocked.Contains(p)) SetGroundTile(p, blockedTile);
+            (renderedBlocked, nextBlocked) = (nextBlocked, renderedBlocked);
             terrainRevision = displayedWorld.MapRevision;
+        }
+        private void SetGroundTile(GridPosition position, Tile tile)
+        {
+            ground.SetTile(new Vector3Int(position.X, position.Y, 0), tile);
+            ChangedTerrainCells++;
         }
         private bool HasVisual(string key) => catalog != null && catalog.TryGet(key, out var visual) && visual.Sprite != null;
         private Sprite SpriteFor(string key) => catalog != null && catalog.TryGet(key, out var visual) && visual.Sprite != null ? visual.Sprite : fallback;
@@ -444,7 +484,7 @@ namespace RimworldTweak.Presentation
                 shadowRenderer.sortingOrder = 32499;
                 marks.Add(identity, mark);
             }
-            mark.Root.SetActive(true); VisibleEntityCount++;
+            mark.Drawn = true; VisibleEntityCount++;
             return mark;
         }
 
@@ -534,6 +574,7 @@ namespace RimworldTweak.Presentation
         private void OnDestroy()
         {
             if (soilTile != null) Destroy(soilTile); if (blockedTile != null) Destroy(blockedTile);
+            DestroyZoneTiles();
             if (fallback != null) Destroy(fallback); if (fallbackTexture != null) Destroy(fallbackTexture);
             if (spriteMaterial != null) Destroy(spriteMaterial);
             if (content != null) Destroy(content.gameObject); if (MapCamera != null) Destroy(MapCamera.gameObject);

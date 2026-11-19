@@ -9,17 +9,12 @@ namespace RimworldTweak.Demo
 {
     public sealed partial class SettlementPlayerCheck
     {
-        private static void RequireSample(bool condition, string reason)
-        {
-            if (!condition) throw new InvalidOperationException(reason);
-        }
-
         private IEnumerator CaptureSettlementArt()
         {
             if (!Check(() =>
             {
                 shell.Buttons["new"].onClick.Invoke();
-                runner.Initialize(new ScenarioDefinition(32, 32, Array.Empty<GridPosition>(),
+                runner.Initialize(new ScenarioDefinition(WorkScenario.SettlementSize, WorkScenario.SettlementSize, Array.Empty<GridPosition>(),
                     new[] {
                         new ColonistSeed(1, new GridPosition(13,16)),
                         new ColonistSeed(4, new GridPosition(15,16)),
@@ -36,7 +31,6 @@ namespace RimworldTweak.Demo
                 RequireSample(world.Colonists.Single(p => p.Id == 2).LifeActivity == LifeActivity.SleepingInBed, "Occupied bed required");
                 shell.Map.Bind(world);
                 shell.Map.Focus(new GridPosition(15,16));
-                shell.Map.MapCamera.orthographicSize = 8f;
             })) yield break;
             yield return null;
             var before = Hash();

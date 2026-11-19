@@ -196,8 +196,15 @@ namespace RimworldTweak.Tests.EditMode
             Only(s.World,WorkCategory.Cook);s.World.SetCookingOrder(stove.Id,true,7);
             Until(s,()=>s.World.Colonists[0].CargoKind==ResourceKind.Ingredients&&s.World.Colonists[0].CargoAmount>0);var delivery=Restore(s);Equivalent(s,delivery,10);
             Until(s,()=>s.World.CookingOrders[0].Progress==39);var cooking=Restore(s);
+            Assert.That(cooking.World.TryGetWorkFeedback(1, out var restoredWork), Is.True);
+            Assert.That(restoredWork.TargetCell, Is.EqualTo(stove.Position));
+            Assert.That(restoredWork.Progress, Is.EqualTo(39));
+            var saved = DataBytes(cooking.CaptureSaveData(true, 3).Data);
+            for(var frame=0;frame<4;frame++) Assert.That(cooking.World.TryGetWorkFeedback(1,out _),Is.True);
+            Assert.That(DataBytes(cooking.CaptureSaveData(true, 3).Data),Is.EqualTo(saved));
             Assert.That(cooking.World.CookingOrders[0].Claim,Is.SameAs(cooking.World.Buildings.Single(b=>b.Id==stove.Id).Claim));
             Equivalent(s,cooking,2);Assert.That(cooking.World.CookingProducedMeals,Is.EqualTo(1));Assert.That(cooking.World.CookingConsumedIngredients,Is.EqualTo(2));
+            Assert.That(cooking.World.TryGetWorkFeedback(1,out _),Is.False);
             var final=Restore(cooking);var output=final.World.CookingOutputs.Single(o=>o.Exists);
             Assert.That(output.Stack.Claim,Is.SameAs(output.Claim));Equivalent(cooking,final,10);Assert.That(final.World.CookingProducedMeals,Is.EqualTo(1));
         }

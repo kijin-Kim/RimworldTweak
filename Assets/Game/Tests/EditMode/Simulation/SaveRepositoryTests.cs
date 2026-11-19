@@ -135,6 +135,18 @@ namespace RimworldTweak.Tests.EditMode
             Assert.That(repository.Load(slot.SlotId).Success,Is.True);
         }
 
+        [Test] public void OversizedWritePreservesReadableSlot()
+        {
+            var slot=Saved();
+            var path=SlotPath(slot.SlotId);
+            var before=File.ReadAllBytes(path);
+            var data=Data();
+            data.World.Colonists[0].WorkReason=new string('x',SaveValidation.MaximumFileBytes);
+            Assert.That(repository.Overwrite(slot.SlotId,"Size boundary",data).Success,Is.False);
+            CollectionAssert.AreEqual(before,File.ReadAllBytes(path));
+            Assert.That(repository.Load(slot.SlotId).Success,Is.True);
+        }
+
         [Test] public void EveryAtomicFailurePreservesOriginalAndNoNewSlotLeaks()
         {
             var slot=Saved();var before=File.ReadAllBytes(SlotPath(slot.SlotId));

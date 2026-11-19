@@ -11,6 +11,8 @@ namespace RimworldTweak.Simulation
         private static void Check(bool valid,string path) { if(!valid) throw new InvalidSave(path); }
         private static bool Defined<T>(string value) where T:struct => value!=null && Enum.TryParse<T>(value,out var parsed) && Enum.IsDefined(typeof(T),parsed) && Enum.GetName(typeof(T),parsed)==value;
         private static void Position(PositionSaveData p,int width,int height,string path) => Check(p!=null&&p.X>=0&&p.Y>=0&&p.X<width&&p.Y<height,path);
+        private static bool ValidSize(int width,int height) =>
+            width >= 1 && width <= WorkScenario.SettlementSize && height >= 1 && height <= WorkScenario.SettlementSize;
         private static void List<T>(List<T> items,string path) { Check(items!=null,path);for(var i=0;i<items.Count;i++)Check(items[i]!=null,path+"["+i+"]"); }
         private static void Unique<T>(IEnumerable<T> values,string path) => Check(values.Distinct().Count()==values.Count(),path);
         private static bool Same(ClaimSaveData a,ClaimSaveData b) => a.OwnerId==b.OwnerId&&a.ActionId==b.ActionId;
@@ -30,7 +32,7 @@ namespace RimworldTweak.Simulation
             Check(d.Session.Speed==1||d.Session.Speed==3,"Session.Speed");
             Check(decimal.TryParse(d.Session.PendingSeconds,NumberStyles.AllowDecimalPoint,CultureInfo.InvariantCulture,out var remainder)&&remainder>=0m&&remainder<0.1m,"Session.PendingSeconds");
             Scenario(d.Scenario);
-            var w=d.World;Check(w!=null,"World");Check(w.Width>=1&&w.Width<=64&&w.Height>=1&&w.Height<=64,"World.Size");
+            var w=d.World;Check(w!=null,"World");Check(ValidSize(w.Width,w.Height),"World.Size");
             Check(w.Width==d.Scenario.Width&&w.Height==d.Scenario.Height&&w.NeedsEnabled==d.Scenario.NeedsEnabled,"World.Scenario");
             Check(w.Tick>=0&&w.MapRevision>=0&&w.PathSearchCount>=0&&w.RequestSequence>=0&&w.AvailabilityRevision>=0,"World.Counters");
             Check(w.LastCommandError!=null&&w.LastCommandError.Length<=256,"World.LastCommandError");
@@ -129,8 +131,15 @@ namespace RimworldTweak.Simulation
                 Check(resources.TryGetValue(o.StackId.Value,out var r),"CookingOutput.StackId");
                 if(o.Exists)Check(stackLinks.Add(r.Id)&&r.Kind==nameof(ResourceKind.Meal)&&r.StorageSlotId==null&&Same(r.Claim,o.Claim)&&r.Amount<=50&&r.Position.X==o.Position.X&&r.Position.Y==o.Position.Y,"CookingOutput.SharedStack");
             }
-            foreach(var z in w.GrowingZones)foreach(var id in z.CellIds)Check(crops.TryGetValue(id,out var c)&&c.ZoneId==z.Id,"GrowingZone.CellId");
-            foreach(var c in w.Crops)Check(w.GrowingZones.Any(z=>z.Id==c.ZoneId&&z.CellIds.Contains(c.Id)),"Crop.ZoneId");
+            var linkedCropCount=0;
+            foreach(var z in w.GrowingZones)
+                foreach(var id in z.CellIds)
+                {
+                    Check(crops.TryGetValue(id,out var c)&&c.ZoneId==z.Id,"GrowingZone.CellId");
+                    linkedCropCount++;
+                }
+            // CellIds are unique per zone and each link above must belong to that zone.
+            Check(linkedCropCount==crops.Count,"Crop.ZoneId");
             foreach(var p in w.Colonists){if(p.WorkTargetId.HasValue)Check(ids.Contains(p.WorkTargetId.Value),"Colonist.WorkTargetId");if(p.LifeTargetId.HasValue)Check(ids.Contains(p.LifeTargetId.Value),"Colonist.LifeTargetId");if(p.PendingDeliveryTargetId.HasValue)Check(ids.Contains(p.PendingDeliveryTargetId.Value),"Colonist.PendingDeliveryTargetId");}
             foreach(var m in w.MoveCommands){Check(pawns.ContainsKey(m.Id),"MoveCommand.Id");if(m.Destination!=null)Position(m.Destination,w.Width,w.Height,"MoveCommand.Destination");}
             foreach(var id in w.CancelledThisTick)Check(pawns.ContainsKey(id),"CancelledThisTick.Id");Unique(w.CancelledThisTick,"CancelledThisTick.Duplicate");
@@ -163,7 +172,7 @@ namespace RimworldTweak.Simulation
         }
         private static void Scenario(ScenarioSaveData s)
         {
-            Check(s!=null,"Scenario");Check(s.Width>=1&&s.Width<=64&&s.Height>=1&&s.Height<=64,"Scenario.Size");
+            Check(s!=null,"Scenario");Check(ValidSize(s.Width,s.Height),"Scenario.Size");
             List(s.BlockedTiles,"Scenario.BlockedTiles");foreach(var p in s.BlockedTiles)Position(p,s.Width,s.Height,"Scenario.BlockedTiles");
             Unique(s.BlockedTiles.Select(p=>p.X+":"+p.Y),"Scenario.BlockedTiles.Duplicate");
             List(s.Colonists,"Scenario.Colonists");List(s.Resources,"Scenario.Resources");List(s.Beds,"Scenario.Beds");List(s.Gatherables,"Scenario.Gatherables");Check(s.Colonists.Count>0,"Scenario.Colonists.Empty");

@@ -44,6 +44,68 @@ namespace RimworldTweak.Tests.EditMode
             var data=Data();Assert.That(files.Save(path,data).Success,Is.True);data.World.Tick=10;
             Assert.That(files.Save(path,data).Success,Is.True);Assert.That(files.Load(path).Data.World.Tick,Is.EqualTo(10));Assert.That(File.Exists(path+".tmp"),Is.False);
         }
+        [Test] public void SettlementMapKeepsStartingLayoutAndValidatesBothSavedDimensions()
+        {
+            var small = WorkScenario.CreateTestMap();
+            var large = WorkScenario.CreateSettlement();
+            Assert.That(small.Width, Is.EqualTo(32));
+            Assert.That(large.Width, Is.EqualTo(250));
+            Assert.That(large.Height, Is.EqualTo(250));
+            Assert.That(large.Colonists[0].Position, Is.EqualTo(P(125,125)));
+            var offsetX = large.Colonists[0].Position.X - small.Colonists[0].Position.X;
+            var offsetY = large.Colonists[0].Position.Y - small.Colonists[0].Position.Y;
+            GridPosition Shift(GridPosition p) => P(p.X + offsetX, p.Y + offsetY);
+            Assert.That(large.BlockedTiles, Is.EqualTo(small.BlockedTiles.Select(Shift)));
+            Assert.That(large.Colonists.Select(p=>p.Position), Is.EqualTo(small.Colonists.Select(p=>Shift(p.Position))));
+            Assert.That(large.Resources.Select(r=>r.Position), Is.EqualTo(small.Resources.Select(r=>Shift(r.Position))));
+            Assert.That(large.Beds.Select(b=>b.Position), Is.EqualTo(small.Beds.Select(b=>Shift(b.Position))));
+            Assert.That(large.Gatherables.Select(g=>g.Position), Is.EqualTo(small.Gatherables.Select(g=>Shift(g.Position))));
+
+            var session = new SimulationSession(large);
+            Assert.That(session.World.QueueSetBlocked(P(0,249),true), Is.True);
+            Assert.That(session.World.QueueSetBlocked(P(250,249),true), Is.False);
+            session.Step(1);
+            var data = session.CaptureSaveData().Data;
+            Assert.That(files.Save(path,data).Success, Is.True);
+            var loaded = files.Load(path);
+            Assert.That(loaded.Success, Is.True);
+            Assert.That(SimulationSession.TryRestoreSave(loaded.Data,out var restored,out var error),Is.True,error);
+            Assert.That(restored.World.BlockedTiles, Does.Contain(P(0,249)));
+            data.World.Width=251;Assert.That(SaveValidation.Validate(data).IsValid, Is.False);
+            data.World.Width=250;data.Scenario.Height=251;Assert.That(SaveValidation.Validate(data).IsValid, Is.False);
+            data.Scenario.Height=249;Assert.That(SaveValidation.Validate(data).IsValid, Is.False);
+            data.Scenario.Height=250;data.World.BlockedTiles[0].X=250;Assert.That(SaveValidation.Validate(data).IsValid, Is.False);
+        }
+
+        [Test] public void LargeReversedZoneAndPathQueriesSurviveTerrainChangesAndRestore()
+        {
+            var session = new SimulationSession(WorkScenario.CreateSettlement());
+            var world = session.World;
+            var start = P(0,0);
+            var goal = P(249,249);
+            var original = world.FindPath(start,goal);
+            Assert.That(original.Count, Is.EqualTo(498));
+            Assert.That(world.FindPath(start,P(248,249)).Count, Is.EqualTo(497));
+            Assert.That(world.QueueSetBlocked(P(248,249),true), Is.True);
+            Assert.That(world.QueueSetBlocked(P(249,248),true), Is.True);
+            session.Step(1);
+            Assert.That(world.FindPath(start,goal), Is.Null);
+            Assert.That(world.QueueSetBlocked(P(248,249),false), Is.True);
+            session.Step(1);
+            Assert.That(world.FindPath(start,goal).Count, Is.EqualTo(498));
+            Assert.That(original.Last(), Is.EqualTo(goal));
+            Assert.That(world.QueueCreateStorage(P(31,29),P(0,0)), Is.True);
+            Assert.That(world.CanCreateGrowingZone(P(33,33),P(31,29)), Is.False);
+            Assert.That(world.CreateGrowingZone(P(60,43),P(32,30)), Is.True);
+            Assert.That(world.CanCreateStorage(P(61,44),P(60,43)), Is.False);
+            var captured = session.CaptureSaveData();
+            Assert.That(captured.Success, Is.True);
+            Assert.That(SimulationSession.TryRestoreSave(captured.Data,out var restored,out var error), Is.True,error);
+            Assert.That(restored.World.StorageZones.Single().Slots.Count,Is.EqualTo(32*30));
+            Assert.That(restored.World.GrowingZones.Single().Cells.Count,Is.EqualTo(29*14));
+            captured.Data.World.GrowingZones.Single().CellIds.RemoveAt(0);
+            Assert.That(SaveValidation.Validate(captured.Data).IsValid,Is.False);
+        }
         [Test] public void InvalidSaveCannotOverwritePreviouslyValidFile()
         {
             var data=Data();Assert.That(files.Save(path,data).Success,Is.True);var before=File.ReadAllBytes(path);

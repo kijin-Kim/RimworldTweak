@@ -87,7 +87,12 @@ namespace RimworldTweak.Tests.EditMode
         {
             var w=World();var b=Place(w);Until(w,()=>b.Progress==1);
             w.Step(b.Duration-2);Assert.That(b.Progress,Is.EqualTo(b.Duration-1));Assert.That(b.Exists,Is.True);
+            Assert.That(w.TryGetWorkFeedback(1,out var work),Is.True);
+            Assert.That(work.Kind,Is.EqualTo(WorkFeedbackKind.Construct));
+            Assert.That(work.TargetCell,Is.EqualTo(b.Position));
+            Assert.That(work.Progress,Is.EqualTo(b.Progress));Assert.That(work.Duration,Is.EqualTo(b.Duration));
             w.Step(1);Assert.That(b.Exists,Is.False);Assert.That(w.Buildings.Count(x=>x.Exists),Is.EqualTo(1));
+            Assert.That(w.TryGetWorkFeedback(1,out _),Is.False);
             Assert.That(Wood(w),Is.EqualTo(38));w.Step(5);Assert.That(Wood(w),Is.EqualTo(38));
         }
         [Test] public void OccupiedWallCompletionWaitsAndResumesWithoutDeletingPawn()
@@ -95,13 +100,25 @@ namespace RimworldTweak.Tests.EditMode
             var w=World(two:true);w.ToggleDraft(2);w.QueueMove(2,P(4,4));Until(w,()=>w.Colonists[1].Position==P(4,4));
             var b=Place(w);w.Step(300);Assert.That(b.Exists,Is.True);Assert.That(w.BlockedTiles.Contains(P(4,4)),Is.False);
             Assert.That(b.Reason,Is.EqualTo(WorkReasonCode.AwaitingClearance));Assert.That(Wood(w),Is.EqualTo(40));
-            w.QueueMove(2,P(5,4));Until(w,()=>!b.Exists);Assert.That(w.Colonists[1].Position,Is.EqualTo(P(5,4)));
+            w.QueueMove(2,P(5,4));Until(w,()=>b.Progress>0);
+            Assert.That(w.TryGetWorkFeedback(1,out _),Is.True);
+            w.QueueMove(2,P(4,4));Until(w,()=>w.Colonists[1].Position==b.Position);
+            var blockedProgress=b.Progress;
+            Assert.That(w.TryGetWorkFeedback(1,out _),Is.False);
+            w.Step(10);Assert.That(b.Progress,Is.EqualTo(blockedProgress));
+            w.QueueMove(2,P(5,4));Until(w,()=>w.Colonists[1].Position==P(5,4));
+            Assert.That(w.TryGetWorkFeedback(1,out var resumed),Is.True);
+            Assert.That(resumed.Progress,Is.EqualTo(blockedProgress));
+            Until(w,()=>!b.Exists);Assert.That(w.Colonists[1].Position,Is.EqualTo(P(5,4)));
             Assert.That(Wood(w),Is.EqualTo(38));
         }
         [Test] public void DemolitionWaitsThirtyTicksAndRefundsOnlyOnce()
         {
             var w=World();var building=Build(w);Assert.That(w.SetDemolition(building.Id,true),Is.True);
             Until(w,()=>building.DemolitionProgress==1);w.Step(28);
+            Assert.That(w.TryGetWorkFeedback(1,out var work),Is.True);
+            Assert.That(work.Kind,Is.EqualTo(WorkFeedbackKind.Demolish));
+            Assert.That(work.Progress,Is.EqualTo(29));Assert.That(work.Duration,Is.EqualTo(30));
             Assert.That(building.Exists,Is.True);Assert.That(building.DemolitionProgress,Is.EqualTo(29));Assert.That(Wood(w),Is.EqualTo(38));
             w.Step(1);Assert.That(building.Exists,Is.False);Assert.That(Wood(w),Is.EqualTo(40));Assert.That(w.BlockedTiles.Contains(building.Position),Is.False);
             Assert.That(w.SetDemolition(building.Id,true),Is.False);w.Step(40);Assert.That(Wood(w),Is.EqualTo(40));

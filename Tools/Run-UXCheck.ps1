@@ -1,7 +1,7 @@
 #requires -Version 7.0
 [CmdletBinding()]
 param(
-    [ValidateSet('Capture','Restart','SettlementArt')][string] $Action='Capture',
+    [ValidateSet('Capture','Restart','WorkFeedback','MapPerformance','SettlementArt')][string] $Action='Capture',
     [int] $Width=1920,
     [int] $Height=1080,
     [ValidateSet(100,125,150)][int] $Scale=100
@@ -20,7 +20,9 @@ try {
     $storage=Join-Path $run 'storage'
     $modes=switch($Action){
         'Restart' {@('save','load')}
+        'WorkFeedback' {'work-feedback'}
         'SettlementArt' {'settlement-art'}
+        'MapPerformance' {'map-performance'}
         default {'capture'}
     }
     $records=@()
@@ -43,7 +45,16 @@ try {
         $result=Get-Content $resultPath -Raw|ConvertFrom-Json
         if($process.ExitCode -ne 0 -or !$result.passed){throw "Player failed: $($result.error)"}
         if($result.width -ne $Width -or $result.height -ne $Height -or $result.scale -ne $Scale){throw 'Actual resolution/scale differs from requested configuration.'}
-        $diagnostic=$mode -eq 'settlement-art'
+        if($mode -eq 'map-performance'){
+            foreach($size in @(32,250)){
+                $measurements=Get-Content -Raw (Join-Path $output "performance-$size.json") | ConvertFrom-Json
+                if($measurements.size -ne $size -or $measurements.slotBytes -le 0){throw "Missing performance evidence for $size"}
+            }
+            $records+=[pscustomobject]@{mode=$mode;processId=$process.Id;exitCode=$process.ExitCode;result=$result}
+            $process.Dispose()
+            continue
+        }
+        $diagnostic=$mode -in @('work-feedback','settlement-art')
         $imageFilter=if($diagnostic){'*-offscreen.png'}else{'*.png'}
         $images=@(Get-ChildItem -LiteralPath $output -Filter $imageFilter)
         if($images.Count -eq 0){throw 'No screenshot evidence.'}
@@ -54,6 +65,7 @@ try {
         $layouts=@(Get-ChildItem -LiteralPath $output -Filter '*-layout.json')
         $requiredScreens=switch($mode){
             'capture' {@('default','sample-five','stove','work','building','save','confirmation','error')}
+            'work-feedback' {@('cooking-start','cooking-half','cooking-done','neighbor-work','distant-selected-work','construction-route')}
             'settlement-art' {@('settlement-default','settlement-details','settlement-distant','settlement-cooking','settlement-harvest')}
             'save' {'saved'}
             'load' {'restored'}

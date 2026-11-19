@@ -46,14 +46,25 @@ namespace RimworldTweak.Editor
 
         public static void BuildWindows()
         {
-            Directory.CreateDirectory("Builds/Windows");
+            BuildWindowsAt("Builds/Windows", BuildOptions.None);
+        }
+
+        // GC allocation counters require an instrumented Player on the Mono backend.
+        public static void BuildWorkProfile()
+        {
+            BuildWindowsAt("TestResults/WorkProfilePlayer", BuildOptions.Development);
+        }
+
+        private static void BuildWindowsAt(string directory, BuildOptions options)
+        {
+            Directory.CreateDirectory(directory);
             var result = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
                 scenes = new[] { ScenePath },
-                locationPathName = "Builds/Windows/RimworldTweak.exe",
+                locationPathName = Path.Combine(directory, "RimworldTweak.exe"),
                 target = BuildTarget.StandaloneWindows64,
-                options = BuildOptions.None
+                options = options
             });
-            File.WriteAllText("Builds/Windows/build-summary.json", JsonUtility.ToJson(new BuildSummary {
+            File.WriteAllText(Path.Combine(directory,"build-summary.json"), JsonUtility.ToJson(new BuildSummary {
                 result = result.summary.result.ToString(), errors = result.summary.totalErrors,
                 warnings = result.summary.totalWarnings, size = result.summary.totalSize,
                 seconds = result.summary.totalTime.TotalSeconds

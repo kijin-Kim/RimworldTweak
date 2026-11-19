@@ -48,7 +48,7 @@ namespace RimworldTweak.Simulation
             }
             if(category==WorkCategory.Farm)
                 foreach(var c in crops)if(c.Exists&&(!targetId.HasValue||c.Id==targetId)&&c.Stage!=CropStage.Growing)
-                    reasons.Add(c.Stage==CropStage.Empty&&!GrowingZone(c.ZoneId).SowingEnabled?WorkReasonCode.Disabled:c.OwnerId.HasValue?WorkReasonCode.TargetReserved:AnyWorkerReaches(category,c.Position,false)?WorkReasonCode.None:WorkReasonCode.Unreachable);
+                    reasons.Add(CropDiagnostic(c,GrowingZone(c.ZoneId)));
             if(category==WorkCategory.Gather)
                 foreach(var n in gatherables)if(n.Designated&&!n.Depleted&&(!targetId.HasValue||n.Id==targetId))
                     reasons.Add(n.OwnerId.HasValue?WorkReasonCode.TargetReserved:AnyWorkerReaches(category,n.Position,false)?WorkReasonCode.None:WorkReasonCode.Unreachable);
@@ -59,15 +59,39 @@ namespace RimworldTweak.Simulation
                     if(!AnyWorkerReaches(category,resource.Position,false)){reasons.Add(WorkReasonCode.Unreachable);continue;}
                     var reason=(WorkReasonCode)Enum.Parse(typeof(WorkReasonCode),StorageFailure(resource.Kind));
                     foreach(var zone in storageZones)if(zone.Allows(resource.Kind))foreach(var slot in zone.Slots)
-                        if(!slot.OwnerId.HasValue&&slot.Amount<50&&(slot.Amount==0||slot.Stack.Kind==resource.Kind)&&ReadPath(resource.Position,slot.Position)!=null)reason=WorkReasonCode.None;
+                        if(!slot.OwnerId.HasValue&&slot.Amount<50&&(slot.Amount==0||slot.Stack.Kind==resource.Kind)&&HasPath(resource.Position,slot.Position))reason=WorkReasonCode.None;
                     reasons.Add(reason);
                 }
             return WorkDiagnostics.ForCategory(category,workPolicies,reasons);
         }
+        private WorkReasonCode CropDiagnostic(CropState crop, GrowingZoneState zone)
+        {
+            if (crop.Stage == CropStage.Empty && !zone.SowingEnabled) return WorkReasonCode.Disabled;
+            if (crop.OwnerId.HasValue) return WorkReasonCode.TargetReserved;
+            return AnyWorkerReaches(WorkCategory.Farm,crop.Position,false) ? WorkReasonCode.None : WorkReasonCode.Unreachable;
+        }
+
+        // All cells in a zone share the worker policy. Inspect each cell once for the alert panel.
+        public int CountFarmAlerts(GrowingZoneState zone, out CropState first, out WorkReasonCode reason)
+        {
+            first = null;
+            var staffed = workPolicies.Exists(p => p.GetPriority(WorkCategory.Farm) > 0);
+            reason = staffed ? WorkReasonCode.Unreachable : WorkReasonCode.NoWorker;
+            var count = 0;
+            foreach (var crop in zone.Cells)
+            {
+                if (!crop.Exists || crop.Stage == CropStage.Growing) continue;
+                if (staffed && CropDiagnostic(crop,zone) != reason) continue;
+                if (first == null) first = crop;
+                count++;
+            }
+            return count;
+        }
+
         private bool ReadReach(GridPosition start,GridPosition target,bool adjacent)
         {
-            if(!adjacent)return ReadPath(start,target)!=null;
-            foreach(var d in Directions)if(ReadPath(start,new GridPosition(target.X+d.X,target.Y+d.Y))!=null)return true;
+            if(!adjacent)return HasPath(start,target);
+            foreach(var d in Directions)if(HasPath(start,new GridPosition(target.X+d.X,target.Y+d.Y)))return true;
             return false;
         }
         private bool AnyWorkerReaches(WorkCategory category,GridPosition target,bool adjacent)

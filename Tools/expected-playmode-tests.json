@@ -114,6 +114,10 @@
   "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.ObjectContextMenuChangesDesignationAndEscapeKeepsSelection",
   "RimworldTweak.Tests.PlayMode.WorldMapViewTests.PageZoomAndHeldArrowRespectModalSuppression",
   "RimworldTweak.Tests.PlayMode.WorldMapViewTests.EdgeCellsCanBeCenteredWithoutChangingZoom",
+  "RimworldTweak.Tests.PlayMode.WorldMapViewTests.SettlementCameraAndTerrainUpdatesStayLocal",
+  "RimworldTweak.Tests.PlayMode.WorldMapViewTests.CookingBarAndFootPoseFollowSavedSimulationTime",
+  "RimworldTweak.Tests.PlayMode.WorldMapViewTests.ConstructionFacesItsTargetFromEverySide",
+  "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.FarmNoticeGroupsAffectedCellsAndClearsAfterPolicyChange",
   "RimworldTweak.Tests.PlayMode.WorldMapViewTests.ModularPawnsKeepTheirLayersTogetherAcrossDirectionsAndCatalogChanges",
   "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.PawnMovesBetweenSimulationTicksAndFreezesAtItsRenderedPosition"
 ]
