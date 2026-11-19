@@ -369,7 +369,15 @@ namespace RimworldTweak.Demo
                 yield return Capture("priority-work");
                 if(!Check(()=>{
                     var world=runner.Session.World;
-                    shell.HandleMapClick(world.Colonists[1].Position,true);shell.Buttons["context.rescue.2"].onClick.Invoke();
+                    runner.SetPaused(false);
+                    shell.HandleMapClick(world.Colonists[1].Position,true);
+                    var tick = world.Tick;
+                    if (!shell.ProcessShortcut(UnityEngine.InputSystem.Key.Space) || !shell.IsContextMenuOpen || !runner.IsPaused)
+                        throw new InvalidOperationException("Pausing closed the rescue menu");
+                    runner.AdvanceTime(.3m);
+                    shell.Buttons["context.rescue.2"].onClick.Invoke();
+                    if (world.Tick != tick || world.RescueFor(1) == null || shell.IsContextMenuOpen)
+                        throw new InvalidOperationException("Paused rescue command");
                     for(var i=0;i<100 && world.RescueFor(1)?.Carrying!=true;i++)runner.Session.Step(1);
                     if(world.RescueFor(1)?.Carrying!=true || world.PriorityWorkTarget(1).HasValue)
                         throw new InvalidOperationException("Rescue pickup "+world.LastCommandError);

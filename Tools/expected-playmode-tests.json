@@ -1,4 +1,5 @@
 [
+  "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.AttackCardTracksRangeSightAimCooldownAndPartialOrders",
   "RimworldTweak.Tests.PlayMode.TitleMenuTests.EmptyTitleKeepsNavigationInMenuAndStartsOnlyOnce",
   "RimworldTweak.Tests.PlayMode.TitleMenuTests.ContinueWithoutRecentRequiresConfirmationAndMissingRecentOffersManualChoice",
   "RimworldTweak.Tests.PlayMode.TitleMenuTests.CorruptSlotAndFailedRestoreLeaveAnActionableList",

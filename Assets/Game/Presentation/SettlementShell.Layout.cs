@@ -158,7 +158,7 @@ namespace RimworldTweak.Presentation
                     Place(rest,4,46,54*Mathf.Clamp01(pawn.Rest/10000f),3);
                     nutrition.GetComponent<Image>().color=pawn.Nutrition<=3000?new Color(.95f,.34f,.23f):new Color(.20f,.65f,.34f);
                     rest.GetComponent<Image>().color=pawn.Rest<=2000?new Color(.95f,.66f,.20f):new Color(.30f,.55f,.85f);
-                    truncatedPortraits[(RectTransform)button.transform]=fullName+"\n"+PawnAction(pawn)+
+                    truncatedPortraits[(RectTransform)button.transform]=fullName+"\n"+DirectAction(Runner.Session.World,pawn)+
                         "\n포만도 "+pawn.Nutrition/100+" · 휴식 "+pawn.Rest/100;
                     button.GetComponent<Image>().color = selectedPawns.Contains(id)
                         ? MenuStyle.Active
@@ -730,6 +730,18 @@ namespace RimworldTweak.Presentation
 
         private string DirectAction(WorldState world,ColonistState pawn)
         {
+            if (pawn.IsDrafted && pawn.Attack.TargetId.HasValue)
+            {
+                var attack = pawn.Attack;
+                if (attack.BlockedReason == "AttackOutOfRange") return "사거리 밖";
+                if (attack.BlockedReason == "AttackBlocked") return "사선 차단";
+                if (attack.BlockedReason == "WeaponRequired") return "무기 필요";
+                if (attack.Cooldown > 0) return $"재공격 대기 · {attack.Cooldown}틱";
+                if (attack.Preparation == 0) return "공격 지정";
+                var weapon = world.EquippedWeapon(pawn.Id)?.Definition;
+                var action = weapon?.Kind == WeaponKind.Melee ? "근접 공격 준비" : "조준 중";
+                return $"{action} · {attack.Preparation}/{weapon?.AimTicks ?? 10}";
+            }
             if(world.HasEquipOrder(pawn.Id))return "무기 가지러 이동";
             var rescue=world.RescueFor(pawn.Id);
             if(rescue!=null)return (rescue.Carrying?"침대로 운반 중 #":"구조하러 이동 #")+rescue.PatientId;

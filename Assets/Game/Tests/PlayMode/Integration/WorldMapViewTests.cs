@@ -376,6 +376,17 @@ namespace RimworldTweak.Tests.PlayMode
             MouseState(map.GridToScreen(P(5, 5)), true); PumpInput(); yield return null;
             MouseState(map.GridToScreen(P(2, 2))); PumpInput(); yield return null;
             Assert.That(rectangles, Is.EqualTo(1)); Assert.That(first, Is.EqualTo(P(5, 5))); Assert.That(last, Is.EqualTo(P(2, 2)));
+            input.Configure(map, () => false, () => false, () => true,
+                (p, right) => { clicks++; last = p; }, (a, b) => rectangles++, () => { });
+            var edge = (target + map.GridToScreen(P(4,3))) / 2;
+            MouseState(edge - Vector2.right,true); PumpInput(); yield return null;
+            MouseState(edge + Vector2.right); PumpInput(); yield return null;
+            Assert.That(clicks, Is.EqualTo(2));
+            Assert.That(last, Is.EqualTo(P(3,3)));
+            Assert.That(rectangles, Is.EqualTo(1));
+            MouseState(target,true); PumpInput(); yield return null;
+            MouseState(map.GridToScreen(P(5,4))); PumpInput(); yield return null;
+            Assert.That(rectangles, Is.EqualTo(2));
         }
 
         [UnityTest] public IEnumerator ModalCancelsCapturedGestureAndStaleReleaseCannotPlace()

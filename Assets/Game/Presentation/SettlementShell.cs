@@ -115,7 +115,7 @@ namespace RimworldTweak.Presentation
                 if (SelectedPawnId.HasValue || SelectedObjectId.HasValue) { ClearSelection(); return true; }
                 ShowPauseMenu(); return true;
             }
-            if (IsInputBlocked) return false;
+            if (IsInputBlocked && !(key == Key.Space && IsContextMenuOpen && HasSettlement && !IsMenuOpen)) return false;
             switch (key)
             {
                 case Key.Tab: ToggleTab("architect"); break;
@@ -249,10 +249,13 @@ namespace RimworldTweak.Presentation
                 var enemy = Runner.Session.World.Raiders.LastOrDefault(r => r.Position == position);
                 if (enemy != null && Runner.Session.World.RaidPhase == RaidPhase.Active)
                 {
-                    var ordered = false;
+                    var ordered = 0;
                     foreach (var id in selectedPawns.OrderBy(id => id))
-                        ordered |= Runner.OrderAttack(id, enemy.Id);
-                    Feedback = ordered ? "적 #" + enemy.Id + " 공격 지정" : selectedPawns.Count==0 ? "소집한 정착민을 선택해." : DirectFailure(Runner.Session.World.LastCommandError);
+                        if (Runner.OrderAttack(id, enemy.Id)) ordered++;
+                    var message = ordered > 0 ? "적 #" + enemy.Id + " 공격 지정" :
+                        selectedPawns.Count == 0 ? "소집한 정착민을 선택해." : DirectFailure(Runner.Session.World.LastCommandError);
+                    if (selectedPawns.Count > 1) message = $"{selectedPawns.Count}명 중 {ordered}명 · " + message;
+                    ShowResult(message);
                     Refresh();
                     return;
                 }
@@ -272,21 +275,24 @@ namespace RimworldTweak.Presentation
                 Report(node!=null&&Runner.DesignateGather(node.Id,true),"채집을 지정했어."); return;
             }
             var world = Runner.Session.World;
-            var pawn = world.Colonists.Where(x =>
-            {
-                var rendered = Map.DisplayedPawnPosition(world, x);
-                return Mathf.FloorToInt(rendered.x) == position.X && Mathf.FloorToInt(rendered.y) == position.Y;
-            }).OrderBy(x => x.Id).FirstOrDefault();
+            var pawn = world.Colonists.Where(x => DisplayedCell(world, x) == position).OrderBy(x => x.Id).FirstOrDefault();
             if(pawn!=null){SelectPawn(pawn.Id,ShiftHeld);return;}
             var ids=ObjectsAt(position);if(ids.Count>0)SelectObject(ids[0],position);else ClearSelection();
         }
+        private GridPosition DisplayedCell(WorldState world, ColonistState pawn)
+        {
+            var position = Map.DisplayedPawnPosition(world, pawn);
+            return new GridPosition(Mathf.FloorToInt(position.x), Mathf.FloorToInt(position.y));
+        }
+
         public void HandleRectangle(GridPosition first, GridPosition last)
         {
             if(IsInputBlocked)return;
             if(ActiveTool==Tool.None)
             {
                 if(first==last){HandleMapClick(last,false);return;}
-                var ids=Runner.Session.World.Colonists.Where(p=>InRectangle(p.Position,first,last)).Select(p=>p.Id).ToArray();
+                var world = Runner.Session.World;
+                var ids=world.Colonists.Where(p=>InRectangle(DisplayedCell(world,p),first,last)).Select(p=>p.Id).ToArray();
                 if(!ShiftHeld)ClearSelection();
                 foreach(var id in ids)if(!selectedPawns.Contains(id))SelectPawn(id,true);
                 return;

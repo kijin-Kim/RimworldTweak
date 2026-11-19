@@ -84,6 +84,9 @@ namespace RimworldTweak.Tests.PlayMode
             Assert.That(world.Colonists[0].Position, Is.EqualTo(P(3,3)));
             Assert.That(Position(1).x, Is.GreaterThan(4f));
             shell.ClearSelection();
+            shell.HandleRectangle(P(4,3), P(4,4));
+            CollectionAssert.AreEquivalent(new[] { 1, 2 }, shell.SelectedPawnIds);
+            shell.ClearSelection();
             shell.HandleMapClick(P(4,3), false);
             Assert.That(shell.SelectedPawnId, Is.EqualTo(1));
             for (var i = 0; i < 20; i++) runner.AdvanceTime(.016m);
@@ -235,6 +238,11 @@ namespace RimworldTweak.Tests.PlayMode
             var node=runner.Session.World.Gatherables.First();
             shell.HandleMapClick(node.Position,true);
             Assert.That(shell.IsContextMenuOpen,Is.True);
+            runner.SetPaused(false);
+            Assert.That(shell.ProcessShortcut(Key.Space), Is.True);
+            runner.AdvanceTime(.3m);
+            Assert.That(runner.IsPaused && shell.IsContextMenuOpen, Is.True);
+            Assert.That(shell.ProcessShortcut(Key.R), Is.False);
             Assert.That(shell.Buttons["context.move"].interactable,Is.False);
             Assert.That(runner.Session.World.PendingCommandCount,Is.Zero);
             Click("context.gather."+node.Id);
@@ -244,6 +252,44 @@ namespace RimworldTweak.Tests.PlayMode
             Assert.That(shell.IsContextMenuOpen,Is.False);
             Assert.That(shell.SelectedPawnId,Is.EqualTo(1));
             Assert.That(runner.Session.World.Tick,Is.Zero);
+        }
+        [UnityTest]
+        public IEnumerator AttackCardTracksRangeSightAimCooldownAndPartialOrders()
+        {
+            Setup();
+            foreach (var wall in new[] { false, true })
+            {
+                runner.Initialize(new ScenarioDefinition(wall ? 11 : 20, 10,
+                    wall ? new[] { P(8,4) } : Array.Empty<GridPosition>(),
+                    new[] { new ColonistSeed(1,P(5,4)), new ColonistSeed(2,P(4,4)) },
+                    Array.Empty<ResourceSeed>(), startWithWeapons: true));
+                runner.SetPaused(true);
+                yield return null;
+                var world = runner.Session.World;
+                world.SetDrafted(1,true);
+                Assert.That(world.OrderEquip(1,world.Weapons.Single(w=>w.Definition.Id=="rifle").Id), Is.True);
+                runner.Session.Step(5);
+                Assert.That(world.StartNormalRaid(), Is.True);
+                shell.SelectPawn(1);
+                shell.SelectPawn(2,true);
+                shell.HandleMapClick(world.Raiders[0].Position,true);
+                Assert.That(shell.Feedback, Does.Contain("2명 중 1명"));
+                shell.SelectPawn(1);
+                string Card()
+                {
+                    shell.SendMessage("LateUpdate");
+                    return shell.GetComponentsInChildren<Text>().Single(t=>t.name=="Selected target").text;
+                }
+                runner.Session.Step(1);
+                Assert.That(Card(), Does.Contain(wall ? "사선 차단" : "사거리 밖"));
+                if (wall) continue;
+                while (world.Colonists[0].Attack.Preparation == 0 && world.Tick < 30) runner.Session.Step(1);
+                Assert.That(Card(), Does.Contain("조준 중 · 1/20"));
+                runner.AdvanceTime(.5m);
+                Assert.That(Card(), Does.Contain("조준 중 · 1/20"));
+                runner.Session.Step(19);
+                Assert.That(Card(), Does.Contain("재공격 대기 · 30틱"));
+            }
         }
         [UnityTest] public IEnumerator GroundWeaponRequiresSingleSelectionAndPickupCanBeCancelledWhilePaused()
         {

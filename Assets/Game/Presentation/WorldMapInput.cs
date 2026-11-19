@@ -18,8 +18,11 @@ namespace RimworldTweak.Presentation
         private Action cancelTool;
         private bool leftCaptured, middleCaptured, suppressUntilRelease, suppressKeysUntilRelease;
         private GridPosition start;
+        private Vector2 pressScreen;
+        private bool selectionDrag;
         public GridPosition? HoverPosition { get; private set; }
-        public GridPosition? DragStart => leftCaptured && (rectangleTool?.Invoke() ?? false) ? start : (GridPosition?)null;
+        public GridPosition? DragStart => leftCaptured && (rectangleTool?.Invoke() ?? false) &&
+            (selectionDrag || (toolActive?.Invoke() ?? false)) ? start : (GridPosition?)null;
         public bool IsCapturing => leftCaptured || middleCaptured;
         public Action<GridPosition?> Hovered { get; set; }
         public float PanSpeed = 6;
@@ -82,13 +85,26 @@ namespace RimworldTweak.Presentation
                         else if (onMap) click?.Invoke(cell, true);
                     }
                 }
-                if (mouse.leftButton.wasPressedThisFrame && onMap) { leftCaptured = true; start = cell; }
+                if (mouse.leftButton.wasPressedThisFrame && onMap)
+                {
+                    leftCaptured = true;
+                    start = cell;
+                    pressScreen = screen;
+                    selectionDrag = false;
+                }
+                if (leftCaptured && !selectionDrag)
+                {
+                    var threshold = Mathf.Max(1, EventSystem.current != null ? EventSystem.current.pixelDragThreshold : 5);
+                    selectionDrag = (screen - pressScreen).sqrMagnitude >= threshold * threshold;
+                }
                 if (mouse.leftButton.wasReleasedThisFrame && leftCaptured)
                 {
                     leftCaptured = false;
                     if (onMap)
                     {
-                        if (rectangleTool?.Invoke() ?? false) rectangle?.Invoke(start, cell);
+                        if ((rectangleTool?.Invoke() ?? false) && !(toolActive?.Invoke() ?? false) && !selectionDrag)
+                            click?.Invoke(start, false);
+                        else if (rectangleTool?.Invoke() ?? false) rectangle?.Invoke(start, cell);
                         else click?.Invoke(cell, false);
                     }
                     view.SetPreview(null, null, false);
