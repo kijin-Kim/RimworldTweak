@@ -24,6 +24,12 @@ namespace RimworldTweak.Simulation
         public bool HasPendingCommand { get; private set; }
         public GridPosition? PendingDestination { get; private set; }
         public bool IsDrafted { get; internal set; }
+        public int Health { get; internal set; } = 100;
+        public bool IsDowned => Health == 0;
+        internal readonly InteractionClaim PatientClaim = new InteractionClaim();
+        public int? TreatedBy => PatientClaim.OwnerId;
+        public int CareProgress { get; internal set; }
+        public AttackState Attack { get; } = new AttackState();
         public long ActionId { get; private set; }
         public bool HasSleepIntent { get; internal set; }
         public WorkActivity WorkActivity { get; internal set; }

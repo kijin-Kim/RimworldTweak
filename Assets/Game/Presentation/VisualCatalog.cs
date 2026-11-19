@@ -91,6 +91,7 @@ namespace RimworldTweak.Presentation
             {
                 case ResourceKind.Wood: return "item.wood";
                 case ResourceKind.Ingredients: return "item.ingredients";
+                case ResourceKind.Medicine: return "item.medicine";
                 case ResourceKind.Meal: return "item.meal";
                 default: throw new ArgumentOutOfRangeException(nameof(kind));
             }

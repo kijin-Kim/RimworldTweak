@@ -6,6 +6,7 @@ namespace RimworldTweak.Simulation
     [DataContract]
     public sealed class SaveData
     {
+        public const int CurrentSchemaVersion = 2;
         [DataMember(Name="schemaVersion", IsRequired=true)] public int SchemaVersion;
         [DataMember(Name="scenarioId", IsRequired=true)] public string ScenarioId;
         [DataMember(Name="scenarioVersion", IsRequired=true)] public int ScenarioVersion;
@@ -54,6 +55,7 @@ namespace RimworldTweak.Simulation
     [DataContract]
     public sealed class ScenarioSaveData
     {
+        [DataMember(IsRequired = true)] public PositionSaveData InitialRaidStove;
         [DataMember(Name="Width", IsRequired=true)] public int Width;
         [DataMember(Name="Height", IsRequired=true)] public int Height;
         [DataMember(Name="NeedsEnabled", IsRequired=true)] public bool NeedsEnabled;
@@ -95,6 +97,9 @@ namespace RimworldTweak.Simulation
     [DataContract]
     public sealed class WorldSaveData
     {
+        [DataMember(IsRequired = true)] public RaidSaveData Raid;
+        [DataMember(IsRequired = true)] public int MedicineConsumed;
+        [DataMember(IsRequired = true)] public int RepairWoodConsumed;
         [DataMember(Name="Width", IsRequired=true)] public int Width;
         [DataMember(Name="Height", IsRequired=true)] public int Height;
         [DataMember(Name="NeedsEnabled", IsRequired=true)] public bool NeedsEnabled;
@@ -135,6 +140,10 @@ namespace RimworldTweak.Simulation
     [DataContract]
     public sealed class ColonistSaveData
     {
+        [DataMember(IsRequired = true)] public int Health;
+        [DataMember(IsRequired = true)] public AttackSaveData Attack;
+        [DataMember(IsRequired = true)] public int CareProgress;
+        [DataMember(IsRequired = true)] public ClaimSaveData PatientClaim;
         [DataMember(Name="Id", IsRequired=true)] public int Id;
         [DataMember(Name="Position", IsRequired=true)] public PositionSaveData Position;
         [DataMember(Name="Destination", IsRequired=true)] public PositionSaveData Destination;
@@ -248,6 +257,11 @@ namespace RimworldTweak.Simulation
     [DataContract]
     public sealed class BuildingSaveData
     {
+        [DataMember(IsRequired = true)] public bool InitialPlacement;
+        [DataMember(IsRequired = true)] public int Durability;
+        [DataMember(IsRequired = true)] public bool RepairDesignated;
+        [DataMember(IsRequired = true)] public int RepairWood;
+        [DataMember(IsRequired = true)] public int RepairProgress;
         [DataMember(Name="Id", IsRequired=true)] public int Id;
         [DataMember(Name="Kind", IsRequired=true)] public string Kind;
         [DataMember(Name="Position", IsRequired=true)] public PositionSaveData Position;

@@ -133,7 +133,7 @@ namespace RimworldTweak.Tests.EditMode
             var built=AssetDatabase.LoadAssetAtPath<VisualCatalog>(VisualCatalog.DefaultAssetPath);
             Assert.That(built,Is.Not.Null,"Run BuildArtAssets.Build before validating the content build.");
             var required=new[]{"terrain.soil","terrain.blocked","pawn.front","pawn.back","pawn.side","tree","plant.gather",
-                "crop.young","crop.growing","crop.mature","item.wood","item.ingredients","item.meal",
+                "crop.young","crop.growing","crop.mature","item.wood","item.ingredients","item.meal","item.medicine",
                 "building.wall","building.door","building.bed","building.stove","ui.panel","overlay.selection",
                 "overlay.storage","overlay.growing","overlay.blueprint","icon.draft","icon.sleep","icon.work","preview.rifle","preview.knife"};
             foreach(var key in required)

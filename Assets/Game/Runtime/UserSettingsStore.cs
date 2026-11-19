@@ -30,7 +30,7 @@ namespace RimworldTweak.Runtime
         {
             if(value==null||value.Version!=1)return "SettingsInvalid";
             if(value.UiScalePercent!=100&&value.UiScalePercent!=125&&value.UiScalePercent!=150)return "SettingsInvalid";
-            return value.RecentSlotId!=null&&(value.RecentSlotId.Length==0||value.RecentSlotId==SaveRepository.LegacySlotId||SaveRepository.IsSlotId(value.RecentSlotId))?string.Empty:"SettingsInvalid";
+            return value.RecentSlotId!=null&&(value.RecentSlotId.Length==0||value.RecentSlotId==SaveRepository.LegacySlotId||value.RecentSlotId==SaveRepository.RaidLegacySlotId||SaveRepository.IsSlotId(value.RecentSlotId))?string.Empty:"SettingsInvalid";
         }
         public UserSettingsLoadResult Load()
         {

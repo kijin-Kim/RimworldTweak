@@ -135,7 +135,7 @@ namespace RimworldTweak.Tests.EditMode
         [Test] public void CorruptTrailingAndOversizeFilesAreRejectedWithoutMutation()
         {
             Assert.That(files.Save(path,Data()).Success,Is.True);var valid=File.ReadAllText(path);
-            foreach(var bad in new[]{"{broken",valid+"{}",valid.Replace("\"schemaVersion\":1,","")})
+            foreach(var bad in new[]{"{broken",valid+"{}",valid.Replace("\"schemaVersion\":2,","")})
             {
                 File.WriteAllText(path,bad);var result=files.Load(path);Assert.That(result.Success,Is.False,"Malformed JSON suffix: "+bad.Substring(Math.Max(0,bad.Length-80)));
                 Assert.That(result.ErrorCode,Is.EqualTo("SaveInvalidData"));Assert.That(File.ReadAllText(path),Is.EqualTo(bad));
@@ -146,7 +146,7 @@ namespace RimworldTweak.Tests.EditMode
         [Test] public void UnsupportedVersionAndNumericEnumAreRejected()
         {
             var data=Data();Assert.That(files.Save(path,data).Success,Is.True);var valid=File.ReadAllText(path);
-            File.WriteAllText(path,valid.Replace("\"schemaVersion\":1","\"schemaVersion\":99"));
+            File.WriteAllText(path,valid.Replace("\"schemaVersion\":2","\"schemaVersion\":99"));
             Assert.That(files.Load(path).ErrorCode,Is.EqualTo("SaveUnsupportedVersion"));
             data.World.Resources[0].Kind="0";Assert.That(SaveValidation.Validate(data).IsValid,Is.False);
         }

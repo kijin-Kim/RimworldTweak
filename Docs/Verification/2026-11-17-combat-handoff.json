@@ -1,0 +1,73 @@
+{
+  "SourceWorktree": "C:\\Users\\kijin\\.codex\\worktrees\\rimworld-combat-integration\\RimworldTweak",
+  "SourceBaseline": "2026-11-17-combat-source.json",
+  "Files": [
+    {
+      "Path": "Assets/Game/Simulation/SightRules.cs",
+      "Sha256": "D1E4B1B81E9FD5BAB9CA50D724BF55735269F4AD24F39274B4A80B44B5DFA053"
+    },
+    {
+      "Path": "Assets/Game/Simulation/SightRules.cs.meta",
+      "Sha256": "3802440F8683FD6DB694800EDBD9782FE3F54F5D595140C616E9047FE604BA21"
+    },
+    {
+      "Path": "Assets/Game/Tests/EditMode/Simulation/SightRulesTests.cs",
+      "Sha256": "61682BFD4E9BA2B0DB77C5731564B6C242ADFDDF170B58CD79A6A9CF60E615A3"
+    },
+    {
+      "Path": "Assets/Game/Tests/EditMode/Simulation/SightRulesTests.cs.meta",
+      "Sha256": "5DC3B8BE29D505BF18A9875550B1D1087F90C821E1ECBD3FBE5DF43BC2875E11"
+    },
+    {
+      "Path": "Assets/Game/Simulation/EquipmentRules.cs",
+      "Sha256": "2341F2ECB129EC084ED805A6BDA81B2B35DE2833E63A970944662255F9DD4D1B"
+    },
+    {
+      "Path": "Assets/Game/Simulation/EquipmentRules.cs.meta",
+      "Sha256": "C56768E38468946E0CE1B00BC546E69349005560DB5B11F827F8407612B4F969"
+    },
+    {
+      "Path": "Assets/Game/Tests/EditMode/Simulation/EquipmentRulesTests.cs",
+      "Sha256": "A9876FA8D10FDEBEE08286434798ECCFD49C20B06815ACAA8185261FFA07C579"
+    },
+    {
+      "Path": "Assets/Game/Tests/EditMode/Simulation/EquipmentRulesTests.cs.meta",
+      "Sha256": "2C27A65066A87B48779754B79BA687B646BDA6C056D7EC8CC248CB6254E7A374"
+    },
+    {
+      "Path": "Assets/Game/Tests/EditMode/Simulation/CombatRulesIntegrationTests.cs",
+      "Sha256": "47D4D138B0D58A529DB95161D0AF8D8C3D755B89F9F21B2D2601EB5DEA09C154"
+    },
+    {
+      "Path": "Assets/Game/Tests/EditMode/Simulation/CombatRulesIntegrationTests.cs.meta",
+      "Sha256": "FCFDC2970F217B0AFEF6A3AC6335C70670A64085ABCCC9C2B1F6926214183EFB"
+    }
+  ],
+  "AppendExpectedEditModeTests": [
+    "RimworldTweak.Tests.EditMode.SightRulesTests.RangeIncludesExactEuclideanBoundaryAndRejectsBeyond",
+    "RimworldTweak.Tests.EditMode.SightRulesTests.RejectedGeometryDoesNotQueryTheMap",
+    "RimworldTweak.Tests.EditMode.SightRulesTests.InvalidArgumentsAndCoverValuesAreRejected",
+    "RimworldTweak.Tests.EditMode.SightRulesTests.ExtremeCoordinatesRejectBeforeOverflowOrTraversal",
+    "RimworldTweak.Tests.EditMode.SightRulesTests.AxisAndDiagonalWallsBlockInBothDirections",
+    "RimworldTweak.Tests.EditMode.SightRulesTests.CornerTouchingSideCellsBlockEvenAdjacentDiagonalShots",
+    "RimworldTweak.Tests.EditMode.SightRulesTests.EndpointCellsAreNeverQueriedOrUsedAsCover",
+    "RimworldTweak.Tests.EditMode.SightRulesTests.TargetFrontCoverProtectsButSideAndDistantCoverDoNot",
+    "RimworldTweak.Tests.EditMode.SightRulesTests.MultipleCoverCellsUseMaximumWithoutAddingAndBlockClearsCover",
+    "RimworldTweak.Tests.EditMode.SightRulesTests.TraversalMatchesIndependentSegmentRectangleIntersection",
+    "RimworldTweak.Tests.EditMode.SightRulesTests.RepeatedQueriesAreDeterministicAndDoNotChangeMap",
+    "RimworldTweak.Tests.EditMode.EquipmentRulesTests.PrototypeWeaponsProvideDistinctRangedRolesAndMelee",
+    "RimworldTweak.Tests.EditMode.EquipmentRulesTests.WeaponRejectsInvalidIdentityKindRangeDamageAndTiming",
+    "RimworldTweak.Tests.EditMode.EquipmentRulesTests.ArmorAndDamageRejectInvalidInputs",
+    "RimworldTweak.Tests.EditMode.EquipmentRulesTests.ZeroDamageAndZeroProtectionAreValid",
+    "RimworldTweak.Tests.EditMode.EquipmentRulesTests.NoArmorPreservesAllDamage",
+    "RimworldTweak.Tests.EditMode.EquipmentRulesTests.PartialArmorAbsorbsExactlyOnceWithoutChangingInput",
+    "RimworldTweak.Tests.EditMode.EquipmentRulesTests.EqualOrExcessArmorCannotCreateNegativeDamage",
+    "RimworldTweak.Tests.EditMode.EquipmentRulesTests.MaximumDamagePreservesAccountingWithoutOverflow",
+    "RimworldTweak.Tests.EditMode.EquipmentRulesTests.RepeatedResolutionIsDeterministicAndDoesNotAccumulateProtection",
+    "RimworldTweak.Tests.EditMode.EquipmentRulesTests.PublicDataPropertiesCannotBeReassigned",
+    "RimworldTweak.Tests.EditMode.CombatRulesIntegrationTests.BlockedAndOutOfRangeAttacksNeverProduceDamage",
+    "RimworldTweak.Tests.EditMode.CombatRulesIntegrationTests.FrontCoverChangesSightInformationButDoesNotReduceDamageTwice",
+    "RimworldTweak.Tests.EditMode.CombatRulesIntegrationTests.RepeatedRuleQueriesPreserveLiveWorldAndSerializedSave"
+  ],
+  "Warning": "Transfer listed new files only; merge test manifest and documentation. Never overwrite current UI/save source using this snapshot."
+}

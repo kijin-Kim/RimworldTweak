@@ -74,7 +74,14 @@ namespace RimworldTweak.Simulation
                         break;
                     case LifeCommandKind.SetBed:
                         var bed = bedsById[command.Id];
-                        if (bed.Exists != command.Exists) { bed.SetExists(command.Exists); availabilityRevision++; }
+                        if (buildings.Find(b => b.Id == bed.Id && b.InitialPlacement) is BuildingState site)
+                        {
+                            if (!command.Exists && site.RepairDesignated) SetRepair(site.Id, false);
+                            site.Exists = command.Exists;
+                            bed.SetExists(command.Exists && site.Durability > 0);
+                            availabilityRevision++;
+                        }
+                        else if (bed.Exists != command.Exists) { bed.SetExists(command.Exists); availabilityRevision++; }
                         break;
                     case LifeCommandKind.Cancel:
                         var cancelled = colonistsById[command.Id];
@@ -95,6 +102,7 @@ namespace RimworldTweak.Simulation
             foreach (var bed in Beds)
                 if (bed.OwnerId == colonist.Id && bed.OwnerActionId == colonist.ActionId) { bed.Release(colonist.Id, colonist.ActionId); availabilityRevision++; }
             ClearWork(colonist);
+            colonist.Attack.Cancel();
             colonist.Stop(); colonist.ClearPending();
             moveCommands.RemoveAll(command => command.Id == colonist.Id);
             colonist.InvalidateAction();
@@ -130,7 +138,8 @@ namespace RimworldTweak.Simulation
         private static int FoodDuration(ResourceState resource) => resource.Kind == ResourceKind.Meal ? 20 : 40;
         private void UpdateNeedsAndActions()
         {
-            foreach (var colonist in Colonists) colonist.UpdateNeeds();
+            foreach (var colonist in Colonists)
+                if (!colonist.IsDowned) colonist.UpdateNeeds();
             InterruptWorkForNeeds();
             foreach (var colonist in Colonists)
             {
@@ -154,12 +163,14 @@ namespace RimworldTweak.Simulation
         private void DecideLife()
         {
             foreach (var colonist in Colonists)
-                if (!colonist.IsDrafted && !cancelledThisTick.Contains(colonist.Id) && colonist.Rest <= 2000) colonist.HasSleepIntent = true;
+                if (!colonist.IsDowned && !colonist.IsDrafted && !cancelledThisTick.Contains(colonist.Id) && colonist.Rest <= 2000) colonist.HasSleepIntent = true;
             var order = new List<ColonistState>(Colonists);
             order.Sort((a, b) => { var need = a.Nutrition.CompareTo(b.Nutrition); return need != 0 ? need : a.Id.CompareTo(b.Id); });
             foreach (var colonist in order)
             {
-                if (colonist.IsDrafted || cancelledThisTick.Contains(colonist.Id)) continue;
+                if (colonist.PatientClaim.OwnerId.HasValue && NeedsUrgentCareBreak(colonist)) CancelPatientTreatment(colonist);
+                if (colonist.IsDowned || colonist.IsDrafted || cancelledThisTick.Contains(colonist.Id) ||
+                    colonist.PatientClaim.OwnerId.HasValue) continue;
                 if (colonist.Nutrition > 3000) { colonist.SetFoodReason(string.Empty); continue; }
                 if (colonist.LifeActivity == LifeActivity.GoingToFood || colonist.LifeActivity == LifeActivity.Eating) continue;
                 if (Tick < colonist.NextFoodSearchTick && colonist.LastFoodRevision == availabilityRevision &&
@@ -181,7 +192,9 @@ namespace RimworldTweak.Simulation
             order.Sort((a, b) => { var need = a.Rest.CompareTo(b.Rest); return need != 0 ? need : a.Id.CompareTo(b.Id); });
             foreach (var colonist in order)
             {
-                if (colonist.IsDrafted || cancelledThisTick.Contains(colonist.Id)) continue;
+                if (colonist.PatientClaim.OwnerId.HasValue && NeedsUrgentCareBreak(colonist)) CancelPatientTreatment(colonist);
+                if (colonist.IsDowned || colonist.IsDrafted || cancelledThisTick.Contains(colonist.Id) ||
+                    colonist.PatientClaim.OwnerId.HasValue) continue;
                 var floor = colonist.LifeActivity == LifeActivity.SleepingOnFloor;
                 if (colonist.IsLifeBusy && !floor) continue;
                 if (!colonist.HasSleepIntent && colonist.Rest > 2000) continue;

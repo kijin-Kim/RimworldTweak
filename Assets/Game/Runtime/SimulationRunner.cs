@@ -35,6 +35,7 @@ namespace RimworldTweak.Runtime
         {
             if (realSeconds < 0m) throw new ArgumentOutOfRangeException(nameof(realSeconds));
             if (!IsPaused && !IsUiBlocked && !SaveBusy && !IsLoadConfirmationOpen) Session.AdvanceTime(checked(realSeconds * SpeedMultiplier));
+            if (Session.World.RaidDefeatStopsTime) IsPaused = true;
         }
 
         public void SetSpeed(int multiplier)
@@ -59,6 +60,16 @@ namespace RimworldTweak.Runtime
         }
 
         public bool MoveColonist(int id, GridPosition target) => PlayerCommand(() => Session.World.QueueMove(id, target));
+        public bool DeveloperMode { get; private set; }
+        public void ToggleDeveloperMode()
+        {
+            if (!SaveBusy && !IsLoadConfirmationOpen) DeveloperMode = !DeveloperMode;
+        }
+        public bool StartDebugRaid() => DeveloperMode && !SaveBusy && !IsLoadConfirmationOpen &&
+            PlayerCommand(() => Session.World.StartNormalRaid());
+        public bool StartRaid(int objectiveId) => PlayerCommand(() => Session.World.StartRaid(objectiveId));
+        public bool OrderAttack(int pawnId, int raiderId) => PlayerCommand(() => Session.World.OrderAttack(pawnId, raiderId));
+        public bool SetRepair(int id, bool enabled) => PlayerCommand(() => Session.World.SetRepair(id, enabled));
         public bool DesignateGather(int id, bool designated) => PlayerCommand(() => Session.World.QueueDesignateGather(id, designated));
         public bool CreateStorage(GridPosition first, GridPosition second) => PlayerCommand(() => Session.World.QueueCreateStorage(first, second));
         public bool SetStorageFilter(int id, ResourceKind kind, bool allowed) => PlayerCommand(() => Session.World.QueueStorageFilter(id, kind, allowed));

@@ -19,7 +19,7 @@ namespace RimworldTweak.Simulation
         public static SaveValidationResult Validate(SaveData data)
         {
             if(data==null)return new SaveValidationResult(false,"SaveInvalidData","data");
-            if(data.SchemaVersion!=1||data.ScenarioVersion!=1||data.RulesVersion!=1||data.ContractVersion!="settlement-five-v2")
+            if(data.SchemaVersion!=SaveData.CurrentSchemaVersion||data.ScenarioVersion!=1||(data.RulesVersion!=2&&data.RulesVersion!=3)||data.ContractVersion!="settlement-raid-v1")
                 return new SaveValidationResult(false,"SaveUnsupportedVersion","header");
             try { ValidateCore(data); return new SaveValidationResult(true); }
             catch(InvalidSave e){return new SaveValidationResult(false,"SaveInvalidData",e.Path);}
@@ -33,6 +33,13 @@ namespace RimworldTweak.Simulation
             Check(decimal.TryParse(d.Session.PendingSeconds,NumberStyles.AllowDecimalPoint,CultureInfo.InvariantCulture,out var remainder)&&remainder>=0m&&remainder<0.1m,"Session.PendingSeconds");
             Scenario(d.Scenario);
             var w=d.World;Check(w!=null,"World");Check(ValidSize(w.Width,w.Height),"World.Size");
+            var raid = w.Raid;
+            Check(raid != null, "World.Raid");
+            if (d.RulesVersion == 3)
+                Check(raid.Kind == "Normal" && raid.RetargetPercent >= 0 && raid.RetargetPercent <= 100 &&
+                    raid.RetargetState > 0, "World.Raid.Normal");
+            else
+                Check(raid.Kind == null && raid.RetargetPercent == null && raid.RetargetState == null, "World.Raid.Legacy");
             Check(w.Width==d.Scenario.Width&&w.Height==d.Scenario.Height&&w.NeedsEnabled==d.Scenario.NeedsEnabled,"World.Scenario");
             Check(w.Tick>=0&&w.MapRevision>=0&&w.PathSearchCount>=0&&w.RequestSequence>=0&&w.AvailabilityRevision>=0,"World.Counters");
             Check(w.LastCommandError!=null&&w.LastCommandError.Length<=256,"World.LastCommandError");
@@ -144,7 +151,7 @@ namespace RimworldTweak.Simulation
             foreach(var m in w.MoveCommands){Check(pawns.ContainsKey(m.Id),"MoveCommand.Id");if(m.Destination!=null)Position(m.Destination,w.Width,w.Height,"MoveCommand.Destination");}
             foreach(var id in w.CancelledThisTick)Check(pawns.ContainsKey(id),"CancelledThisTick.Id");Unique(w.CancelledThisTick,"CancelledThisTick.Duplicate");
             Check(w.WorkPolicies.Count==w.Colonists.Count,"WorkPolicies.Count");Unique(w.WorkPolicies.Select(p=>p.PawnId),"WorkPolicies.PawnId");
-            foreach(var p in w.WorkPolicies){Check(pawns.ContainsKey(p.PawnId),"WorkPolicy.PawnId");List(p.Priorities,"WorkPolicy.Priorities");Check(p.Priorities.Count==5,"WorkPolicy.Priorities.Count");Unique(p.Priorities.Select(v=>v.Category),"WorkPolicy.Category");foreach(var v in p.Priorities)Check(Defined<WorkCategory>(v.Category)&&v.Priority>=0&&v.Priority<=3,"WorkPolicy.Priority");}
+            foreach(var p in w.WorkPolicies){Check(pawns.ContainsKey(p.PawnId),"WorkPolicy.PawnId");List(p.Priorities,"WorkPolicy.Priorities");Check(p.Priorities.Count==Enum.GetValues(typeof(WorkCategory)).Length,"WorkPolicy.Priorities.Count");Unique(p.Priorities.Select(v=>v.Category),"WorkPolicy.Category");foreach(var v in p.Priorities)Check(Defined<WorkCategory>(v.Category)&&v.Priority>=0&&v.Priority<=3,"WorkPolicy.Priority");}
             Unique(w.Produced.Select(p=>p.Kind),"Produced.Kind");foreach(var p in w.Produced)Check(Defined<ResourceKind>(p.Kind)&&p.Amount>=0,"Produced.Values");
             ValidateMaterialLedger(d);
         }
@@ -161,8 +168,10 @@ namespace RimworldTweak.Simulation
                     foreach(var r in w.Resources)if(r.Kind==name)
                     { expected+=(long)r.AddedAmount-r.RemovedAmount-r.ConsumedAmount;if(r.Exists)actual+=r.Amount; }
                     foreach(var pawn in w.Colonists)if(pawn.CargoKind==name)actual+=pawn.CargoAmount;
+                    Check(w.RepairWoodConsumed>=0&&w.MedicineConsumed>=0,"Recovery.Ledger");
                     if(kind==ResourceKind.Wood)
-                    { expected+=(long)w.DemolitionReturnedWood-w.ConstructionConsumedWood;foreach(var b in w.Blueprints)if(b.Exists)actual+=b.DeliveredWood; }
+                    { expected+=(long)w.DemolitionReturnedWood-w.ConstructionConsumedWood-w.RepairWoodConsumed;foreach(var b in w.Blueprints)if(b.Exists)actual+=b.DeliveredWood;foreach(var b in w.Buildings)if(b.Exists)actual+=b.RepairWood; }
+                    if(kind==ResourceKind.Medicine)expected-=w.MedicineConsumed;
                     if(kind==ResourceKind.Ingredients)
                     { expected-=w.CookingConsumedIngredients;foreach(var o in w.CookingOrders)if(o.Exists)actual+=o.InputIngredients; }
                 }

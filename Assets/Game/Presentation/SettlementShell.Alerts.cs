@@ -19,6 +19,27 @@ namespace RimworldTweak.Presentation
         {
             if(alertContent==null)return;
             var active=new HashSet<string>();var w=Runner.Session.World;
+            if(w.RaidPhase!=RaidPhase.Idle)
+            {
+                const string key="raid";active.Add(key);
+                var caption=w.RaidPhase switch {
+                    RaidPhase.Active => "습격 중 · 적 "+w.Raiders.Count+"명",
+                    RaidPhase.Retreating => "적 철수 중",
+                    RaidPhase.Resolved => w.RaidOutcome switch {
+                        RaidOutcome.Defended=>"습격 종료 · 방어 성공", RaidOutcome.AllDown=>"습격 종료\n정착민 전원 전투 불능",
+                        RaidOutcome.ObjectiveLost=>"습격 종료 · 시설 파손", _=>"습격 종료 · 시간 만료"},
+                    _ => "습격 예고"};
+                if(!alertRows.TryGetValue(key,out var row))
+                {
+                    row=RowButton(alertContent,"alert.raid",caption,()=>{
+                        var enemy=Runner.Session.World.Raiders.FirstOrDefault();
+                        if(enemy!=null){SelectObject(enemy.Id);FocusTarget(enemy.Position);}
+                    },64);
+                    row.transform.SetAsFirstSibling();
+                    alertRows.Add(key,row);
+                }
+                row.GetComponentInChildren<Text>().text=caption;
+            }
             foreach(var b in w.Blueprints.Where(x=>x.Exists))AddAlert(active,WorkCategory.Build,b.Id,b.Position);
             foreach(var b in w.Buildings.Where(x=>x.Exists&&(x.Kind==BuildingKind.Stove||x.DemolitionDesignated)))
                 AddAlert(active,b.DemolitionDesignated?WorkCategory.Build:WorkCategory.Cook,b.Id,b.Position);

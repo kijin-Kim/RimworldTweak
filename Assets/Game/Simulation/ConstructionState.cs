@@ -28,6 +28,11 @@ namespace RimworldTweak.Simulation
         public BuildingKind Kind { get; }
         public GridPosition Position { get; }
         public bool Exists { get; internal set; } = true;
+        public bool RepairDesignated { get; internal set; }
+        public int RepairWood { get; internal set; }
+        public int RepairProgress { get; internal set; }
+        public bool InitialPlacement { get; internal set; }
+        public int Durability { get; internal set; } = 100;
         public bool DemolitionDesignated { get; internal set; }
         public int DemolitionProgress { get; internal set; }
         public long RequestOrder { get; internal set; }

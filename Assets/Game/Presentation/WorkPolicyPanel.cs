@@ -17,13 +17,13 @@ namespace RimworldTweak.Presentation
         {
             if (Root != null) throw new InvalidOperationException("Work policy panel already built.");
             Root = Rect("Work policy panel", parent, 0, 0, 708, 80);
-            for (var i = 0; i < 5; i++)
+            for (var i = 0; i < Enum.GetValues(typeof(WorkCategory)).Length; i++)
             {
                 var category = (WorkCategory)i;
-                var rect = Rect("Priority " + category, Root, i * 140, 40, 132, 36);
+                var rect = Rect("Priority " + category, Root, i * 89, 40, 85, 36);
                 var image = rect.gameObject.AddComponent<Image>(); image.color = new Color(.19f, .29f, .31f);
                 var button = rect.gameObject.AddComponent<Button>(); button.targetGraphic = image;
-                var label = TextAt("Label", rect, font, 0, 0, 132, 36); label.alignment = TextAnchor.MiddleCenter;
+                var label = TextAt("Label", rect, font, 0, 0, 85, 36); label.alignment = TextAnchor.MiddleCenter;
                 button.onClick.AddListener(() => { if (selected != null) change?.Invoke(category, (selected.GetPriority(category) + 1) % 4); });
                 buttons.Add(button);
             }

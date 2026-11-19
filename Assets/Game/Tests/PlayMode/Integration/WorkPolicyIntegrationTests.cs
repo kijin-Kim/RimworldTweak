@@ -33,7 +33,7 @@ namespace RimworldTweak.Tests.PlayMode
         public IEnumerator PausedPriorityButtonsCycleAllCategoriesAndRemainPawnSpecific()
         {
             Setup(); var w = runner.Session.World; var panel = view.WorkPolicyPanel;
-            Assert.That(panel.PriorityButtons.Count, Is.EqualTo(5));
+            Assert.That(panel.PriorityButtons.Count, Is.EqualTo(System.Enum.GetValues(typeof(WorkCategory)).Length));
             foreach (WorkCategory category in Enum.GetValues(typeof(WorkCategory)))
             {
                 var button = panel.PriorityButtons[(int)category]; var policy = w.WorkPolicies.Single(p => p.PawnId == 1);
@@ -95,7 +95,7 @@ namespace RimworldTweak.Tests.PlayMode
             Assert.That(runner.Session.World, Is.Not.SameAs(w));
             foreach (WorkCategory category in Enum.GetValues(typeof(WorkCategory)))
             {
-                var expected = category == WorkCategory.Haul ? 1 : 2;
+                var expected = category == WorkCategory.Haul || category == WorkCategory.Care ? 1 : 2;
                 Assert.That(runner.Session.World.WorkPolicies.Single(p => p.PawnId == 1).GetPriority(category), Is.EqualTo(expected));
                 Assert.That(Label(view.WorkPolicyPanel.PriorityButtons[(int)category]), Does.Contain(expected.ToString()));
             }

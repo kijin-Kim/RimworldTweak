@@ -52,6 +52,7 @@ namespace RimworldTweak.Simulation
         public bool PlaceBlueprint(BuildingKind kind, GridPosition position)
         {
             if(!CanPlaceBlueprint(kind, position, out var reason)) return Reject(reason);
+            if (ConstructionRules.BlocksMovement(kind) && IsRaidEntrance(position)) return Reject("RaidEntranceBlocked");
             blueprints.Add(new BlueprintState(NewId(),kind,position,++requestSequence)); availabilityRevision++;
             LastCommandError=string.Empty; return true;
         }
@@ -79,12 +80,15 @@ namespace RimworldTweak.Simulation
         public bool SetDemolition(int buildingId,bool enabled)
         {
             var b=Building(buildingId); if(b==null) return Reject("InvalidBuilding");
+            if (enabled && b.InitialPlacement && b.Kind == BuildingKind.Bed) return Reject("InitialBedProtected");
+            if (enabled && RaidRunning && RaidObjectiveId == buildingId) return Reject("RaidObjectiveProtected");
             if(b.DemolitionDesignated!=enabled)
             {
+                if (enabled && b.RepairDesignated) SetRepair(b.Id, false);
                 CancelProductionOwners(b.Id); b.DemolitionDesignated=enabled;
                 if(enabled) b.RequestOrder=++requestSequence;
                 if(b.Kind==BuildingKind.Stove) ReconcileCookingCycles(false);
-                if(b.Kind==BuildingKind.Bed) bedsById[b.Id].SetExists(!enabled);
+                if(b.Kind==BuildingKind.Bed) bedsById[b.Id].SetExists(!enabled && b.Durability > 0);
                 availabilityRevision++;
             }
             LastCommandError=string.Empty; return true;
@@ -237,6 +241,7 @@ namespace RimworldTweak.Simulation
         private bool ValidProductionWork(ColonistState pawn)
         {
             if(!pawn.WorkTargetId.HasValue||!pawn.FeatureStep.HasValue) return false;
+            if(IsRecovery(pawn.FeatureStep)) return ValidRecoveryWork(pawn);
             if(pawn.FeatureStep==WorkStep.Cook||pawn.FeatureStep==WorkStep.DeliverCook)return ValidCookingWork(pawn);
             if(pawn.FeatureStep==WorkStep.DeliverBuild)
             {
@@ -306,7 +311,8 @@ namespace RimworldTweak.Simulation
                     if(b.Kind==BuildingKind.Stove) RemoveStove(b);
                     b.Exists=false; if(ConstructionRules.BlocksMovement(b.Kind)) SetProductionBlocked(b.Position,false);
                     if(b.Kind==BuildingKind.Bed) bedsById[b.Id].SetExists(false);
-                    SpawnResource(ResourceKind.Wood,result.ProduceAmount,b.Position); DemolitionReturnedWood+=result.ProduceAmount;
+                    if (!b.InitialPlacement)
+                    { SpawnResource(ResourceKind.Wood,result.ProduceAmount,b.Position); DemolitionReturnedWood+=result.ProduceAmount; }
                     FinishProduction(pawn);
                 }
             }

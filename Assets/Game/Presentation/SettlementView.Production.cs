@@ -123,7 +123,7 @@ namespace RimworldTweak.Presentation
                 ProductionMarker(index++,w,c.Position,c.Stage==CropStage.Empty?"밭 · 파종":c.Stage==CropStage.Mature?"작물 · 수확":"작물 "+(100*c.GrowthTicks/FarmingRules.GrowthDuration)+"%",MapSymbol.Crop,c.Stage==CropStage.Mature?new Color(.95f,.78f,.3f):new Color(.38f,.7f,.3f));
             }
             foreach(var b in w.Blueprints) if(b.Exists) ProductionMarker(index++,w,b.Position,RimworldTweak.Presentation.ConstructionPanel.Name(b.Kind)+" [설계]",BuildingSymbol(b.Kind),new Color(.35f,.70f,.95f,.65f));
-            foreach(var b in w.Buildings) if(b.Exists && (b.Kind!=BuildingKind.Bed || b.DemolitionDesignated)) ProductionMarker(index++,w,b.Position,RimworldTweak.Presentation.ConstructionPanel.Name(b.Kind)+(b.DemolitionDesignated?" [철거]":""),BuildingSymbol(b.Kind),new Color(.76f,.64f,.48f));
+            foreach(var b in w.Buildings) if(b.Exists && (b.Kind!=BuildingKind.Bed || b.DemolitionDesignated || b.Durability==0)) ProductionMarker(index++,w,b.Position,RimworldTweak.Presentation.ConstructionPanel.Name(b.Kind)+(b.Durability==0?" [고장]":b.DemolitionDesignated?" [철거]":""),BuildingSymbol(b.Kind),b.Durability==0?new Color(.72f,.36f,.35f):new Color(.76f,.64f,.48f));
             for(var i=index;i<productionMarkers.Count;i++) productionMarkers[i].gameObject.SetActive(false);
             for(var i=floors;i<growingFloors.Count;i++) growingFloors[i].gameObject.SetActive(false);
         }

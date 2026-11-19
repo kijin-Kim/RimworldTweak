@@ -1,0 +1,29 @@
+{
+  "Criteria": "F1-F6 complete in isolated integration snapshot",
+  "Runs": [
+    {
+      "Run": "20261117T144642524Z-eaa317a6",
+      "Inputs": 395,
+      "CurrentInputMatch": true
+    },
+    {
+      "Run": "20261117T144908924Z-7532f00f",
+      "Inputs": 395,
+      "CurrentInputMatch": true
+    },
+    {
+      "Run": "20261117T145010125Z-build",
+      "Inputs": 395,
+      "CurrentInputMatch": true
+    }
+  ],
+  "ChangedExistingInput": [
+    "Tools\\expected-editmode-tests.json"
+  ],
+  "HandoffFiles": 10,
+  "NewTests": 24,
+  "DocumentsChecked": 9,
+  "BrokenLinks": 0,
+  "OriginalUiWorkspaceImported": false,
+  "CommitCreated": false
+}

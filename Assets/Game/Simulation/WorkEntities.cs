@@ -62,7 +62,7 @@ namespace RimworldTweak.Simulation
 
     public sealed partial class StorageZoneState
     {
-        private readonly HashSet<ResourceKind> allowed = new HashSet<ResourceKind> { ResourceKind.Wood, ResourceKind.Ingredients, ResourceKind.Meal };
+        private readonly HashSet<ResourceKind> allowed = new HashSet<ResourceKind> { ResourceKind.Wood, ResourceKind.Ingredients, ResourceKind.Meal, ResourceKind.Medicine };
         internal StorageZoneState(int id, List<StorageSlotState> slots) { Id = id; Slots = slots.AsReadOnly(); }
         public int Id { get; }
         public bool Exists { get; internal set; } = true;

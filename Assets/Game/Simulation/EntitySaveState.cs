@@ -22,6 +22,10 @@ namespace RimworldTweak.Simulation
             Status=Status.ToString(),
             HasPendingCommand=HasPendingCommand,
             PendingDestination=PendingDestination.HasValue?PositionSaveData.From(PendingDestination.Value):null,
+            Health=Health,
+            CareProgress=CareProgress,
+            PatientClaim=SaveState.Capture(PatientClaim),
+            Attack=WorldState.CaptureAttack(Attack),
             IsDrafted=IsDrafted,
             ActionId=ActionId,
             HasSleepIntent=HasSleepIntent,
@@ -65,6 +69,11 @@ namespace RimworldTweak.Simulation
             v.Status=SaveState.Enum<MovementStatus>(d.Status);
             v.HasPendingCommand=d.HasPendingCommand;
             v.PendingDestination=d.PendingDestination?.ToPosition();
+            if (d.Health < 0 || d.Health > 100) throw new ArgumentException("SaveInvalidData");
+            v.Health=d.Health;
+            v.CareProgress=d.CareProgress;
+            SaveState.Restore(v.PatientClaim,d.PatientClaim);
+            WorldState.RestoreAttack(v.Attack,d.Attack);
             v.IsDrafted=d.IsDrafted;
             v.ActionId=d.ActionId;
             v.HasSleepIntent=d.HasSleepIntent;
@@ -232,6 +241,11 @@ namespace RimworldTweak.Simulation
             Kind=Kind.ToString(),
             Position=PositionSaveData.From(Position),
             Exists=Exists,
+            Durability=Durability,
+            InitialPlacement=InitialPlacement,
+            RepairDesignated=RepairDesignated,
+            RepairWood=RepairWood,
+            RepairProgress=RepairProgress,
             DemolitionDesignated=DemolitionDesignated,
             DemolitionProgress=DemolitionProgress,
             RequestOrder=RequestOrder,
@@ -241,6 +255,12 @@ namespace RimworldTweak.Simulation
         {
             var v=new BuildingState(d.Id,SaveState.Enum<BuildingKind>(d.Kind),d.Position.ToPosition());
             v.Exists=d.Exists;
+            if (d.Durability < 0 || d.Durability > 100) throw new ArgumentException("SaveInvalidData");
+            v.Durability=d.Durability;
+            v.InitialPlacement=d.InitialPlacement;
+            v.RepairDesignated=d.RepairDesignated;
+            v.RepairWood=d.RepairWood;
+            v.RepairProgress=d.RepairProgress;
             v.DemolitionDesignated=d.DemolitionDesignated;
             v.DemolitionProgress=d.DemolitionProgress;
             v.RequestOrder=d.RequestOrder;

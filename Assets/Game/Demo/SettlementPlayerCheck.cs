@@ -47,7 +47,7 @@ namespace RimworldTweak.Demo
             mode=Arg(args,"--ux-mode","capture");Directory.CreateDirectory(output);
             try
             {
-                shell=gameObject.AddComponent<SettlementShell>();shell.Initialize(runner,true,storage,visuals);
+                shell=gameObject.AddComponent<SettlementShell>();shell.Initialize(runner,true,storage,visuals,mode=="raid-integration");
                 var scale=int.Parse(Arg(args,"--ux-scale","100"));runner.SetUiScale(scale);
                 result.scale=scale;result.mode=mode;StartCoroutine(Run());
             }
@@ -299,6 +299,33 @@ namespace RimworldTweak.Demo
                     if (!label.text.EndsWith("…", StringComparison.Ordinal) || !fullName.text.StartsWith("정착민 " + longNameId+"\n", StringComparison.Ordinal))
                         throw new InvalidOperationException("Long portrait name did not truncate and disclose the full value.");
                 })) yield break;
+            }
+            else if(mode=="raid-integration")
+            {
+                if(!Check(()=>{
+                    shell.Buttons["new"].onClick.Invoke();runner.SetPaused(true);
+                    var world=runner.Session.World;
+                    if(world.Width!=250||world.Height!=250||world.RaidPhase!=RaidPhase.Idle)throw new InvalidOperationException("New settlement baseline");
+                    shell.OpenTab("development");shell.Buttons["dev.raid"].onClick.Invoke();
+                    if(world.Raiders.Count!=2||world.Raiders.Any(r=>!r.Attack.TargetId.HasValue))throw new InvalidOperationException("Immediate raid targets");
+                    shell.HandleMapClick(world.Raiders[0].Position,false);
+                    if(shell.SelectedObjectId!=world.Raiders[0].Id)throw new InvalidOperationException("Raider map selection");
+                }))yield break;
+                yield return Capture("raid-start");
+                if(!Check(()=>{
+                    if(shell.SelectedObjectId!=runner.Session.World.Raiders[0].Id)throw new InvalidOperationException("Raider selection lost after HUD refresh");
+                    if(!runner.SaveSlot("일반 습격 통합 검사"))throw new InvalidOperationException(runner.SaveMessage);
+                    var saved=Hash();
+                    if(!runner.LoadSlot(runner.ActiveSlotId)||Hash()!=saved)throw new InvalidOperationException("Active raid restore");
+                    var world=runner.Session.World;
+                    var pawn=world.Colonists[0];shell.SelectPawn(pawn.Id);runner.ToggleDraft(pawn.Id);
+                    shell.HandleMapClick(world.Raiders[0].Position,true);
+                    if(!pawn.Attack.TargetId.HasValue)throw new InvalidOperationException("Map attack order");
+                    for(var i=0;i<1600&&world.RaidPhase!=RaidPhase.Resolved;i++)runner.Session.Step(1);
+                    if(world.RaidPhase!=RaidPhase.Resolved)throw new InvalidOperationException("Raid outcome");
+                    shell.Map.Focus(pawn.Position);
+                }))yield break;
+                yield return Capture("raid-result");
             }
             else if(mode=="settlement-art")
             {

@@ -45,7 +45,7 @@ namespace RimworldTweak.Simulation
         {
             var o=cookingOrders.Find(x=>x.Exists&&x.Id==billId);
             if(o==null)return Reject("InvalidCookingOrder");
-            if(o.ActiveCycle)CancelProductionOwners(o.StoveId);
+            if(o.ActiveCycle)CancelCookingWorkers(o.StoveId);
             if(o.InputIngredients>0)SpawnResource(ResourceKind.Ingredients,o.InputIngredients,o.ServiceCell);
             o.InputIngredients=0;o.Progress=0;o.ActiveCycle=false;o.Exists=false;
             availabilityRevision++;LastCommandError=string.Empty;return true;
@@ -56,6 +56,14 @@ namespace RimworldTweak.Simulation
             var output=CookingOutput(b.Id);
             if(output!=null) {if(output.Stack!=null){CancelProductionOwners(output.Stack.Id);output.Stack.DetachStorage();}output.Exists=false;}
         }
+        private void CancelCookingWorkers(int stoveId)
+        {
+            foreach (var pawn in Colonists)
+                if ((pawn.FeatureStep == WorkStep.Cook || pawn.FeatureStep == WorkStep.DeliverCook) &&
+                    (pawn.WorkTargetId == stoveId || pawn.PendingDeliveryTargetId == stoveId))
+                    FinishProduction(pawn);
+        }
+
         private void ReconcileCookingCycles(bool allowStart)
         {
             cookingOrders.Sort((a,b)=>{var n=a.StoveId.CompareTo(b.StoveId);return n!=0?n:a.Priority!=b.Priority?a.Priority.CompareTo(b.Priority):a.Id.CompareTo(b.Id);});
@@ -65,17 +73,17 @@ namespace RimworldTweak.Simulation
                 if(!o.Exists)continue;
                 var b=Building(o.StoveId);
                 var demand=NeedsCooking(o, meals+count);
-                var allowed=b!=null&&!b.DemolitionDesignated&&o.Enabled&&demand;
+                var allowed=b!=null&&b.Durability>0&&!b.DemolitionDesignated&&o.Enabled&&demand;
                 if(busyStoves.Contains(o.StoveId))
                 {
-                    if(o.ActiveCycle){CancelProductionOwners(o.StoveId);o.ActiveCycle=false;}
+                    if(o.ActiveCycle){CancelCookingWorkers(o.StoveId);o.ActiveCycle=false;}
                     o.Reason=WorkReasonCode.TargetReserved;
                     continue;
                 }
                 if(!allowed)
                 {
-                    if(o.ActiveCycle){CancelProductionOwners(o.StoveId);o.ActiveCycle=false;}
-                    o.Reason=b==null||b.DemolitionDesignated?WorkReasonCode.InvalidTarget:!o.Enabled?WorkReasonCode.Disabled:WorkReasonCode.TargetReached;
+                    if(o.ActiveCycle){CancelCookingWorkers(o.StoveId);o.ActiveCycle=false;}
+                    o.Reason=b==null||b.Durability==0||b.DemolitionDesignated?WorkReasonCode.InvalidTarget:!o.Enabled?WorkReasonCode.Disabled:WorkReasonCode.TargetReached;
                     continue;
                 }
                 var feasible=AnyWorkerReaches(WorkCategory.Cook,o.ServiceCell,false);
@@ -89,7 +97,7 @@ namespace RimworldTweak.Simulation
                         if(pawn.Id==o.WorkerId.Value&&!pawn.IsDrafted&&FindPath(pawn.Position,o.ServiceCell)!=null)feasible=true;
                 }
                 if(!staffed||!feasible)
-                {if(o.ActiveCycle){CancelProductionOwners(o.StoveId);o.ActiveCycle=false;}o.Reason=!staffed?WorkReasonCode.NoWorker:WorkReasonCode.Unreachable;continue;}
+                {if(o.ActiveCycle){CancelCookingWorkers(o.StoveId);o.ActiveCycle=false;}o.Reason=!staffed?WorkReasonCode.NoWorker:WorkReasonCode.Unreachable;continue;}
                 if(o.ActiveCycle){count++;busyStoves.Add(o.StoveId);}
                 else if(allowStart)
                 {
@@ -224,7 +232,7 @@ namespace RimworldTweak.Simulation
         private bool ValidCookingWork(ColonistState pawn)
         {
             var o=CookingOrder(pawn.PendingDeliveryTargetId??pawn.WorkTargetId??-1);
-            if(o==null||!o.ActiveCycle||!o.Enabled||Building(o.StoveId)==null||Building(o.StoveId).DemolitionDesignated)return false;
+            if(o==null||!o.ActiveCycle||!o.Enabled||Building(o.StoveId)==null||(Building(o.StoveId).DemolitionDesignated||Building(o.StoveId).Durability==0))return false;
             if(pawn.FeatureStep==WorkStep.DeliverCook)
             {
                 if(o.InputIngredients>=2)return false;

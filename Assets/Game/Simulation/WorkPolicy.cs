@@ -5,7 +5,7 @@ namespace RimworldTweak.Simulation
 {
     public sealed class WorkPolicyState
     {
-        private readonly int[] priorities = { 2, 1, 2, 2, 2 };
+        private readonly int[] priorities = { 2, 1, 2, 2, 2, 1 };
         internal WorkPolicyState(int pawnId) { PawnId = pawnId; }
         public int PawnId { get; }
         public int GetPriority(WorkCategory category)
@@ -40,7 +40,7 @@ namespace RimworldTweak.Simulation
         public static int DefaultPriority(WorkCategory category)
         {
             if (!Enum.IsDefined(typeof(WorkCategory), category)) throw new ArgumentOutOfRangeException(nameof(category));
-            return category == WorkCategory.Haul ? 1 : 2;
+            return category == WorkCategory.Haul || category == WorkCategory.Care ? 1 : 2;
         }
         public static WorkCandidate Select(WorkReadContext context, int pawnId, IReadOnlyList<WorkCandidate> candidates)
         {
@@ -61,6 +61,13 @@ namespace RimworldTweak.Simulation
         private static int Compare(WorkPolicySnapshot policy, WorkCandidate a, WorkCandidate b)
         {
             var result = policy.GetPriority(a.Category).CompareTo(policy.GetPriority(b.Category));
+            if (result == 0)
+            {
+                var aCare = a.Category == WorkCategory.Care;
+                var bCare = b.Category == WorkCategory.Care;
+                if (aCare != bCare) return aCare ? -1 : 1;
+                if (aCare) result = a.RequestOrder.CompareTo(b.RequestOrder);
+            }
             if (result == 0) result = a.PathLength.CompareTo(b.PathLength);
             if (result == 0) result = a.RequestOrder.CompareTo(b.RequestOrder);
             if (result == 0) result = a.TargetId.CompareTo(b.TargetId);

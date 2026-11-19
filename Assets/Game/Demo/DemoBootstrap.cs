@@ -24,6 +24,9 @@ namespace RimworldTweak.Demo
             public bool playerControlGuardPassed, constructionInspectionPassed;
             public bool constructionPassed, farmingPassed;
             public bool cookingPassed, workPolicyPassed, saveLoadPassed;
+            public bool normalRaidPassed;
+            public bool raidDefensePassed, raidRecoveryPassed;
+            public int raidMedicineConsumed, raidRepairWoodConsumed, raidRestoredMeals;
             public string defaultSavePath;
             public long restoredSaveTick;
             public int cookedMeals, cookingIngredientsConsumed;
@@ -177,6 +180,35 @@ namespace RimworldTweak.Demo
             if (!Check(CheckWork)) yield break;
             if (!Check(CheckProduction)) yield break;
             if (!Check(CheckPlayerControlsAndInspection)) yield break;
+            if (!Check(StartGeneralRaid)) yield break;
+            yield return new WaitForEndOfFrame();
+            var normalStart = Path.Combine(output, "normal-raid-start.png");
+            ScreenCapture.CaptureScreenshot(normalStart);
+            yield return null;
+            if (!Check(FinishGeneralRaid)) yield break;
+            yield return new WaitForEndOfFrame();
+            var normalResult = Path.Combine(output, "normal-raid-result.png");
+            ScreenCapture.CaptureScreenshot(normalResult);
+            var normalDeadline = Time.realtimeSinceStartup + 10f;
+            while ((!File.Exists(normalStart) || !File.Exists(normalResult)) && Time.realtimeSinceStartup < normalDeadline) yield return null;
+            if (!Check(() => Require(File.Exists(normalStart) && File.Exists(normalResult), "Normal raid screenshots missing"))) yield break;
+            if (!Check(PrepareRaidDefense)) yield break;
+            yield return null;
+            yield return new WaitForEndOfFrame();
+            var warningImage = Path.Combine(output, "raid-warning.png");
+            if (!Check(() => ScreenCapture.CaptureScreenshot(warningImage))) yield break;
+            var warningDeadline = Time.realtimeSinceStartup + 10f;
+            while (!File.Exists(warningImage) && Time.realtimeSinceStartup < warningDeadline) yield return null;
+            if (!Check(() => Require(File.Exists(warningImage), "Raid warning image missing"))) yield break;
+            if (!Check(CheckRaidDefense)) yield break;
+            yield return null;
+            yield return new WaitForEndOfFrame();
+            var raidImage = Path.Combine(output, "raid.png");
+            if (!Check(() => ScreenCapture.CaptureScreenshot(raidImage))) yield break;
+            var raidDeadline = Time.realtimeSinceStartup + 10f;
+            while (!File.Exists(raidImage) && Time.realtimeSinceStartup < raidDeadline) yield return null;
+            if (!Check(() => Require(File.Exists(raidImage), "Raid image missing"))) yield break;
+            if (!Check(CheckRaidRepair)) yield break;
             if (!Check(CheckCookingAndPolicy)) yield break;
             if (!Check(CheckSaveLoad)) yield break;
             if(!Check(()=>{Require(Runner.BeginLoad(),"Render load confirmation");View.RefreshNow();}))yield break;
@@ -194,6 +226,140 @@ namespace RimworldTweak.Demo
             while (!File.Exists(report.screenshot) && Time.realtimeSinceStartup < deadline) yield return null;
             if (!Check(() => Require(File.Exists(report.screenshot) && new FileInfo(report.screenshot).Length > 0, "Screenshot missing"))) yield break;
             Finish(true);
+        }
+
+        private static void StepUntil(WorldState world, Func<bool> condition, int limit, string message)
+        {
+            for (var index = 0; index < limit && !condition(); index++) world.Step(1);
+            Require(condition(), message + " at tick " + world.Tick);
+        }
+
+        private void StartGeneralRaid()
+        {
+            Runner.Initialize(WorkScenario.Create());
+            Runner.SetPaused(true);
+            View.RefreshNow();
+            var world = Runner.Session.World;
+            View.DeveloperButton.onClick.Invoke();
+            View.RaidButton.onClick.Invoke();
+            Require(Runner.Session.World == world && world.Tick == 0 && world.Raiders.Count == 2 &&
+                world.Raiders.All(r => r.Attack.TargetId.HasValue), "Immediate normal raid");
+        }
+
+        private void FinishGeneralRaid()
+        {
+            var world = Runner.Session.World;
+            View.DeveloperButton.onClick.Invoke();
+            foreach (var pawn in world.Colonists)
+            {
+                View.SelectColonist(pawn.Id);
+                Require(View.ToggleDraftSelected(), "Draft defender");
+            }
+            Runner.SetPaused(false);
+            for (var tick = 0; tick < 180 && world.RaidPhase == RaidPhase.Active; tick++)
+            {
+                foreach (var pawn in world.Colonists.Where(p => !p.IsDowned && !p.Attack.TargetId.HasValue))
+                {
+                    View.SelectColonist(pawn.Id);
+                    View.AttackButton.onClick.Invoke();
+                    View.HandleMapClick(world.Raiders[0].Position, false);
+                    Require(pawn.Attack.TargetId.HasValue, "Normal raid attack selection");
+                }
+                Runner.AdvanceTime(0.1m);
+                View.RefreshNow();
+            }
+            Runner.SetPaused(true);
+            Require(world.RaidOutcome == RaidOutcome.Defended && world.Raiders.Count == 0, "Normal raid combat outcome");
+            report.normalRaidPassed = true;
+        }
+
+        private void PrepareRaidDefense()
+        {
+            Runner.Initialize(RaidScenario.Create());
+            Runner.SetPaused(true);
+            var world = Runner.Session.World;
+            var objective = world.Buildings.Single(b => b.Kind == BuildingKind.Stove);
+            Require(Runner.StartRaid(objective.Id), "Legacy raid regression");
+            View.RefreshNow();
+            Require(world.RaidPhase == RaidPhase.Warning && world.Tick == 0, "Paused raid warning");
+        }
+
+        private void CheckRaidDefense()
+        {
+            var world = Runner.Session.World;
+            View.SelectColonist(1);
+            Require(View.ToggleDraftSelected() && View.MoveSelected(new GridPosition(13, 5)), "Raid defender move");
+            var first = world.Colonists[0];
+            StepUntil(world, () => first.IsDowned, 360, "Actual melee downed the defender");
+            var remaining = world.Colonists.Where(pawn => !pawn.IsDowned).ToArray();
+            foreach (var pawn in remaining)
+            {
+                View.SelectColonist(pawn.Id);
+                Require(View.ToggleDraftSelected() && View.MoveSelected(new GridPosition(11, 7)), "Defense reposition");
+            }
+            StepUntil(world, () => remaining.All(p => p.Position == new GridPosition(11, 7) || p.IsDowned), 55, "Defenders in position");
+            for (var tick = 0; tick < 130 && world.RaidPhase == RaidPhase.Active; tick++)
+            {
+                var enemy = world.Raiders.FirstOrDefault();
+                foreach (var pawn in remaining.Where(p => !p.IsDowned && p.Attack.TargetId != enemy.Id))
+                {
+                    View.SelectColonist(pawn.Id);
+                    View.AttackButton.onClick.Invoke();
+                    Require(View.HandleMapClick(enemy.Position, false) && pawn.Attack.TargetId.HasValue, "Attack target input");
+                }
+                world.Step(1);
+            }
+            Require(world.RaidOutcome == RaidOutcome.Defended && world.RaidDownedCount >= 1, "Defense outcome");
+            foreach (var pawn in remaining.Where(p => p.IsDrafted)) Runner.ToggleDraft(pawn.Id);
+            StepUntil(world, () => world.Colonists.Any(p => p.CareProgress == 39 && p.WorkTargetId == first.Id), 650, "Actual care in progress");
+            var previousSavePath = Runner.SavePath;
+            Runner.SavePath = Path.Combine(output, "raid-save", "settlement-v2.json");
+            Require(Runner.SaveNow() && Runner.BeginLoad() && Runner.ConfirmLoad(), "Treatment save and restore");
+            Runner.SavePath = previousSavePath;
+            world = Runner.Session.World;
+            var consumed = world.MedicineConsumed;
+            world.Step(1);
+            Require(world.Colonists[0].Health == 40 && world.MedicineConsumed == consumed + 1, "Restored medicine applied once");
+            View.RefreshNow();
+            View.SelectColonist(1);
+            Require(View.NeedsText.text.Contains("40/100") && View.RaidStatusText.text.Contains("방어 성공"), "Recovery HUD");
+            report.raidMedicineConsumed = world.MedicineConsumed;
+            report.raidDefensePassed = true;
+        }
+
+        private void CheckRaidRepair()
+        {
+            Runner.Initialize(new ScenarioDefinition(16, 12,
+                Enumerable.Range(0, 12).Where(y => y != 4).Select(y => new GridPosition(7, y)),
+                new[] { new ColonistSeed(1, new GridPosition(6, 4)) },
+                new[] { new ResourceSeed(2, ResourceKind.Wood, 12, new GridPosition(5, 5)),
+                    new ResourceSeed(3, ResourceKind.Ingredients, 2, new GridPosition(9, 4)) },
+                initialRaidStove: new GridPosition(10, 5)));
+            Runner.SetPaused(true);
+            var world = Runner.Session.World;
+            var stove = world.Buildings.Single(b => b.Kind == BuildingKind.Stove);
+            var order = world.CookingOrders.Single();
+            Require(Runner.SetCookingOrder(stove.Id, true, 1), "Cooking before the raid");
+            StepUntil(world, () => order.Progress == 10, 180, "Stove had work in progress");
+            Require(Runner.ToggleDraft(1) && Runner.MoveColonist(1, new GridPosition(6, 4)), "Protect the remaining worker");
+            StepUntil(world, () => world.Colonists[0].Position == new GridPosition(6, 4), 100, "Worker behind the divider");
+            Require(world.QueueSetBlocked(new GridPosition(7, 4), true), "Close the divider");
+            world.Step(1);
+            Require(Runner.StartRaid(stove.Id), "Start objective attack");
+            StepUntil(world, () => world.RaidPhase == RaidPhase.Resolved, 450, "Failed raid resolves");
+            Require(world.RaidOutcome == RaidOutcome.ObjectiveLost && stove.Durability == 0 &&
+                order.Progress == 10 && order.InputIngredients == 2, "Actual damage preserved cooking work");
+            Require(world.QueueSetBlocked(new GridPosition(7, 4), false) && Runner.ToggleDraft(1), "Open recovery access");
+            View.RefreshNow();
+            View.HandleMapClick(stove.Position, false);
+            View.RepairButton.onClick.Invoke();
+            Require(stove.RepairDesignated, "Repair UI command");
+            StepUntil(world, () => stove.Durability == 100 && world.CookingProducedMeals == 1, 600, "Repair and resume cooking");
+            Require(world.RepairWoodConsumed == 6 && world.CookingConsumedIngredients == 2, "Repair and cooking ledger");
+            Require(Runner.StartRaid(stove.Id) && world.Raiders.Count == 0 && world.RaidPhase == RaidPhase.Warning, "Second raid resets");
+            report.raidRepairWoodConsumed = world.RepairWoodConsumed;
+            report.raidRestoredMeals = world.CookingProducedMeals;
+            report.raidRecoveryPassed = true;
         }
 
         private void CheckSaveLoad()

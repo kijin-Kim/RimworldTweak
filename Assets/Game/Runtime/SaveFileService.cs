@@ -5,6 +5,9 @@ using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Threading;
 using System.Xml;
+using System.Xml.Linq;
+using System.Linq;
+using System.Collections.Generic;
 using RimworldTweak.Simulation;
 namespace RimworldTweak.Runtime
 {
@@ -30,6 +33,7 @@ namespace RimworldTweak.Runtime
         private static int busy;
         private static readonly UTF8Encoding Utf8 = new UTF8Encoding(false,true);
         private sealed class SizeLimitException : Exception { }
+        private sealed class UnsupportedSaveVersionException : Exception { }
         private sealed class LimitedStream : MemoryStream
         {
             public override void Write(byte[] buffer,int offset,int count)
@@ -47,10 +51,87 @@ namespace RimworldTweak.Runtime
             var quotas=new XmlDictionaryReaderQuotas {MaxDepth=64,MaxStringContentLength=SaveValidation.MaximumFileBytes,MaxArrayLength=1000000,MaxBytesPerRead=4096,MaxNameTableCharCount=16384};
             using(var reader=JsonReaderWriterFactory.CreateJsonReader(bytes,0,bytes.Length,Utf8,quotas,null))
             {
-                var data=(SaveData)Serializer().ReadObject(reader);
-                if(reader.Read())throw new SerializationException("Trailing JSON content.");
-                return data;
+                try
+                {
+                    var data=(SaveData)Serializer().ReadObject(reader);
+                    if(reader.Read())throw new SerializationException("Trailing JSON content.");
+                    return data;
+                }
+                catch (SerializationException)
+                {
+                    var upgraded=UpgradeSettlement<SaveData>(bytes,quotas);
+                    if(upgraded!=null)return upgraded;
+                    // Older saves can lack required fields of the current schema.
+                    using (var header = JsonReaderWriterFactory.CreateJsonReader(bytes,0,bytes.Length,Utf8,quotas,null))
+                    {
+                        header.MoveToContent();
+                        header.ReadStartElement();
+                        while (header.MoveToContent() == XmlNodeType.Element)
+                        {
+                            if (header.LocalName == "schemaVersion" && header.GetAttribute("type") == "number")
+                            {
+                                if (header.ReadElementContentAsInt() != SaveData.CurrentSchemaVersion)
+                                    throw new UnsupportedSaveVersionException();
+                                break;
+                            }
+                            header.Skip();
+                        }
+                    }
+                    throw;
+                }
             }
+        }
+        // Upgrade the complete pre-combat contract in memory. Slot metadata and the original file stay intact.
+        private static T UpgradeSettlement<T>(byte[] bytes, XmlDictionaryReaderQuotas quotas)
+        {
+            XElement root;
+            using (var reader=JsonReaderWriterFactory.CreateJsonReader(bytes,0,bytes.Length,Utf8,quotas,null))
+                root=XElement.Load(reader);
+            var save=typeof(T)==typeof(SaveEnvelope)?root.Element("payload"):root;
+            if ((string)save?.Element("schemaVersion")!="1" || (string)save.Element("rulesVersion")!="1" ||
+                (string)save.Element("contractVersion")!="settlement-five-v2") return default;
+            XElement Required(XElement parent,string name) => parent?.Element(name) ?? throw new SerializationException("Missing "+name);
+            void Add<V>(XElement parent,string name,V value)
+            {
+                if(parent.Element(name)!=null)throw new SerializationException("Duplicate "+name);
+                var encoded=EncodeJson(value);
+                using(var reader=JsonReaderWriterFactory.CreateJsonReader(encoded,quotas))
+                {
+                    var field=XElement.Load(reader);field.Name=name;parent.Add(field);
+                }
+            }
+            var world=Required(save,"world");var scenario=Required(save,"scenario");
+            Add<PositionSaveData>(scenario,"InitialRaidStove",null);
+            Add(world,"Raid",new RaidSaveData {Phase="Idle",Outcome="None",Injured=new List<int>(),Downed=new List<int>(),Raiders=new List<RaiderSaveData>()});
+            Add(world,"MedicineConsumed",0);Add(world,"RepairWoodConsumed",0);
+            foreach(var pawn in Required(world,"Colonists").Elements())
+            {
+                Add(pawn,"Health",100);Add(pawn,"Attack",new AttackSaveData {BlockedReason=""});
+                Add(pawn,"CareProgress",0);Add(pawn,"PatientClaim",new ClaimSaveData());
+            }
+            foreach(var policy in Required(world,"WorkPolicies").Elements())
+                AddArrayItem(Required(policy,"Priorities"),new WorkPrioritySaveData {Category="Care",Priority=1},quotas);
+            var buildings=Required(world,"Buildings");
+            foreach(var building in buildings.Elements())
+            {
+                Add(building,"InitialPlacement",false);Add(building,"Durability",100);Add(building,"RepairDesignated",false);
+                Add(building,"RepairWood",0);Add(building,"RepairProgress",0);
+            }
+            foreach(var bed in Required(scenario,"Beds").Elements())
+            {
+                var id=(int)Required(bed,"Id");var position=Required(bed,"Position");
+                var live=Required(world,"Beds").Elements().FirstOrDefault(b=>(string)b.Element("Id")==id.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                AddArrayItem(buildings,new BuildingSaveData {Id=id,Kind="Bed",Position=new PositionSaveData((int)Required(position,"X"),(int)Required(position,"Y")),
+                    Exists=(bool)Required(live,"Exists"),Durability=100,InitialPlacement=true,Reason="None",Claim=new ClaimSaveData()},quotas);
+            }
+            save.Element("schemaVersion").Value="2";save.Element("rulesVersion").Value="2";save.Element("contractVersion").Value="settlement-raid-v1";
+            using(var reader=root.CreateReader())return (T)new DataContractJsonSerializer(typeof(T),
+                new DataContractJsonSerializerSettings {MaxItemsInObjectGraph=1000000,UseSimpleDictionaryFormat=true}).ReadObject(reader);
+        }
+        private static void AddArrayItem<V>(XElement array,V value,XmlDictionaryReaderQuotas quotas)
+        {
+            using(var reader=JsonReaderWriterFactory.CreateJsonReader(EncodeJson(value),quotas))
+            {var item=XElement.Load(reader);item.Name="item";array.Add(item);}
         }
         private static bool JsonSpace(char c) => c==' '||c=='\t'||c=='\r'||c=='\n';
         private static void RequireSingleObject(string json)
@@ -111,6 +192,7 @@ namespace RimworldTweak.Runtime
                 created=false;return new SaveFileResult(true);
             }
             catch(SizeLimitException){return new SaveFileResult(false,"SaveInvalidData");}
+            catch(UnsupportedSaveVersionException){return new SaveFileResult(false,"SaveUnsupportedVersion");}
             catch(SerializationException){return new SaveFileResult(false,"SaveInvalidData");}
             catch(XmlException){return new SaveFileResult(false,"SaveInvalidData");}
             catch(DecoderFallbackException){return new SaveFileResult(false,"SaveInvalidData");}
@@ -132,6 +214,9 @@ namespace RimworldTweak.Runtime
                 return valid.IsValid?new SaveLoadResult(true,data):new SaveLoadResult(false,errorCode:valid.ErrorCode);
             }
             catch(SizeLimitException){return new SaveLoadResult(false,errorCode:"SaveInvalidData");}
+            catch(UnsupportedSaveVersionException){return new SaveLoadResult(false,errorCode:"SaveUnsupportedVersion");}
+            catch(FormatException){return new SaveLoadResult(false,errorCode:"SaveInvalidData");}
+            catch(OverflowException){return new SaveLoadResult(false,errorCode:"SaveInvalidData");}
             catch(SerializationException){return new SaveLoadResult(false,errorCode:"SaveInvalidData");}
             catch(XmlException){return new SaveLoadResult(false,errorCode:"SaveInvalidData");}
             catch(DecoderFallbackException){return new SaveLoadResult(false,errorCode:"SaveInvalidData");}
@@ -160,7 +245,11 @@ namespace RimworldTweak.Runtime
             var serializer=new DataContractJsonSerializer(typeof(T),new DataContractJsonSerializerSettings {
                 EmitTypeInformation=EmitTypeInformation.Never,MaxItemsInObjectGraph=1000000,UseSimpleDictionaryFormat=true });
             using(var reader=JsonReaderWriterFactory.CreateJsonReader(bytes,0,bytes.Length,Utf8,quotas,null))
-            {var value=(T)serializer.ReadObject(reader);if(reader.Read())throw new SerializationException("Trailing JSON content.");return value;}
+            {
+                try {var value=(T)serializer.ReadObject(reader);if(reader.Read())throw new SerializationException("Trailing JSON content.");return value;}
+                catch(SerializationException) when(typeof(T)==typeof(SaveEnvelope))
+                {var upgraded=UpgradeSettlement<T>(bytes,quotas);if((object)upgraded==null)throw;return upgraded;}
+            }
         }
         private static bool ExpectedFileException(Exception e) => e is IOException||e is UnauthorizedAccessException||e is ArgumentException||e is NotSupportedException||
             e is SizeLimitException||e is SerializationException||e is XmlException||e is DecoderFallbackException||e is FormatException||e is OverflowException;

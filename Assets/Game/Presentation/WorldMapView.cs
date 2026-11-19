@@ -187,6 +187,10 @@ namespace RimworldTweak.Presentation
                 if (!node.Depleted)
                     Draw("gather." + node.Id, node.Kind == GatherKind.Tree ? "tree" : "plant.gather", CellCenter(node.Position),
                         node.Designated ? new Color(1, .85f, .65f) : Color.white, Sort(CellCenter(node.Position).y, 20), node.Designated ? "채집" : null);
+            foreach (var enemy in world.Raiders)
+                Draw("raider." + enemy.Id, VisualCatalog.PawnKey(Vector2.left), CellCenter(enemy.Position),
+                    new Color(1f, .36f, .32f), Sort(CellCenter(enemy.Position).y, 45),
+                    "습격자 #" + enemy.Id + " · " + enemy.Health + (enemy.Attack.TargetId.HasValue ? " → #" + enemy.Attack.TargetId : ""));
             foreach (var bed in world.Beds)
                 if (bed.Exists && !HasBuilding(world, bed.Id)) Draw("bed." + bed.Id, "building.bed", CellCenter(bed.Position), Color.white, Sort(CellCenter(bed.Position).y, 10), null);
             foreach (var building in world.Buildings)
@@ -194,7 +198,7 @@ namespace RimworldTweak.Presentation
                 {
                     var key = VisualCatalog.BuildingKey(building.Kind);
                     if (building.Kind == BuildingKind.Wall && HasVisual(key + "." + WallMask(world, building.Position))) key += "." + WallMask(world, building.Position);
-                    Draw("building." + building.Id, key, CellCenter(building.Position), building.DemolitionDesignated ? new Color(1, .55f, .45f) : Color.white,
+                    Draw((building.InitialPlacement && building.Kind == BuildingKind.Bed ? "bed." : "building.") + building.Id, key, CellCenter(building.Position), building.DemolitionDesignated ? new Color(1, .55f, .45f) : Color.white,
                         Sort(CellCenter(building.Position).y, 10), building.DemolitionDesignated ? "철거" : null);
                 }
             foreach (var blueprint in world.Blueprints)
@@ -558,6 +562,7 @@ namespace RimworldTweak.Presentation
         }
         private static bool TryFindPosition(WorldState world, int id, out GridPosition position)
         {
+            foreach (var enemy in world.Raiders) if (enemy.Id == id) { position=enemy.Position; return true; }
             foreach (var b in world.Buildings) if (b.Exists && b.Id == id) { position = b.Position; return true; }
             foreach (var b in world.Blueprints) if (b.Exists && b.Id == id) { position = b.Position; return true; }
             foreach (var b in world.Beds) if (b.Exists && b.Id == id) { position = b.Position; return true; }

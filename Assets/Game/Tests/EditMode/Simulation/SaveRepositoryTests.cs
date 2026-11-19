@@ -77,6 +77,19 @@ namespace RimworldTweak.Tests.EditMode
             CollectionAssert.AreEqual(new[]{a.SlotId,b.SlotId}.OrderBy(x=>x,StringComparer.Ordinal),list.Slots.Select(x=>x.SlotId));
         }
 
+        [Test] public void PreviousLargeSettlementSlotLoadsAndCanStartNormalRaid()
+        {
+            var fixture=Directory.GetFiles(Path.Combine(UnityEngine.Application.dataPath,"..","Tools","TestFixtures","SettlementV1"),"*.save.json").Single();
+            var path=Path.Combine(directory,Path.GetFileName(fixture));File.Copy(fixture,path);
+            var loaded=repository.Load(Path.GetFileName(fixture).Substring(0,32));Assert.That(loaded.Success,Is.True,loaded.ErrorCode);
+            Assert.That(SimulationSession.TryRestoreSave(loaded.Data,out var session,out var error),Is.True,error);
+            Assert.That(session.World.Width,Is.EqualTo(250));Assert.That(session.World.StartNormalRaid(),Is.True);
+            Assert.That(session.World.Raiders.Count,Is.EqualTo(2));
+            var saved=repository.SaveNew("통합",session.CaptureSaveData(true,1).Data);Assert.That(saved.Success,Is.True,saved.ErrorCode);
+            Assert.That(repository.Load(saved.Slot.SlotId).Data.World.Raid.Raiders.Count,Is.EqualTo(2));
+            CollectionAssert.AreEqual(File.ReadAllBytes(fixture),File.ReadAllBytes(path));
+        }
+
         [Test] public void FrozenLegacyFixtureLoadsWithoutChangingOriginalAndCanSaveAsNew()
         {
             var fixture=Path.Combine(UnityEngine.Application.dataPath,"Game","Tests","Fixtures","legacy-v1.json");

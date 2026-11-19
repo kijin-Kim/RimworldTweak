@@ -208,7 +208,7 @@ namespace RimworldTweak.Presentation
                 var ground = world.ResourceTotal(kind, false);
                 var stored = world.ResourceTotal(kind, true);
                 var carried = world.CargoTotal(kind);
-                var input = kind == ResourceKind.Wood ? world.ConstructionWood
+                var input = kind == ResourceKind.Wood ? world.ConstructionWood + world.Buildings.Where(b=>b.Exists).Sum(b=>b.RepairWood)
                     : kind == ResourceKind.Ingredients ? world.CookingInputTotal : 0;
                 var total = ground + stored + carried + input;
                 var name = SettlementView.ResourceName(kind);
@@ -250,6 +250,16 @@ namespace RimworldTweak.Presentation
             if (right)
             {
                 if (ActiveTool != Tool.None) { CancelTool(); return; }
+                var enemy = Runner.Session.World.Raiders.LastOrDefault(r => r.Position == position);
+                if (enemy != null && Runner.Session.World.RaidPhase == RaidPhase.Active)
+                {
+                    var ordered = false;
+                    foreach (var id in selectedPawns.OrderBy(id => id))
+                        ordered |= Runner.OrderAttack(id, enemy.Id);
+                    Feedback = ordered ? "적 #" + enemy.Id + " 공격 지정" : "소집한 정착민을 선택해.";
+                    Refresh();
+                    return;
+                }
                 if(ObjectsAt(position).Count>0){ShowContextMenu(position);return;}
                 if (SelectedPawnId.HasValue)MoveSelectedPawns(position);
                 return;
@@ -357,6 +367,7 @@ namespace RimworldTweak.Presentation
         private List<int> ObjectsAt(GridPosition p)
         {
             var w=Runner.Session.World;var ids=new List<int>();
+            ids.AddRange(w.Raiders.Where(x=>x.Position==p).Select(x=>x.Id).OrderBy(id=>id));
             ids.AddRange(w.Buildings.Where(x=>x.Exists&&x.Position==p).Select(x=>x.Id).OrderBy(id=>id));
             ids.AddRange(w.Blueprints.Where(x=>x.Exists&&x.Position==p).Select(x=>x.Id).OrderBy(id=>id));
             ids.AddRange(w.Beds.Where(x=>x.Exists&&x.Position==p).Select(x=>x.Id).OrderBy(id=>id));
@@ -387,7 +398,7 @@ namespace RimworldTweak.Presentation
         private bool ObjectExists(int id)
         {
             var w=Runner.Session.World;
-            return w.Buildings.Any(x=>x.Id==id&&x.Exists)||w.Blueprints.Any(x=>x.Id==id&&x.Exists)||w.Beds.Any(x=>x.Id==id&&x.Exists)
+            return w.Raiders.Any(x=>x.Id==id)||w.Buildings.Any(x=>x.Id==id&&x.Exists)||w.Blueprints.Any(x=>x.Id==id&&x.Exists)||w.Beds.Any(x=>x.Id==id&&x.Exists)
                 ||w.Resources.Any(x=>x.Id==id&&x.Exists)||w.Gatherables.Any(x=>x.Id==id&&!x.Depleted)||w.StorageZones.Any(x=>x.Id==id&&x.Exists)
                 ||w.GrowingZones.Any(x=>x.Id==id&&x.Exists)||w.Crops.Any(x=>x.Id==id&&x.Exists);
         }

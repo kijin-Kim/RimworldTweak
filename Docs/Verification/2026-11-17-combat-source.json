@@ -1,0 +1,1542 @@
+[
+  {
+    "Path": "Assets\\Game.meta",
+    "Sha256": "E841DB293D21A95E30F1A1A15D8FD034E18CBDBCE0B00014593D65B1B3BFC8C5"
+  },
+  {
+    "Path": "Assets\\Resources.meta",
+    "Sha256": "A6BF005E4B0153F9239780AD9DC07468E1AF9465EF54DBC543FB0CFFD164C381"
+  },
+  {
+    "Path": "Assets\\Scenes.meta",
+    "Sha256": "A80A7B316E7D7CE80C8A01ECB374702A04E91228A0729629C894C70250BAEA5D"
+  },
+  {
+    "Path": "Assets\\Settings.meta",
+    "Sha256": "0B5BA35DAAE66CBFCFA17BF61091AEAB7F3BED07681F8DB7BED3FB72D178C2D4"
+  },
+  {
+    "Path": "Assets\\Game\\Content.meta",
+    "Sha256": "6EB6102880C83445B9ED10CCAD7BB9BC026FE9EF8F58D2AB340B3C7EFAC7968E"
+  },
+  {
+    "Path": "Assets\\Game\\Demo.meta",
+    "Sha256": "1EC1D85B86B97540F2DA843617DAEA609F53F26DA78231C93EBD6C0EA0A7C6CE"
+  },
+  {
+    "Path": "Assets\\Game\\Editor.meta",
+    "Sha256": "D7771D2105B82FE3259987A65AE1BD5E8EF8DAE61CA4E2EBC0B39505EB00D11D"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation.meta",
+    "Sha256": "647B437ED6B799918CCA1A04062174DAF6DF0A2FEADA285267AC8ECDBD67BD5D"
+  },
+  {
+    "Path": "Assets\\Game\\Runtime.meta",
+    "Sha256": "0475F0FE6BF80A00C0EF1D3E1D32CD867F33C667A9AE1B5467C4286A15B15A33"
+  },
+  {
+    "Path": "Assets\\Game\\Scenes.meta",
+    "Sha256": "FA0A66D1E1DDF2A4FC59436DA8719579561CAEEBE7DC4A0991D98E9C703CE949"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation.meta",
+    "Sha256": "E576D19C4C186561FEDD02FF2EE25CF685DA149F8B25A525FF2B597DF7A67A9A"
+  },
+  {
+    "Path": "Assets\\Game\\Tests.meta",
+    "Sha256": "0801E4F16CBAFD070196B2055609EE3B7C3D1812DAE5F3FC34B6DF49B50810C8"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art.meta",
+    "Sha256": "132B232D783B156BB1F1933D11D953EE62A1476A06FF397C8EB926F7CDD1BFC1"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Resources.meta",
+    "Sha256": "2324859286C12FDDE65BCF31827DC9E4DBF599BB7B76EDEE9B387154EFF32A66"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Visuals.meta",
+    "Sha256": "5E71A9F37146000CB8F72EA5364BAEA5428E298A268C761C4CF8C2184503BCCD"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated.meta",
+    "Sha256": "8C3437C8FFA9B41B673CDDF39F797175D687146F06D8A1F665E34DD88BCBCB10"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural.meta",
+    "Sha256": "FD58FDFB84D445775A74798FA9B9834BD0A29DD1A1B4F5D72CA8D5D62781F026"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\bed.png",
+    "Sha256": "6F3FDA238E1501AD6801B029198788A2B7379224D90D6CA312BA824A32EF85EB"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\bed.png.meta",
+    "Sha256": "DB3DB14BC09959655E3B847BCDF44D4EC49BA2309C5EE738AB9FEE280868F8B5"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\crop-growing.png",
+    "Sha256": "BC96985FE89E3C2C18C52331ABC5C3BAFC473752A281BC499BE4D551DD700CDE"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\crop-growing.png.meta",
+    "Sha256": "4246E1277187540E00B7C824C7B55E6079C510D20C08E5DD3F1DF44B48751981"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\crop-mature.png",
+    "Sha256": "7FD81EA37185364C672AAEC897DACB50D9D114833B78D010FEAD62EE0AFAEFBB"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\crop-mature.png.meta",
+    "Sha256": "7153A7CFC17395703E9FB46073BEED1079DE7D908EAB1355D80B6A8ACDC14313"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\crop-young.png",
+    "Sha256": "1D42423834D65DBC0B573402E4B47ADC4A2CA74F68AC12CA230D9E07C29DB037"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\crop-young.png.meta",
+    "Sha256": "B7B9B19CCACEFD43FA584134166BD38692F7EDB7D86F66D26371C2AA772D3B89"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\gather.png",
+    "Sha256": "7FCBE63869A3041D3DEEDD1DE2CAD4439709CB4A4C8A934971150540D4E33A89"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\gather.png.meta",
+    "Sha256": "0BFE43584C57D81157317483A6602A3B35B5D712F1CB4A0F011E56BB381BD4EC"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\ingredients.png",
+    "Sha256": "877D43DDB46923A3C16E6BA2AEFE72282DCFD4899527A3E9407B0F466D20EF9B"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\ingredients.png.meta",
+    "Sha256": "02938322EE513C837BA55244287C9D2745ED30409B2F33E605BB2FAFA78D6DC2"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\meal.png",
+    "Sha256": "B6A88AF4969A7B9443A7B7BE9C83DE4F9C1D5EA15E405598C4AA302FD010C3DD"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\meal.png.meta",
+    "Sha256": "4FAD754E63BA23F053B83C0C044900B37F9C0EFE183DC8839B7C26DDE82F4F69"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\pawn-back.png",
+    "Sha256": "98092711497562C2BC43846D21098E28F56E22681FC2A232A0F1F45852C35EDF"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\pawn-back.png.meta",
+    "Sha256": "C8895D6B3A2BBBAA3D20F7EAA641A5818CD8E7A3B750065656CEEE61A9CC09E3"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\pawn-front.png",
+    "Sha256": "3A4A5AE52CCC00B6B9A8A074DEE3FD1C242B9D7A0808DC8FA664E7F82A583025"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\pawn-front.png.meta",
+    "Sha256": "73B239A19E67C7E5B28794ACEA9B5BCA61F77D2A1D36BFB853998D55E6ED4C00"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\pawn-side.png",
+    "Sha256": "B94E97D297578A330ECFDF650C9EC6A8EE6B5CEC6E6E8678BE7A3B22F8162351"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\pawn-side.png.meta",
+    "Sha256": "87553004EFFAB7FD9308988D4DD594B1689B9D489A4277173FC2F86EDD3B1E0F"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\soil.png",
+    "Sha256": "9AD5C07725A5888D52511DD7D35800D2273FD188219B9353CCD7BA1718E11051"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\soil.png.meta",
+    "Sha256": "9E2EF2E23A7CDC6B797AF661F2A7DCCDCA5376F1FA42DFAEDBD1456D0311F974"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\stove.png",
+    "Sha256": "64C21E1AFAF20375F31CE9EAE7CDCE82AB7478F38713ADE40B1FF8CF98F3E927"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\stove.png.meta",
+    "Sha256": "21ED2BE0329251B7044BFE350EF5868CAAD2B323157C0BE1BE4AF097BA81DAD8"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\tree.png",
+    "Sha256": "57CDF14D1CE1DD8B48A302736B68565D972564EA6177861AE02010071A0717B8"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\tree.png.meta",
+    "Sha256": "BD97B6F3CADEE7912F71A7D4605C241FFC56A6FAA0AAB3605BE4B82F38508F73"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\wood.png",
+    "Sha256": "C0DBED5693E4BBE8C0D201B2DF69F040E574EF6B0B85F398B42F85B74B14E26F"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Generated\\wood.png.meta",
+    "Sha256": "2322F630CAFD1DA10762A5D65C3CE560DA5E65EDF3F0F688B41051070198920A"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\blocked.png",
+    "Sha256": "5EAA672FD6B2CABC93B357C8673312796BF535D7FBBB8171C0D82B56071FBFBD"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\blocked.png.meta",
+    "Sha256": "6047CFE7F2280D8DACCE7855C56F3AAA15F03857CE8ED15D7177C81A2D633F46"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\blueprint.png",
+    "Sha256": "45633A078907C964E9C886FAA2438E1D0E139DE220BF9CA81FE462E320E3C93A"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\blueprint.png.meta",
+    "Sha256": "082CC1082B019BA41B929707D2B4FEB96112DBB83E1943AADCF7B38659C1ED8C"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\crop-growing.png",
+    "Sha256": "CA7185B7A60F81C9F3150C7D1ECA219A65C0730EF91CB4B805F9462C59AF5C93"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\crop-growing.png.meta",
+    "Sha256": "0F968552637A223C8D39018F538CCDA269A4FD35F66FCCA1F38DF2CD53BD0EA3"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\crop-mature.png",
+    "Sha256": "69E6FFD8EA391665B5043AA31FF800FFB65A9DE30AEA9336F5F8E5F1F610F155"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\crop-mature.png.meta",
+    "Sha256": "363BAD53D679B808F680DC4BF3EAD1F8EDFA51F9877621F8DC44F642A3BE6676"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\crop-young.png",
+    "Sha256": "4ED43F0777DA4207B7AE7FDE20115045A6D212CD17A6972C931D93C16BF67A26"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\crop-young.png.meta",
+    "Sha256": "6B60EA73C0E698ED3DA14E8F6F49346107A6D530826E681B2A7688EF8D34187B"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\door.png",
+    "Sha256": "3FC637E49B514C3724DE09BDFF6A6D1D42C8924DEBBC32EEF4BF053D51011E20"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\door.png.meta",
+    "Sha256": "F156255D14F510D4E992C8881461AF83547C5CA5E477BCB9B8CBFC40345C8367"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\draft.png",
+    "Sha256": "AA65152D5475657A7F469BC9235AA60DD40E06EBABD0F79E011052251353941D"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\draft.png.meta",
+    "Sha256": "5609DD83CF27FB445B83627FFA07F62926B270CB38A88169B56D0E4F5B9F5127"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\gather.png",
+    "Sha256": "AB9C7F8191C11C0BBF2F308D9B0AA36BAE0CBA6125CD0120475AC4A29211EB3D"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\gather.png.meta",
+    "Sha256": "48D27D8000DC32B37C5224D0CC5F03EB3F04CEDFD181F1A9C7ED37856E8FBB72"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\growing.png",
+    "Sha256": "4C61C273BBC4388C4576D976D63F49D7F0A2D0A630A6D1B00C4C95773890EBC7"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\growing.png.meta",
+    "Sha256": "FF3CDE1779B478AE9D57E98CEB60802A4C58C1210637C88957EF74C492BFCB3D"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\ingredients.png",
+    "Sha256": "816F9DFEE312149A29E38C5A64131D1720BEAD5243C5AB90D6836855DEF2825E"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\ingredients.png.meta",
+    "Sha256": "A315E76BE18218AE2AEFE31A4A6DE50991BAA61F69A76AB89264FFEFD384F953"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\meal.png",
+    "Sha256": "CEFCE19A68F4222ACF7A2972F82DE2BF23B72C5FC17894775CE3C560A1176FF7"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\meal.png.meta",
+    "Sha256": "2BFB4E62A92395D831BC197B606C6E48C177865929C3E03DB80B77BF0709F33F"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\panel.png",
+    "Sha256": "4F3F2D7E274762D30ECE0C2E91FF7E97AC8D64380A24BC8053563C1A885D430E"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\panel.png.meta",
+    "Sha256": "3B69B690BFBAD34C2831EF198ED7D47E897A29AD1BFF432A7C999E74CE8BB6EC"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\pawn-back.png",
+    "Sha256": "45708006F25F6D8B3283960FE52F072C8665C174B0188D263833F6D49FC45C54"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\pawn-back.png.meta",
+    "Sha256": "6B935207E65BF5C7B413E9BDC0EE273D3D3B42636DC81BFF823C347AA8F6BE6F"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\pawn-side.png",
+    "Sha256": "3E720F654C2F680B5CE3FF1896F7CCD3ADFB5051EDC27FAA01A1585485D08682"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\pawn-side.png.meta",
+    "Sha256": "5741F266497442FF1E89A5FB00FC65F96E7867E54BD305413ACE453E3D5E8A35"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\selection.png",
+    "Sha256": "65BF36F79DEA984E8F0467A5D4461DA3FA6156125CF6B0C6F93F74ED3327B481"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\selection.png.meta",
+    "Sha256": "668ADAD2400DB222C4D43B71C4789EE552E3256E8622AD18248A55C3FEE1252E"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\sleep.png",
+    "Sha256": "89D3132E7CEC123468C74628BC7ED68C5E5E9A8CBCBA21EF2EC27E91C8763E7F"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\sleep.png.meta",
+    "Sha256": "04A77231CF9BB0D3438188D2C14D0DF76A852324AD1D0C834B1D864881CC3975"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\storage.png",
+    "Sha256": "9C1F1CDD86764FE96FB301814257E1A83CB9ADFD74750EEC0593C08A558D13F1"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\storage.png.meta",
+    "Sha256": "FFC908DD5EF573F4D7A2CAE4F95AAE8BFA03A060591AF9164F14B356C0C91461"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\stove.png",
+    "Sha256": "0EF1C47BD8B178A76353A22658C36CFEA5C7919CB36A79237AC32C5A6A79DF75"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\stove.png.meta",
+    "Sha256": "D8CD8E8B0C0D2A85D0ACDADAB4C99AA3BB426974CE57F31557262459EF829050"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-0.png",
+    "Sha256": "9DC611D4775210E04AD62972556981E87DB129021C6C0210879B56EB6E5DB39E"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-0.png.meta",
+    "Sha256": "2C62469AA3CEF2060F2155FCA19DC0821B9051A89CC8987D77132F836EC94CFF"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-1.png",
+    "Sha256": "7BCD6A728907099D5D711037F602D2C1A10E0E09FC2399C1AD0DE04EBA58FC0F"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-1.png.meta",
+    "Sha256": "3004EC953A4A115C8CFF81EC9EF2052D014AA5F95F581D9D009873913E422A96"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-10.png",
+    "Sha256": "679C125DF6DF590061137ACD226F99893E13BEC615F56C9CC08CAB88FC15B04E"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-10.png.meta",
+    "Sha256": "A2106CC9FD88D6A2DC90591227AADC1F6479949D52AD7CA7993F04A8F51CE58C"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-11.png",
+    "Sha256": "C527A132A6CA7BBF2F27092E5426E10C19FD8DAC5B2670AC8378EB321C7582E8"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-11.png.meta",
+    "Sha256": "A2F5A139D25EAE31BA3E286E4BCA49CBF4AE02CFA8BD2A488FAC9554D6D0A394"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-12.png",
+    "Sha256": "BA3CC79E471E6D2FDB20EA16A3DCE4C52066ABE5ED4387385263B4EC364D2DEA"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-12.png.meta",
+    "Sha256": "7BEC92FAD24BAA19A6991EA2CA70C8DF978B1583B2AA944E3C2413B2593E9863"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-13.png",
+    "Sha256": "BE1591825C3231A1CBD0E7B0AF20D1490B8CCE37524697DE398E549246A348D7"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-13.png.meta",
+    "Sha256": "86960FE077CCD05520EAC015CA8933EF29ABC5DD97131083B09971AD54765523"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-14.png",
+    "Sha256": "A3CD80193E79FAD8E83A952CCA3B7B656157EF1F32C11D19C060CA6F3CA41C48"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-14.png.meta",
+    "Sha256": "8EE67CF304311187444BB6CB4C16DAA9884BC3A4226CC8DE4368CEA740133A3B"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-15.png",
+    "Sha256": "DB755C5604150CD13E74893D88402547236261701198FBAAB8903E9624C2C727"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-15.png.meta",
+    "Sha256": "1B4470F3D7913245CA99983886E3662031903EA31ECE699145B823753FE67D9E"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-2.png",
+    "Sha256": "7D0182C088A30718E5E42B3B6F103BD6D33868C90CF1D288151892183AF14526"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-2.png.meta",
+    "Sha256": "C2F28887004B6CBB48AFDDD585A983D509F953F675ADFDC514364C90D9C33848"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-3.png",
+    "Sha256": "1D3AAC0BB3F2EC9233DA0A6C7226B4C162184A62844A74C37501918569E3D186"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-3.png.meta",
+    "Sha256": "67D9A2CA84D428CBE39651C70DD03B5F0CAD0DEEC12949B33860F86C62FB141F"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-4.png",
+    "Sha256": "E67917F07B05323690E61D1316D3939E975031BB6B1132A62B4C547D79F2312B"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-4.png.meta",
+    "Sha256": "7E325011B624C629D7D4F49C7D5EEA4F6552770A6A440A6DFDC69D5E6AD5799B"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-5.png",
+    "Sha256": "FAF198A5B261D8FFB725D6DF2A6F741A34210C56D43355F8E3A8E23C792C4E0A"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-5.png.meta",
+    "Sha256": "93A68937F698FC4CC3CFAD60B24A32DD80D2DB8B23B40FEE16F3D5AC35B256E0"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-6.png",
+    "Sha256": "A3281F71EF0181D6A34C86F0C56C6D72B7DBB1F61145A2802462BA7D665ADBE2"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-6.png.meta",
+    "Sha256": "670438E55F9D429C1A8A6ED62BDB27705F349AA4B1B1E26840090CC76C56BADD"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-7.png",
+    "Sha256": "A38E3DB9039E5939A4E2E1D3C766AB8587E4AABA12466A7E91E0943F88E89BC8"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-7.png.meta",
+    "Sha256": "5080EE870ABB5C104AB5F2EB07B9D5AF9CDCDC1A1AFE492CCFF6F2671100B872"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-8.png",
+    "Sha256": "54C6BFBC3751B983EB945F2CACEF08ABF0BF8C223F643E343195B1D74ED42D13"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-8.png.meta",
+    "Sha256": "A3E39C63264895F314AC46CA655B651477E1F6C049CFB40A4F9DD900C8EC0F4D"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-9.png",
+    "Sha256": "85EAB560EF3EF98174D6F3214D2697D33952D052AE8E11BE65EA30F8B319C274"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wall-9.png.meta",
+    "Sha256": "69A5B55304050CC124EA96414EF8761333E21940CC8E77F382D8AA3C7B154394"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wood.png",
+    "Sha256": "2CB2BF9CA3EB670A633F5B979415DD980A3B6701AB018C1C59372673BD896917"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\wood.png.meta",
+    "Sha256": "5855C12534DE797EF7C0197925DEC694D480680CB2E15F094D4D79707656DAAD"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\work.png",
+    "Sha256": "5F239F2ACE988663A6F5D72162224586040499B6A9E83F72A534B92D62374F85"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Art\\Structural\\work.png.meta",
+    "Sha256": "174CF22ED3389744C6DC0E2FEC87138DE14F75A0EBB90A11CA9B1F966D9E093F"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Resources\\UI.meta",
+    "Sha256": "6F1092320FE91222B6F0F899B91C9C30689FBD00E2274BB509D19FD9F35BD873"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Resources\\UI\\Noto-LICENSE.txt",
+    "Sha256": "6A73F9541C2DE74158C0E7CF6B0A58EF774F5A780BF191F2D7EC9CC53EFE2BF2"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Resources\\UI\\Noto-LICENSE.txt.meta",
+    "Sha256": "E80891AFDEDA070D3D678E308BF78F10E0A0668AD01B5B0413D733F46810AC72"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Resources\\UI\\NotoSansCJKkr-Regular.otf",
+    "Sha256": "6BCB2A0703AA137E874FC2DFFA85F6C21BA9A67FA329E81B8C801663AF7E992A"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Resources\\UI\\NotoSansCJKkr-Regular.otf.meta",
+    "Sha256": "C4EF9CC7D89279657E70E4C749BD2FFD756AE2A1391FCBBB7654B3A6C15E8199"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Visuals\\DefaultVisualCatalog.asset",
+    "Sha256": "850BF8EDEA7735E81C730125017FEDBE12586F0805A373CB03E0237B78DA6D41"
+  },
+  {
+    "Path": "Assets\\Game\\Content\\Visuals\\DefaultVisualCatalog.asset.meta",
+    "Sha256": "39ED027709F5F57B6EA176690BAB736EC38FE0D96399B033C7DB9BF11C7CF815"
+  },
+  {
+    "Path": "Assets\\Game\\Demo\\DemoBootstrap.cs",
+    "Sha256": "270ED84C221FE91451AA3E7AE3BEA11A2351FAEDD9803A41ACE8F699901FDB2F"
+  },
+  {
+    "Path": "Assets\\Game\\Demo\\DemoBootstrap.cs.meta",
+    "Sha256": "19199C29FEA4A9CCCD389FAEB1CBE20F5FC7C1F2E7DF77BD242CA4B66009187A"
+  },
+  {
+    "Path": "Assets\\Game\\Demo\\RimworldTweak.Demo.asmdef",
+    "Sha256": "62EAAD0261D103BEDF67AC9FE53617053A097CA8960E8ADF9314EE5141E29C82"
+  },
+  {
+    "Path": "Assets\\Game\\Demo\\RimworldTweak.Demo.asmdef.meta",
+    "Sha256": "1693211E7839B9FAAB044B4A6142B9E44DE6F4E6B1221C299CB32B2ECDAF78EB"
+  },
+  {
+    "Path": "Assets\\Game\\Demo\\SettlementPlayerCheck.cs",
+    "Sha256": "961FE0EAA9F80D5D234628BBB8BCF795D0D96E1283F1E78EF03F7D2F2D9BD236"
+  },
+  {
+    "Path": "Assets\\Game\\Demo\\SettlementPlayerCheck.cs.meta",
+    "Sha256": "EDDCCA536386C8188869FE085074FB874B9F882E1C8B226981BD841FF25CC4BF"
+  },
+  {
+    "Path": "Assets\\Game\\Editor\\BuildArtAssets.cs",
+    "Sha256": "78B1F3D38F9369869AD5D9B0755AB1BC2161FC0CBA909D46653D6D07E6D37B4C"
+  },
+  {
+    "Path": "Assets\\Game\\Editor\\BuildArtAssets.cs.meta",
+    "Sha256": "499288296E37D9CC7605787EBAAD9796EB6CF768E0EADCC21ADD27A81CE712FA"
+  },
+  {
+    "Path": "Assets\\Game\\Editor\\DemoBuild.cs",
+    "Sha256": "232F5976072A4556D756499C67D7F6E6EF8B05F90D6DEDF25C14752DF58D5C2E"
+  },
+  {
+    "Path": "Assets\\Game\\Editor\\DemoBuild.cs.meta",
+    "Sha256": "6301F5154A876646051169FA96EBAB60DE9D95A74F83D879C27E0254612E132D"
+  },
+  {
+    "Path": "Assets\\Game\\Editor\\RimworldTweak.Editor.asmdef",
+    "Sha256": "5C14128CAF4B9683AA5A71047FA3819FBCD9CA4B03F0D6F1F264BFCA90CD0BA5"
+  },
+  {
+    "Path": "Assets\\Game\\Editor\\RimworldTweak.Editor.asmdef.meta",
+    "Sha256": "A1CAC8ADF113496D24DE28974A07B95BE654B2A4EF0F580ECD3E948EED900F2D"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\BoardPointerHandler.cs",
+    "Sha256": "00FCF2DD290110538FD1AE85D11AE6A64DAB46398B736E43BDBBDB9C48CB8ED9"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\BoardPointerHandler.cs.meta",
+    "Sha256": "16112C561DAC01C3A776FF4E5AB476090DC9AE3F47A7119FDE672ECED2DF93D1"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\ConstructionPanel.cs",
+    "Sha256": "138371D92004C6CC74E711A60FC61D7DC3BA90A614CE38714916BB6F998DB93C"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\ConstructionPanel.cs.meta",
+    "Sha256": "4B1660ECE4CCC3282EEC5AA088B8A9A8D89B43F39253955BBD24C1A4A0B7B0C8"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\CookingPanel.cs",
+    "Sha256": "3CF9EE9F4EF30D0B33F04F1320192E0057AD3EFCE70350D0B41468071B0EECB3"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\CookingPanel.cs.meta",
+    "Sha256": "758A6D2A4B9BDF151145B5E91E6967982DE11C235E8774DB0FF8A561D1599655"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\FarmingPanel.cs",
+    "Sha256": "DCF0FB9D20BD8FEF3DEBCD41C8EF40DFE25EFCD2661DC9C70A4E53C43C8D734A"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\FarmingPanel.cs.meta",
+    "Sha256": "B49AE4BC5DD4491F340768004EB93254FA24A5A8A39B2E1E87EB6D49CE39183E"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\MapSymbolGraphic.cs",
+    "Sha256": "205DF85F7ABBA0B576C1ED6702D2E5E953D32290B9256C35D7B20079D377E34D"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\MapSymbolGraphic.cs.meta",
+    "Sha256": "6759F2050FBBEAC78EFB7695122127FA8B0DDD47E0479DCCACAF9A2694196511"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\RimworldTweak.Presentation.asmdef",
+    "Sha256": "110A93934C348547FB39005FA13C326CD6607D8B0BB775E27D267021345E5777"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\RimworldTweak.Presentation.asmdef.meta",
+    "Sha256": "D511D21D63A1E799820EC7DC9C0414CD03184A72710387C1BAE9A0AFFB3ECC62"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SaveLoadPanel.cs",
+    "Sha256": "E01B5ED108D2268E36F99C38BC3D7AA31C3C9E40025CC174A71BECB300782FE3"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SaveLoadPanel.cs.meta",
+    "Sha256": "34EC6EDBA5AEB05CAE95E3E2F48A2825B7ECD3B43A0BB8A86DCCE5783E0C00E4"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SettlementShell.Alerts.cs",
+    "Sha256": "1D73A93E4B2EBB501FA0D2BE51BC96123220EB49FB384F737CEF89A00CD5D690"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SettlementShell.Alerts.cs.meta",
+    "Sha256": "34F9B8353185E0C01B0076FE2279CFF16A6A24181FC4776110F6716B58B19B24"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SettlementShell.cs",
+    "Sha256": "9BB51EA07B8C31FF61C1468F001C0710EAA57E2C8771CA5B7586BEC72A399400"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SettlementShell.cs.meta",
+    "Sha256": "39A5B6EE1A46DBA54E09253537771B79C33C5BDE654095CF5D25BA992C96AB09"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SettlementShell.Layout.cs",
+    "Sha256": "9CEE29A8D355F390A3C2BC97E4DBBDA20A5B5C2DDBFD7CB27D540EBAC6CAE26A"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SettlementShell.Layout.cs.meta",
+    "Sha256": "A74450C31D960D43A8E061788ACD8B82013B5527F74AFD69C863B6FB3D27D767"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SettlementShell.Menus.cs",
+    "Sha256": "DF46D05955AB879BA2383355E008C0FA4BE2C2A76596B7CD4F3442034B764B96"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SettlementShell.Menus.cs.meta",
+    "Sha256": "7C16A7A353E04AE3E87CD2791CA4026D93F7605A31592D6E5C3C4FF7A3BF22FD"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SettlementView.cs",
+    "Sha256": "B09614149749E2D530F184F28F534D8CBE68E0E6B2935416D7067DCBCA03882E"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SettlementView.cs.meta",
+    "Sha256": "C9C07690CD5B6379212BF150899B0B3F25FFC9F0C71D0237C1F15E754765A3B5"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SettlementView.Inspection.cs",
+    "Sha256": "B2832F1013E8A5F24B026552C899DE0FC2FC1BD14783A52202F56C6E725BE51D"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SettlementView.Inspection.cs.meta",
+    "Sha256": "A3ACEAF342C7C69266B5B2FF547624ED386DACA8F73C9F089C54CFF3DC4CACF8"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SettlementView.Planning.cs",
+    "Sha256": "0DD5403B39B27601B656AC51487B2E36D0F4B8019CC059F8E8AF49CFEE40BD66"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SettlementView.Planning.cs.meta",
+    "Sha256": "6A6C48E84B7E08EC72CF6A2A920E5712845C028220BADF6DA561FC95F1CF5CF2"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SettlementView.Production.cs",
+    "Sha256": "DBDDABFC3A7AA926A432C0831E58465354DAB0F0252AD8E2CB8937DB29D23EC7"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SettlementView.Production.cs.meta",
+    "Sha256": "6DCE1CB89520D5FE2B4CF7F4F26BF42439425CDDB493B1AF74FB1E84B8AA01B0"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SettlementView.Save.cs",
+    "Sha256": "917B91820F9124331071467FB26943520C7A5478100A479C87939FE8A19C61CC"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SettlementView.Save.cs.meta",
+    "Sha256": "D2DE34F88202261351C487328856B2A6AD0702462BC7B4EC053B5EEF9FC74E85"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SettlementView.Work.cs",
+    "Sha256": "FEE7D1CF4A16A4964BD5DC248DD85B39AC439C8B1A841507FA3F3586C1E850ED"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\SettlementView.Work.cs.meta",
+    "Sha256": "236EC0A3D9F1D65178D263DC061292206B874F681180219A1EBE5A54ECB89E39"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\VisualCatalog.cs",
+    "Sha256": "5CA55CF3BACB003367CD988184F0FE15C483E7E885495ABEFA62455EE9A49C1B"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\VisualCatalog.cs.meta",
+    "Sha256": "C5A0C889D61200CFD063F8197A8C0A30D2AB35D06030AFA500F85796729D64FD"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\WorkPolicyPanel.cs",
+    "Sha256": "8F23310B816A8EFC7A39137C2ACF7128FB25B7FC550B6F3D2DC7575E6B0C2900"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\WorkPolicyPanel.cs.meta",
+    "Sha256": "CF54E87D4174122C5D07CAE29F40976B05DF44062688678038FDEE4CE6572440"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\WorldMapInput.cs",
+    "Sha256": "7BF5CBD6C412F4E026954CDA0C0C5EF7990A71B5B93CF1749AB8255F48861265"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\WorldMapInput.cs.meta",
+    "Sha256": "70D79E0A66320494D44C34874621E59213726DA81635A6FB94782199F27E4BA4"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\WorldMapView.cs",
+    "Sha256": "FF0B86AE78687ED237FC42B24E7D61F2DE66714D08069CA92F04A55DF419FCD3"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\WorldMapView.cs.meta",
+    "Sha256": "C303548D8D05C716C24B4E74559B720D1CAA31191699940099EB54B9238CBA49"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\WorldMarker.cs",
+    "Sha256": "FC5F7EF95E3FC9F389BC03482B5D871073B35BA635D39766983DEE93FDAC1D31"
+  },
+  {
+    "Path": "Assets\\Game\\Presentation\\WorldMarker.cs.meta",
+    "Sha256": "C82F4E05406A725D38C4C18688F349D9156FA2401A047D37ED5FE6A48C3A084D"
+  },
+  {
+    "Path": "Assets\\Game\\Runtime\\RimworldTweak.Runtime.asmdef",
+    "Sha256": "1A9A9DCF5942E34277746BB9F246F51067FA8673195B1A1F87E22169056EA1F8"
+  },
+  {
+    "Path": "Assets\\Game\\Runtime\\RimworldTweak.Runtime.asmdef.meta",
+    "Sha256": "0672EDEB52EB6C001CBFAA680E0E0B829E9D185656303A851E03B0DCDA0EC0D2"
+  },
+  {
+    "Path": "Assets\\Game\\Runtime\\SaveFileService.cs",
+    "Sha256": "CED5BF672707953C046B5FD302CADF12BD39DCF7D975C8B5B8500F2AC5C79772"
+  },
+  {
+    "Path": "Assets\\Game\\Runtime\\SaveFileService.cs.meta",
+    "Sha256": "320A9BB08F2761C73C099151AA119A7AD33FC79947A9DFCCF251162C20E8AAA9"
+  },
+  {
+    "Path": "Assets\\Game\\Runtime\\SaveRepository.cs",
+    "Sha256": "F67CB48F421938199B8AABB3F6155A9D788E8AC13AA0B3932AA91FA930919E15"
+  },
+  {
+    "Path": "Assets\\Game\\Runtime\\SaveRepository.cs.meta",
+    "Sha256": "FFBA62A2A281D5921569F40C087F725CF042E9B79BCFBFED5D1A2D43723879DA"
+  },
+  {
+    "Path": "Assets\\Game\\Runtime\\SimulationRunner.cs",
+    "Sha256": "A96D38C3F5BACEBADA52B6EEA9FF2B7BCB74A106B8A85D5BF7D65C6994BD7100"
+  },
+  {
+    "Path": "Assets\\Game\\Runtime\\SimulationRunner.cs.meta",
+    "Sha256": "3475517FA8BA74323E5E4EC36FC4F0AAB927A55D9DC7C20F0CF852B3F6AC562D"
+  },
+  {
+    "Path": "Assets\\Game\\Runtime\\SimulationRunner.Save.cs",
+    "Sha256": "B43A24C057E8F0545B84249EC3442652B02489E8C2468A9E734DC0FE1CE50807"
+  },
+  {
+    "Path": "Assets\\Game\\Runtime\\SimulationRunner.Save.cs.meta",
+    "Sha256": "34645CF9B0CCBB6BB40E516799B784FA3C4AB1B039ACFE4674EF00611C40722E"
+  },
+  {
+    "Path": "Assets\\Game\\Runtime\\SimulationRunner.Slots.cs",
+    "Sha256": "3B2B1993804C20B737A566C269C83A9D6D3216B044A8648EF172475BED00C736"
+  },
+  {
+    "Path": "Assets\\Game\\Runtime\\SimulationRunner.Slots.cs.meta",
+    "Sha256": "510C7F2124C5682735A9A36718ED7A37F209ADC933A4F1021DFD7882CBE8495E"
+  },
+  {
+    "Path": "Assets\\Game\\Runtime\\UserSettingsStore.cs",
+    "Sha256": "61AC7DB633F928B2160789295C8D7175101C16502684E0FDC926AEE749493B20"
+  },
+  {
+    "Path": "Assets\\Game\\Runtime\\UserSettingsStore.cs.meta",
+    "Sha256": "EF8D4220F2CFDE2FC6631BB9CA3E1E36AB7DD709D1984ED2DCB9562D1EB8657F"
+  },
+  {
+    "Path": "Assets\\Game\\Scenes\\SimulationSandbox.unity",
+    "Sha256": "5DC0097009BD901BF2508C330E0946075EC10F2BFB94337EBC464344C6DBB2F0"
+  },
+  {
+    "Path": "Assets\\Game\\Scenes\\SimulationSandbox.unity.meta",
+    "Sha256": "0C87002CAC6EE90CB33D0F49E5027DE892ABB680B03BBBD88BA92452362AF33F"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\ColonistState.cs",
+    "Sha256": "0DC967445637608719C2AA42884795869380DE03A871EF4B86CE293BE5E64F4B"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\ColonistState.cs.meta",
+    "Sha256": "48AA1EEE48E78A170336D77A6290822762D6F3350CC5D850F515CB88BE419B35"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\ConstructionRules.cs",
+    "Sha256": "32B6BAA4F68F2579F88AE32993616F7CFD00C9F255CBE118CC01557DA6D2C372"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\ConstructionRules.cs.meta",
+    "Sha256": "9D3B7FA94CC9807621BA003387E737342AB26568E951C95193586C999F6D22C2"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\ConstructionState.cs",
+    "Sha256": "A85C93BA3A56EEAC3EE1D17C0133858A881D3A198EE54DBAA51FE922CFD3D272"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\ConstructionState.cs.meta",
+    "Sha256": "EE4FC40CA44E3F405EA08C5FB78AC393AABA1062251A8425A081D7611CE60FA9"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\CookingRules.cs",
+    "Sha256": "1B243E23E62EA98C87CA0DCE3BBBA5D6C07845EF6F1718549676B89571D5C747"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\CookingRules.cs.meta",
+    "Sha256": "E8271A78BC3B62AF961DE0420941D8D62DECAA4411DEF77549A4D35B315B29E5"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\CookingState.cs",
+    "Sha256": "28E5844E3A9638499EC412E6D5A9D318D6B12799D7F76354DE0E534BD48D3657"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\CookingState.cs.meta",
+    "Sha256": "5BA281D39DC70EA349276D26BFC2B2958E479606A76E983F6014CF68245E58FE"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\EntitySaveState.cs",
+    "Sha256": "90941A10D6889FFFD9C377D5780AC587F7589EBBC733B3DE9DCA31ABB11A730F"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\EntitySaveState.cs.meta",
+    "Sha256": "948DD79B50436ABC16505EC5156C2C0C52DE95981F14E3E9C9CC2E179D49995B"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\FarmingRules.cs",
+    "Sha256": "79DBCA3194ADEFE7C29FDD2682EC0B24A011E59F6AD574C62D69508D33BCF624"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\FarmingRules.cs.meta",
+    "Sha256": "77E1D031E56174EC3AA06E5205AC2623DA8801AF48DE29838371BCDD95C383F7"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\FarmingState.cs",
+    "Sha256": "1745809D66FDE973CE626A12161DA75D3A8D6084A19960D780261E96371A7220"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\FarmingState.cs.meta",
+    "Sha256": "59ECAACDF82DD501892E6B7CA7FEB0C72485D5C47E19EA37AB5ECE78188894B5"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\FeatureWorkContracts.cs",
+    "Sha256": "C1A0F1AC3986B56C4CEB70E3CCA2DA0A08D50ACD5725FE99807F6EB51661E63D"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\FeatureWorkContracts.cs.meta",
+    "Sha256": "90B1C731FE6046F978C8963F22C9BDA74FF3FF4B771E0D4FF521054AE49DDF23"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\GridPosition.cs",
+    "Sha256": "63394261351B10A504D676B2B923BEA4B90FC8DA5D1E93D855CC9AA648A2361D"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\GridPosition.cs.meta",
+    "Sha256": "2FE21F27B1FA557146AEBBC182D20E64CC503D9ECCC8462E56D6D8524C88B637"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\InitialEntities.cs",
+    "Sha256": "C67F871A9AA83621BFA11CFE58BC9AD59B321A3252FE7873D572B2B4B7E8E91A"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\InitialEntities.cs.meta",
+    "Sha256": "196E0CCC9804C30FB406228FF09DE17A5AA28274FE482A1DAC39746B3947D969"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\LivingEntities.cs",
+    "Sha256": "CBE418D742C4D37A7C5E4E7EBB1FAFA3D30B51C03595114F24B69D5C14264AE6"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\LivingEntities.cs.meta",
+    "Sha256": "961ACA3E0071AFAC165147D5E54192ACFBB140BB890A4EE55106C204218D4CBA"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\LivingScenario.cs",
+    "Sha256": "EF36F22EE9F6733F4B1E30FD41485E90334910F9BABA6980F8E47C9EBB26A6B6"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\LivingScenario.cs.meta",
+    "Sha256": "3E575F82D2AA867BE12167E3226B3A4B85590F742A8488747E4F4D3C165209D4"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\RimworldTweak.Simulation.asmdef",
+    "Sha256": "4D2D4DC38EC32B0D7CFB972074DAB58BBBDCD6D3EBCE3038775D2C3E261B21D6"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\RimworldTweak.Simulation.asmdef.meta",
+    "Sha256": "42E4864EEC9E00F8E03741D6A09A7BB5E7142D97405914153E4D26A8598BEC01"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\SandboxScenario.cs",
+    "Sha256": "DCA594FBE81F715A8965A762122D585419817686D4B5A73EE591DA82E95A5085"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\SandboxScenario.cs.meta",
+    "Sha256": "5A35B09C1E06F6C9FAE060A8F62FAB6FAA948B5323CDF0B74C7424DDF62981ED"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\SaveData.cs",
+    "Sha256": "014DD9585CB453C8C35BC42F47AFDEC1D49043B33255E46086FC0328EDD2ADEF"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\SaveData.cs.meta",
+    "Sha256": "4D6951B7D28574233BC9478A2CCCC1B72ACC445EE7A5CEA78CC073CD5B958114"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\SaveValidation.cs",
+    "Sha256": "280F2DE42A9F7DA59E5A70DD19FC3088070075A19FED954B5B9343A9F9FA2F45"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\SaveValidation.cs.meta",
+    "Sha256": "1836ECEABA0F328D5A6AFB56E539A8305B0477E069D19014AFDC1A08F56CB91C"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\ScenarioDefinition.cs",
+    "Sha256": "B6A0FB8AC22976A994B3811E731DF0E332948AE7464035EF957267637BB64D4C"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\ScenarioDefinition.cs.meta",
+    "Sha256": "D152953CAC311696FFA617DCFB60C7ECABD3CBBCBD4DD730B45F6E485B4DAE6E"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\ScenarioValidationException.cs",
+    "Sha256": "BF98E07295AC329A4DE3AFC1DCCB50E99A96366DA57E822791F4656D5E46C3F2"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\ScenarioValidationException.cs.meta",
+    "Sha256": "E9BDC2A9423240D4EB97950ABECB61F6759CAC559E0C08D91059F79D31DEF887"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\SimulationSession.cs",
+    "Sha256": "482910AB8148F307BBCA9D86957AF06385A8FEB649940517CAF95B62E0D5D922"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\SimulationSession.cs.meta",
+    "Sha256": "AA9B6EB4075183BCD20E9C423D3EE875D2AA6680D8C9057035274F397E0074D6"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\SimulationSession.Save.cs",
+    "Sha256": "1C635F51AE2C658BA27A21780559EE5CDC30D14EF512AAE68809B9F31F7B6932"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\SimulationSession.Save.cs.meta",
+    "Sha256": "8D641E116BD09A9843EA870DF1AB93C3DB6F3F6C3A478D01B93E04BE9229DE97"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorkDiagnostics.cs",
+    "Sha256": "6A8F454002BC6F6808C4661CAE79E9073CB7B3DD6A216D0CC66602846E558B27"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorkDiagnostics.cs.meta",
+    "Sha256": "943EDF50AED959A1AB35D3D030175879A09BF39201D8D9703CBC145357694C91"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorkEntities.cs",
+    "Sha256": "DF2DA44A9ADE1DCAE9AD58789395F35E19FBBDA8F2BEF96450798EBBAA0EE8D8"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorkEntities.cs.meta",
+    "Sha256": "C4FF9BE9B5F1E24D71C87BC1E9E18D3FFA82FC2E786C0A1C45E2361BB52EA371"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorkPolicy.cs",
+    "Sha256": "805B602C81907C381D9E7D0E16FC8983F1D57BA2979379C396A52AE97CAE83B9"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorkPolicy.cs.meta",
+    "Sha256": "4576E8AE77187728646D6F1A96644518A171FFC7894242EA1AEFB66631FBB4B6"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorkScenario.cs",
+    "Sha256": "BE5A95F0C58B272B85E66A0359AFCFFE73ADBD58353CCAC18667F35FD5D90C48"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorkScenario.cs.meta",
+    "Sha256": "5AD862CA6977177547D2DB23FA30DD71B690E36A0B2898194BE3EAB5739C10B2"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorldState.Cooking.cs",
+    "Sha256": "3041671F0129ED91314E2E6221D6860D61AE4E029085162E3DCC59DAA43AEE6B"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorldState.Cooking.cs.meta",
+    "Sha256": "FCD2469F677D616CCB28D4391906355A3D72D0A22756B68A610B8A4F22EF6500"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorldState.cs",
+    "Sha256": "52BF91936272C21E6655A5FC4BE393B7986A835521DAF73C70DC279664533138"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorldState.cs.meta",
+    "Sha256": "90BFF0178D26A53ECD0C441C1A14B93EFBB4DD2C7FA2FC7871BE9254CE64B0B6"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorldState.Features.cs",
+    "Sha256": "71826F0FEA36B6F0E11D2F87B8AFC62C051772BDCF980DC7D3A235108E94B7DD"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorldState.Features.cs.meta",
+    "Sha256": "06F22675C27DC79E4DDF5681C554E30E4FF43B7FD1FD2B8FBA54C33DD0D1F218"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorldState.Living.cs",
+    "Sha256": "E5FE6F02DDC33047AE2BB1388BE7137D8B0799CF78BEFF8C732233EEB5B8CE15"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorldState.Living.cs.meta",
+    "Sha256": "7876D721AD8A5D711C7EB4746A491FAE5E350A7AD1D0AE33DCD055A39004573F"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorldState.Production.cs",
+    "Sha256": "51276FE21550ED58A938989A40ECCFA9D4309BEE8DED39A8537A99EDCC687622"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorldState.Production.cs.meta",
+    "Sha256": "8BEBFDD2FB8355C92428F882ADAA842A46C3F991C9BD871B7ED1BA071B1CB210"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorldState.Save.cs",
+    "Sha256": "715E201BCB47BBEE2D645FA4520CFC05EB2095094C7272AB6F2AFB159CE32F78"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorldState.Save.cs.meta",
+    "Sha256": "C3A7C094610D7F3EBC64AE0554ECBCB8A4E02C439268F4527C5DEB9745A7FBB3"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorldState.Work.cs",
+    "Sha256": "711671C28A06662FD71E8B5C2F63EFC3A7F98DCAA0BFD73FA7A6287F3F1A56CF"
+  },
+  {
+    "Path": "Assets\\Game\\Simulation\\WorldState.Work.cs.meta",
+    "Sha256": "4E1952C9C037CFD6819FC44D97073152D4C4FD2701E24959CEBB9FE445621711"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode.meta",
+    "Sha256": "ADF335AB1AEFF70792C90487C36996C5B1CAAE856C5D07FD97DA9FEEDFC0D2AF"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\Fixtures.meta",
+    "Sha256": "37B50FD589477A894FB1D8EE44764C93A3FDCBC39A36168F07BB6612AFADEDD0"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode.meta",
+    "Sha256": "D5F7E47B9D51388E618C32AD5A75B323600D118CCEEB82CB1FF274E7608F7D12"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation.meta",
+    "Sha256": "9A399075424703C19961AD750DA750331003AC65AAD7256764265E1A16F1484B"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\ConstructionTests.cs",
+    "Sha256": "B0D143A907615B55F0E4F6BBF0CE42D60E7F6B97A29EE132B621C4D8E046E8CC"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\ConstructionTests.cs.meta",
+    "Sha256": "5388B81534866C6427BEAA576EFD3E511829158AFEFA2243E8B1FE3D9A472BD3"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\CookingTests.cs",
+    "Sha256": "3787A5202F8779D692537EE081783B32491825DACFF5EB0D620068F1BFF1429F"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\CookingTests.cs.meta",
+    "Sha256": "7F39871545B845C41EE31B0470E011A198B016CB3CB77B54AB4C938796FF7325"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\FarmingTests.cs",
+    "Sha256": "E40C725F82DF06D58768FFBDD93FAFE7DE87846261A15B7342E53A464CE09CA5"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\FarmingTests.cs.meta",
+    "Sha256": "AE69AD41175488AE925EDDD614FD8CDC14DB027B973A87C58CB685EE3516EADE"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\FeatureWorkContractTests.cs",
+    "Sha256": "4EEF0F2BD0A2760F3C8D71AB15ED6364B400FDB48C37BDF0BB6680F4C0BA01E9"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\FeatureWorkContractTests.cs.meta",
+    "Sha256": "D64833C8CE9580E313FC72DD2464698EDB298A87E0A8357F676C1C5F438637C7"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\InitialWorldTests.cs",
+    "Sha256": "305905DD5B324FF34CFC7258D3735D878B5FFCE8D73EA4732B9DB891178BD043"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\InitialWorldTests.cs.meta",
+    "Sha256": "6F872CD9FBFAB5B4278E5ACB7212D38331ED2B6C4607242DC47532B5ECC7A8C4"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\LivingTests.cs",
+    "Sha256": "E1D67201B07135EAD5CC5A7BE8C6E3CAF2A5436FB7AAADE76360BFFB650DEE87"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\LivingTests.cs.meta",
+    "Sha256": "31F6050C59BC117E9C6B2CDB67E9774D7E3E4A495D7EE1EEE98DF17557696EB4"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\MovementTests.cs",
+    "Sha256": "F443652DC825B67812B334326493DFA98CE05078388B96DDACFFD9517EED71F8"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\MovementTests.cs.meta",
+    "Sha256": "3F3281DCC063FE8FA42397A5F1A8F35A69AD552EC17A62E34F3842F6DFD4DB10"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\PlacementPreviewTests.cs",
+    "Sha256": "069391F8ACE44AAF2CF57C8E1BFD6333F25B81ACA44DC5F3ACC10A278724439E"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\PlacementPreviewTests.cs.meta",
+    "Sha256": "E5F5B41245674ECD8E00DC324EE652BB7906CD8B100AFA0671FD79D0B00F6ADE"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\PlayerControlTests.cs",
+    "Sha256": "8A2A8B27FF38989759933F7BF54B1E50197E9081C820567AA5119581EA28F52A"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\PlayerControlTests.cs.meta",
+    "Sha256": "3EB66B61A1B8B325270C7E25844221BCFD5D88190D5C5A029CED5D80908E11E5"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\RimworldTweak.Tests.EditMode.asmdef",
+    "Sha256": "3645A65476FC46BC5A6DF56C03511EACC2267A3EC5225363FEC90694B210481E"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\RimworldTweak.Tests.EditMode.asmdef.meta",
+    "Sha256": "96708BB42DE166933216FBD386090517E3596D33A1DD7DD99DC3B0A9B0622B01"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\SaveRepositoryTests.cs",
+    "Sha256": "FABD60191CF920FCF2E134AEE6D63ED36F00C4FCADA29E1B07B775FCDFB9C913"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\SaveRepositoryTests.cs.meta",
+    "Sha256": "D8329B7324B98823CD98DEFB057617BBD77612D2B77A16F4A4AC7FE82403ACF5"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\SaveRoundTripTests.cs",
+    "Sha256": "7B87742D3A46DC6DB736E93FD88FB666655275F2A2D651921C629B658979BC12"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\SaveRoundTripTests.cs.meta",
+    "Sha256": "056DBEB774C9D91D16D4BA511AC410E49DB057AD1C3F17A84DA7A51D18FA5E5F"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\SaveTests.cs",
+    "Sha256": "F9212C91FA6E68E832876DCAF2C1FC0C7FA62CBE61CEF2473E5B1BE0560322A3"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\SaveTests.cs.meta",
+    "Sha256": "CE838D0737AD0CFB767FCC4C4F390C1ECFC3381150771CC940443835F335D394"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\TickTests.cs",
+    "Sha256": "97721F8A5A78660D3100B30E8F919F16E95438ABD4806CDCD84FDF4B07667CA3"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\TickTests.cs.meta",
+    "Sha256": "D177D9FE411D2D4A2148816CAB4C6F7C638631590D95636951D14EB3812CE344"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\VisualCatalogTests.cs",
+    "Sha256": "F214452B339BBEC269C328A7A14FFBC42BAD8CF2C32E49FB5A277E76201ED464"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\VisualCatalogTests.cs.meta",
+    "Sha256": "88E0F734A4F5592414D2AB662FD2505C073BB9BC423ED7A0FDE5453C39D7652E"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\WorkPolicyTests.cs",
+    "Sha256": "EBADE78DB497B8FA75BFF00223CF4CA4F3EA3AE364DEE17651AEA3FA30ABF13D"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\WorkPolicyTests.cs.meta",
+    "Sha256": "89E472D1EDC85FC355CF67CBC1F8FB59349CB2BC7B13B18652233547736070DE"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\WorkTests.cs",
+    "Sha256": "16933C2227C6DE98DB83A9AD8BCACA9C50DBA823C267C3749502AE9E4A71E764"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\EditMode\\Simulation\\WorkTests.cs.meta",
+    "Sha256": "ACE5C3F062B401D8B6742044052955B821F3B354B5B2CFB6442839A33A6AD759"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\Fixtures\\legacy-v1.json",
+    "Sha256": "ABE5ED857AB68284650D14EDE1B96C2CACB2F4C7FD4F5B7282B39D81E4FDE6F1"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\Fixtures\\legacy-v1.json.meta",
+    "Sha256": "F9F7171FA73E95C5FD37735BD77163E56A8FAD5A57C1301FD09C2AB4912EC344"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration.meta",
+    "Sha256": "C32153CF26314C617B61EB3045F0650F881355150FC5C57B6A7661B7192411EF"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\ConstructionIntegrationTests.cs",
+    "Sha256": "7C967DA8EFB45B46A160F70BC71153A3CD5080F6E02DE8859BF17D782C8AE410"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\ConstructionIntegrationTests.cs.meta",
+    "Sha256": "AB68D390CB45737CD3792C722FB1193737900B58F2366A7895D075D7ACB1BE5B"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\CookingIntegrationTests.cs",
+    "Sha256": "2F3C6C18D8C1E96195926A250E94DA3E3DE5A0E54E1A06AA4D7A395348ECDC9D"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\CookingIntegrationTests.cs.meta",
+    "Sha256": "3633CE6A69835412BB3AD123FE4FEFE5F2D03564921CC561AFC0AFB0308F6D16"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\DemoIntegrationTests.cs",
+    "Sha256": "1DC6DB2052FF2D0A10FAE06102E50FE76C233AB7C629E3DD008A70B6192A3139"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\DemoIntegrationTests.cs.meta",
+    "Sha256": "A8B9C4D78F201F732AC60DB6153B10D789BD96170B772F7E16CA3B070644A0CC"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\FarmingIntegrationTests.cs",
+    "Sha256": "1DA6F07DA5D2737473F9C74128215051DE2E45C57023408829A85F150DDCCFFD"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\FarmingIntegrationTests.cs.meta",
+    "Sha256": "583038744D2D129992D2ECB83BF74D5EEC5C243B67003A166AB8FAD73A226FE0"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\LivingIntegrationTests.cs",
+    "Sha256": "22661099C5D7058BD4B41003A04364CA6B3CEBFF166A3D7936076F7070D56FEC"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\LivingIntegrationTests.cs.meta",
+    "Sha256": "32A473286E1CA6A36E0368A7F69E9A207A5B6A03CEC3C1FE90E5FD0FDF86448F"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\MovementIntegrationTests.cs",
+    "Sha256": "9543BE97F98665945F47075D553DAFC339CE0CC7EEC2A634275FD5A58F4AD1BB"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\MovementIntegrationTests.cs.meta",
+    "Sha256": "F34EF747A4AE854439A495D5D9103282B4EF54CC9265BCBB22448BA80A68EDBE"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\PausedCommandTests.cs",
+    "Sha256": "9294C1CB0E250464A04BCF984AEA8AB702A1E8703B2D192A69DF739D9587F90D"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\PausedCommandTests.cs.meta",
+    "Sha256": "98FF6A3CA471ED20D989EE4619F987FF35C65BB2FF444299418D51B4847A8567"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\PlayerControlIntegrationTests.cs",
+    "Sha256": "CE5E9CB685679BA76C72410E72DA7258B72F062511769F13E6BBE541F3F252AF"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\PlayerControlIntegrationTests.cs.meta",
+    "Sha256": "184B1DFA2F5ACD6DF92A3A89B5D1F18CDF37858A09BB480B49F355E80A894702"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\ReadableUiTests.cs",
+    "Sha256": "35B53522E6275E8254074C2754D6D22F891D67924AA1BDDBE98F95EE69C2EA08"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\ReadableUiTests.cs.meta",
+    "Sha256": "C69A0B34BA97BBD4C528E1686F532FDD52106DD2DC9767BCE100EEC8848764A2"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\RimworldTweak.Tests.PlayMode.asmdef",
+    "Sha256": "DD2C3905052FFFCACA0C851ABED857E1067432554990ACD35B9FB587BAD6232E"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\RimworldTweak.Tests.PlayMode.asmdef.meta",
+    "Sha256": "E6B1A68C1C77639D28F693C1078562FBD26BD43453524DD98CF59DD67B1838FC"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\SaveIntegrationTests.cs",
+    "Sha256": "AB68F1F0D0D4469D70FFF3BD1FCF4FD5EDD3E29DF898C848487AEDC8A88FA5C2"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\SaveIntegrationTests.cs.meta",
+    "Sha256": "7F84E71B3A8BAEC27F19CD6038C1428EA7F1190738D8DC2CA60029FE64512F5B"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\SettlementShellIntegrationTests.cs",
+    "Sha256": "EEA9DB06E546B73ED7E13D9AED6E69E881EE0D19FE5777BFEFE78B88AC80ECBC"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\SettlementShellIntegrationTests.cs.meta",
+    "Sha256": "51A0D4CCD6126CC85A30D24C9C02A50C5ADE439C0C84F86D037126AB93A56DC6"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\WorkIntegrationTests.cs",
+    "Sha256": "3B5FBDCE962E9C3C2B8E7FA9E05D4BBB44B272FAF2915214B72DFFC5F9C9FB1E"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\WorkIntegrationTests.cs.meta",
+    "Sha256": "17DA8BF832FD7BB13BE083DBC8FED42643F4BED0161AB4A720BCEF8C71C887F3"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\WorkPolicyIntegrationTests.cs",
+    "Sha256": "B75D2B9BBA136E3443DE641C37C30E1FD213278DD420C4F5C2EF5DA2843522E0"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\WorkPolicyIntegrationTests.cs.meta",
+    "Sha256": "6575E033E1552D5A1AFE05F21B26084490123858EC4E1D41F9BA3AB578125D85"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\WorldMapViewTests.cs",
+    "Sha256": "7914B6BD9066B0463D7C3687CD0BF06B7184F4298E5094D693652C266E2AB1DF"
+  },
+  {
+    "Path": "Assets\\Game\\Tests\\PlayMode\\Integration\\WorldMapViewTests.cs.meta",
+    "Sha256": "6AD99DD1FE4F8E5C360ADA8241A3547F4CEF730148DC499A3BC7436DBC4C3756"
+  },
+  {
+    "Path": "Assets\\Scenes\\SampleScene.unity",
+    "Sha256": "387D8216A517BE775B6ECC2AB55B97ECE687C3372322DA2BA027A96908014912"
+  },
+  {
+    "Path": "Assets\\Scenes\\SampleScene.unity.meta",
+    "Sha256": "204F446BC13539151C15AF875550A7FA6F791662E967572A1B4B06FD0005DAD1"
+  },
+  {
+    "Path": "Assets\\Settings\\DefaultVolumeProfile.asset",
+    "Sha256": "4789B43834DD5EFB32EEC4C3B436BAF0895C9F8CF2A0624121DA8DD812EE984A"
+  },
+  {
+    "Path": "Assets\\Settings\\DefaultVolumeProfile.asset.meta",
+    "Sha256": "037700FC76EE8E15BF57A6608BF0229B50B9BA78A1095A943FE0ADD01A6BF5C5"
+  },
+  {
+    "Path": "Assets\\Settings\\InputSystem_Actions.inputactions",
+    "Sha256": "1C6CBB519D65ECFE19A29231735B7F54741A20AC1A8AD4F46A18E1BFB28A3C39"
+  },
+  {
+    "Path": "Assets\\Settings\\InputSystem_Actions.inputactions.meta",
+    "Sha256": "E2DF3DE96691137DC24B37BD9009E7BE17040F3E5CD6D5401B2CD9D8AE2C9C1D"
+  },
+  {
+    "Path": "Assets\\Settings\\Lit2DSceneTemplate.scenetemplate",
+    "Sha256": "CA928761BF976C878D54DF524A3742C5F1BCA53A013B4061ABD2C752C8A212AA"
+  },
+  {
+    "Path": "Assets\\Settings\\Lit2DSceneTemplate.scenetemplate.meta",
+    "Sha256": "D4CC0F73332C3228945AA64F9C5019F1C1950D77703728C5E9674A0367C5E4D1"
+  },
+  {
+    "Path": "Assets\\Settings\\Renderer2D.asset",
+    "Sha256": "900455794D0D788504847C3AA54E03A0374FD3635AFA295ED05C2F646F974705"
+  },
+  {
+    "Path": "Assets\\Settings\\Renderer2D.asset.meta",
+    "Sha256": "9689252004910CFAD653E8A8D09B8C96BEFB560E1FB583033630DB0F5BB76420"
+  },
+  {
+    "Path": "Assets\\Settings\\Scenes.meta",
+    "Sha256": "705B24F629AF6836450C9FD2085F781FE11D8633BCAA0C7B3197058B93A766E5"
+  },
+  {
+    "Path": "Assets\\Settings\\UniversalRenderPipelineGlobalSettings.asset",
+    "Sha256": "EBE6D10C2148DB120B49DF23EDCAC9CFC9D693BC80C3F99BFAF70551D0CACF4F"
+  },
+  {
+    "Path": "Assets\\Settings\\UniversalRenderPipelineGlobalSettings.asset.meta",
+    "Sha256": "746A38B93F8F49B644FF6893456CF24DB401E5C342AAAE3864E91560D37C5422"
+  },
+  {
+    "Path": "Assets\\Settings\\UniversalRP.asset",
+    "Sha256": "167D20E3285F9071DC9BCB0A4FEE7CDF8BB335DD849EC96E4B3FA39BD401F266"
+  },
+  {
+    "Path": "Assets\\Settings\\UniversalRP.asset.meta",
+    "Sha256": "8B7653265C1A9A054461264FC7B03BDBAFC030149949FCE5BF9E85924FB565A5"
+  },
+  {
+    "Path": "Assets\\Settings\\Scenes\\URP2DSceneTemplate.unity",
+    "Sha256": "F6FB3E91AAA90417E2920B7F903066833B3B9AEA72DDCB5E46B91AFA729C2E90"
+  },
+  {
+    "Path": "Assets\\Settings\\Scenes\\URP2DSceneTemplate.unity.meta",
+    "Sha256": "E7391FF924B7DEFDF30E0B0B235F8113618481C93F567E0C699C8895A9534579"
+  },
+  {
+    "Path": "Packages\\manifest.json",
+    "Sha256": "D957D7B19B0A9F44FA03C8041483F8819F94AE50BB09A5B60137BB4383AD8DA8"
+  },
+  {
+    "Path": "Packages\\packages-lock.json",
+    "Sha256": "726872497E73A22B24EC87EA29F692F803F3929E1671F7EE8665234057108E1C"
+  },
+  {
+    "Path": "ProjectSettings\\AudioManager.asset",
+    "Sha256": "AEEDEB3243F07B61DBBE854AA08B5EF6F0B5274DD9852AD9F6129DDE3E105A31"
+  },
+  {
+    "Path": "ProjectSettings\\ClusterInputManager.asset",
+    "Sha256": "40E65DD214BF254955D2C8829CA8CE2130FD3510485560CE012E9A1DDD93E623"
+  },
+  {
+    "Path": "ProjectSettings\\DynamicsManager.asset",
+    "Sha256": "B7C9A9DC08B98990109D4346F68745E15E238DE400F96C583E53E1C83C743A78"
+  },
+  {
+    "Path": "ProjectSettings\\EditorBuildSettings.asset",
+    "Sha256": "949C257CBCF57E98ECCB3003AA655E21FC5CC4D2038317096C3F209F8692772E"
+  },
+  {
+    "Path": "ProjectSettings\\EditorSettings.asset",
+    "Sha256": "95B5B2D7A79A643593554EA84F3F0FAD742FEC10A172182533477C2EC6999BCC"
+  },
+  {
+    "Path": "ProjectSettings\\GraphicsSettings.asset",
+    "Sha256": "BCDB6EE570B5EDC137B79E48F860495035136E494030E214FE39C151D16FE993"
+  },
+  {
+    "Path": "ProjectSettings\\InputManager.asset",
+    "Sha256": "7A1BB836A1008D26D0860D143E9D9DF7CA41731D30A72901B518063819C62DF2"
+  },
+  {
+    "Path": "ProjectSettings\\MemorySettings.asset",
+    "Sha256": "1E8379A461B10AE09F3F696911088C16875D63E87ED5F2D95DF9E1892703F9FD"
+  },
+  {
+    "Path": "ProjectSettings\\MultiplayerManager.asset",
+    "Sha256": "ABA89FD1A1DDAD182727AD82727E536D27372E90328A8196DA2A4560398983DD"
+  },
+  {
+    "Path": "ProjectSettings\\NavMeshAreas.asset",
+    "Sha256": "80106CFA7E6181A1928B142C075F3E510D527441E3D79BC83590E4AC91E7CD66"
+  },
+  {
+    "Path": "ProjectSettings\\NetworkManager.asset",
+    "Sha256": "46395DEF99A6B5AE38EBB19B3E18F75215A9D4172C219361521A5A51E051F386"
+  },
+  {
+    "Path": "ProjectSettings\\PackageManagerSettings.asset",
+    "Sha256": "AB3E5A1C3C69D0784EDC2C4E17031EE0A8AF1D265D52D60BDF029D245AFC5877"
+  },
+  {
+    "Path": "ProjectSettings\\Physics2DSettings.asset",
+    "Sha256": "50E61D70BC38C632CB0E6EFE364A9C5BCFD9A8DBCF4E7B5ECFB06A2030C4518F"
+  },
+  {
+    "Path": "ProjectSettings\\PresetManager.asset",
+    "Sha256": "29C125923FE6E29F90190D4FCE1C82D660E7051546E2C9D02908D18C9CF2436C"
+  },
+  {
+    "Path": "ProjectSettings\\ProjectSettings.asset",
+    "Sha256": "8F858F828975F1BD9A5B049F5203D9E7F43F2E9859F1FAAC956D2036CC25DDC4"
+  },
+  {
+    "Path": "ProjectSettings\\ProjectVersion.txt",
+    "Sha256": "91B35566B263574C8A513EFF3BBA6D5D313482D752D961077B47AB5B3FF14981"
+  },
+  {
+    "Path": "ProjectSettings\\QualitySettings.asset",
+    "Sha256": "C1ED060F85623D3595B1E9EEA133D957CD92191639A6EDC51C638E3EDCBA240C"
+  },
+  {
+    "Path": "ProjectSettings\\SceneTemplateSettings.json",
+    "Sha256": "BB9098B3BFCDE78D93E264B96F7B77B5430E64E8C57A7AAD7F5A5D9C3945E16A"
+  },
+  {
+    "Path": "ProjectSettings\\ShaderGraphSettings.asset",
+    "Sha256": "5C432C9C73FDF73FEE91C8823EA02AB98E3B7A8EDF341B5AE6901D699CCE52A7"
+  },
+  {
+    "Path": "ProjectSettings\\TagManager.asset",
+    "Sha256": "8E18B1C820E9C09E16BBD1F1B7842E9FB3B0158A0921B0964E0B8FA12C6E2C01"
+  },
+  {
+    "Path": "ProjectSettings\\TimeManager.asset",
+    "Sha256": "1A83E54ADBBDA7C9F4851103A0C6AB7F6448A3343D4EA5B7620452FA08416ECD"
+  },
+  {
+    "Path": "ProjectSettings\\UnityConnectSettings.asset",
+    "Sha256": "B7DD1E8290598F5CE86919BA1C98B42B766C8C42191A30FA2C4D12195C4ECD00"
+  },
+  {
+    "Path": "ProjectSettings\\URPProjectSettings.asset",
+    "Sha256": "C317FE22B9488785C0611F0642429922E5D324430D929BFFB41648130F30C218"
+  },
+  {
+    "Path": "ProjectSettings\\VersionControlSettings.asset",
+    "Sha256": "E199CDFA6A8F2BF33CFD47E549198F13E3EB2A5099E908FDB4E0F14D939CCC6B"
+  },
+  {
+    "Path": "ProjectSettings\\VFXManager.asset",
+    "Sha256": "F066C6483919961332415EE64204F74FE52F38C02E82892EB02B7A5B2E381F0E"
+  },
+  {
+    "Path": "ProjectSettings\\XRSettings.asset",
+    "Sha256": "EDD2BEB4A2E388312B4B7DA241AA51070434005D82C59363F1237DD2E567585F"
+  },
+  {
+    "Path": "Tools\\expected-editmode-tests.json",
+    "Sha256": "925AC82D8AF80369565CB2FE686EE1A4D705E72090CFB255CAFF3635B57447B4"
+  },
+  {
+    "Path": "Tools\\expected-playmode-tests.json",
+    "Sha256": "F73A5DC9B2D89EFB66A61A1C556B9777CDB8E411F8A4DE697D7B8CB675C4BFF3"
+  },
+  {
+    "Path": "Tools\\RenderValidation.ps1",
+    "Sha256": "720B51C151866BE4C87336637688C86740EEF60D81E848581A74D631476946EA"
+  },
+  {
+    "Path": "Tools\\Run-Demo.ps1",
+    "Sha256": "A1265D01EFF31114A6EB209F91DE04BD07C85E5E10D8A36D7F396312935C30EB"
+  },
+  {
+    "Path": "Tools\\Run-Tests.ps1",
+    "Sha256": "84ABDBD750A8F4E59A38C9FCC9FAE98CC302C691408CF04ABCE5CB39DB0C9052"
+  },
+  {
+    "Path": "Tools\\Run-UXCheck.ps1",
+    "Sha256": "EE9BC7BE93DE3E502702CD245A68E662502B1756D005E9EA261E9CD733A0717E"
+  },
+  {
+    "Path": "Tools\\Start-ManualCheck.ps1",
+    "Sha256": "41CBA761043A21E4EEF77D09522B1FD323CB1AF660F0893ED1CCF432211BA2E1"
+  },
+  {
+    "Path": "Tools\\Test-ResultValidation.ps1",
+    "Sha256": "E180D16F0CD1D49D862EDAF8879973E10362D21E3B4CCE6B29C377DEF334002F"
+  },
+  {
+    "Path": "Tools\\TestResultValidation.ps1",
+    "Sha256": "2BCEEB9CC16C542DAD4ECAACBDC4CC649105538030B84E89A62BEE343A813046"
+  }
+]

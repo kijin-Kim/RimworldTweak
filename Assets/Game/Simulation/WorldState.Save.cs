@@ -9,6 +9,8 @@ namespace RimworldTweak.Simulation
         internal WorldSaveData CaptureSave()
         {
             return new WorldSaveData {
+                Raid=CaptureRaid(),
+                MedicineConsumed=MedicineConsumed,RepairWoodConsumed=RepairWoodConsumed,
                 Width=Width,Height=Height,NeedsEnabled=NeedsEnabled,Tick=Tick,MapRevision=MapRevision,PathSearchCount=PathSearchCount,LastCommandError=LastCommandError,
                 NextEntityId=checked(nextEntityId+1),RequestSequence=requestSequence,AvailabilityRevision=availabilityRevision,
                 BlockedTiles=blockedTiles.Select(PositionSaveData.From).ToList(),CancelledThisTick=cancelledThisTick.OrderBy(x=>x).ToList(),
@@ -30,6 +32,7 @@ namespace RimworldTweak.Simulation
             var beds=d.Beds.Select(BedState.RestoreSave).ToList();
             var w=new WorldState(d.Width,d.Height,d.BlockedTiles.Select(x=>x.ToPosition()).ToList(),pawns,resources,beds,d.NeedsEnabled) {
                 Tick=d.Tick,MapRevision=d.MapRevision,PathSearchCount=d.PathSearchCount,LastCommandError=d.LastCommandError,
+                MedicineConsumed=d.MedicineConsumed,RepairWoodConsumed=d.RepairWoodConsumed,
                 nextEntityId=d.NextEntityId-1,requestSequence=d.RequestSequence,availabilityRevision=d.AvailabilityRevision,
                 ConstructionConsumedWood=d.ConstructionConsumedWood,DemolitionReturnedWood=d.DemolitionReturnedWood,CookingConsumedIngredients=d.CookingConsumedIngredients,CookingProducedMeals=d.CookingProducedMeals
             };
@@ -60,6 +63,7 @@ namespace RimworldTweak.Simulation
                 w.cookingOutputs.Add(output);
             }
             foreach(var x in d.WorkPolicies)foreach(var p in x.Priorities)w.PolicyFor(x.PawnId).SetPriority(SaveState.Enum<WorkCategory>(p.Category),p.Priority);
+            w.RestoreRaid(d.Raid);
             w.ValidateRestoredActions();
             return w;
         }
@@ -71,10 +75,11 @@ namespace RimworldTweak.Simulation
                 {
                     long expected=original.Resources.Where(x=>x.Kind==kind).Sum(x=>(long)x.Amount)+ProducedAmount(kind);
                     foreach(var resource in Resources)if(resource.Kind==kind)expected+=(long)resource.AddedAmount-resource.RemovedAmount-resource.ConsumedAmount;
-                    if(kind==ResourceKind.Wood)expected+=(long)DemolitionReturnedWood-ConstructionConsumedWood;
+                    if(kind==ResourceKind.Wood)expected+=(long)DemolitionReturnedWood-ConstructionConsumedWood-RepairWoodConsumed;
+                    if(kind==ResourceKind.Medicine)expected-=MedicineConsumed;
                     if(kind==ResourceKind.Ingredients)expected-=CookingConsumedIngredients;
                     long actual=Resources.Where(x=>x.Exists&&x.Kind==kind).Sum(x=>(long)x.Amount)+Colonists.Where(x=>x.CargoKind==kind).Sum(x=>(long)x.CargoAmount);
-                    if(kind==ResourceKind.Wood)actual+=blueprints.Where(x=>x.Exists).Sum(x=>(long)x.DeliveredWood);
+                    if(kind==ResourceKind.Wood)actual+=blueprints.Where(x=>x.Exists).Sum(x=>(long)x.DeliveredWood)+buildings.Sum(x=>(long)x.RepairWood);
                     if(kind==ResourceKind.Ingredients)actual+=cookingOrders.Where(x=>x.Exists).Sum(x=>(long)x.InputIngredients);
                     RequireSave(expected==actual);
                 }
@@ -87,9 +92,12 @@ namespace RimworldTweak.Simulation
         {
             foreach(var b in buildings)
             {
-                if(b.Exists&&ConstructionRules.BlocksMovement(b.Kind))RequireSave(blockedSet.Contains(b.Position));
+                RequireSave(b.RepairWood >= 0 && b.RepairWood <= 2 && b.RepairProgress >= 0 && b.RepairProgress < 40 &&
+                    (b.RepairProgress == 0 || b.RepairWood == 2) &&
+                    (b.RepairDesignated ? b.Exists && !b.DemolitionDesignated && b.Durability < 100 : b.RepairWood == 0 && b.RepairProgress == 0));
+                if(b.Exists&&b.Durability>0&&ConstructionRules.BlocksMovement(b.Kind))RequireSave(blockedSet.Contains(b.Position));
                 if(b.Kind==BuildingKind.Bed)
-                    RequireSave(bedsById.TryGetValue(b.Id,out var bed)&&bed.Exists==(b.Exists&&!b.DemolitionDesignated));
+                    RequireSave(bedsById.TryGetValue(b.Id,out var bed)&&bed.Exists==(b.Exists&&b.Durability>0&&!b.DemolitionDesignated));
                 if(b.Exists&&b.Kind==BuildingKind.Stove)RequireSave(CookingOutput(b.Id)!=null);
             }
             foreach(var b in blueprints)if(!b.Exists)RequireSave(b.DeliveredWood==0&&!b.OwnerId.HasValue);
@@ -107,17 +115,21 @@ namespace RimworldTweak.Simulation
         }
         private void ValidatePawnStage(ColonistState pawn)
         {
-            var delivery=pawn.FeatureStep==WorkStep.DeliverBuild||pawn.FeatureStep==WorkStep.DeliverCook;
+            var delivery=pawn.FeatureStep==WorkStep.DeliverBuild||pawn.FeatureStep==WorkStep.DeliverCook||pawn.FeatureStep==WorkStep.DeliverRepair;
+            var care=pawn.FeatureStep==WorkStep.Care;
+            var treating=care&&(pawn.WorkActivity==WorkActivity.GoingToFeature||pawn.WorkActivity==WorkActivity.WorkingFeature);
+            RequireSave(pawn.CareProgress>=0&&pawn.CareProgress<40&&(pawn.CareProgress==0||care&&pawn.WorkActivity==WorkActivity.WorkingFeature));
             var delivering=pawn.WorkActivity==WorkActivity.GoingToBuildDelivery||pawn.WorkActivity==WorkActivity.DeliveringBuild;
             var picking=pawn.WorkActivity==WorkActivity.GoingToBuildPickup||pawn.WorkActivity==WorkActivity.PickingUpBuild;
             var store=pawn.WorkActivity==WorkActivity.GoingToStore||pawn.WorkActivity==WorkActivity.Storing;
-            RequireSave((pawn.CargoAmount>0)==(store||delivery&&delivering));
+            RequireSave((pawn.CargoAmount>0)==(store||delivery&&delivering||treating));
             if(pawn.FeatureStep.HasValue)
             {
                 RequireSave(pawn.IsWorking);
-                if(delivery)
-                {RequireSave((delivering||picking)&&pawn.PendingDeliveryTargetId.HasValue);if(delivering)RequireSave(pawn.CargoKind==(pawn.FeatureStep==WorkStep.DeliverBuild?ResourceKind.Wood:ResourceKind.Ingredients));}
-                else RequireSave((pawn.FeatureStep==WorkStep.Construct||pawn.FeatureStep==WorkStep.Demolish||pawn.FeatureStep==WorkStep.Sow||pawn.FeatureStep==WorkStep.Harvest||pawn.FeatureStep==WorkStep.Cook)&&
+                if(care) RequireSave((treating||picking)&&pawn.PendingDeliveryTargetId.HasValue);
+                else if(delivery)
+                {RequireSave((delivering||picking)&&pawn.PendingDeliveryTargetId.HasValue);if(delivering)RequireSave(pawn.CargoKind==(pawn.FeatureStep==WorkStep.DeliverCook?ResourceKind.Ingredients:ResourceKind.Wood));}
+                else RequireSave((pawn.FeatureStep==WorkStep.Construct||pawn.FeatureStep==WorkStep.Demolish||pawn.FeatureStep==WorkStep.Sow||pawn.FeatureStep==WorkStep.Harvest||pawn.FeatureStep==WorkStep.Cook||pawn.FeatureStep==WorkStep.Repair)&&
                     (pawn.WorkActivity==WorkActivity.GoingToFeature||pawn.WorkActivity==WorkActivity.WorkingFeature)&&!pawn.PendingDeliveryTargetId.HasValue);
             }
             else RequireSave(!picking&&!delivering&&pawn.WorkActivity!=WorkActivity.GoingToFeature&&pawn.WorkActivity!=WorkActivity.WorkingFeature&&!pawn.PendingDeliveryTargetId.HasValue);
@@ -126,7 +138,8 @@ namespace RimworldTweak.Simulation
                 RequireSave(pawn.WorkTargetId.HasValue&&resourcesById.TryGetValue(pawn.WorkTargetId.Value,out var source));
                 var r=resourcesById[pawn.WorkTargetId.Value];
                 RequireSave(r.Reservations.Count==1&&r.Reservations.TryGetValue(pawn.Id,out var reserved)&&reserved>0&&reserved<=10&&!r.IsInUse);
-                if(delivery)RequireSave(r.Kind==(pawn.FeatureStep==WorkStep.DeliverBuild?ResourceKind.Wood:ResourceKind.Ingredients));
+                if(care)RequireSave(r.Kind==ResourceKind.Medicine&&r.Reservations[pawn.Id]==1);
+                if(delivery)RequireSave(r.Kind==(pawn.FeatureStep==WorkStep.DeliverCook?ResourceKind.Ingredients:ResourceKind.Wood));
             }
             if(pawn.IsCookingDelivery)RequireSave(!pawn.FeatureStep.HasValue&&pawn.CargoKind==ResourceKind.Meal&&pawn.CargoAmount==1&&
                 (pawn.WorkActivity==WorkActivity.GoingToStore||pawn.WorkActivity==WorkActivity.Storing));
@@ -135,7 +148,7 @@ namespace RimworldTweak.Simulation
             if(pawn.LifeActivity==LifeActivity.GoingToFood||pawn.LifeActivity==LifeActivity.Eating)
             {
                 RequireSave(pawn.LifeTargetId.HasValue&&resourcesById.TryGetValue(pawn.LifeTargetId.Value,out var resource));
-                var food=resourcesById[pawn.LifeTargetId.Value];RequireSave(food.Kind!=ResourceKind.Wood);RequireSave(pawn.ActionDuration==FoodDuration(food)&&pawn.ActionProgress<pawn.ActionDuration);
+                var food=resourcesById[pawn.LifeTargetId.Value];RequireSave(food.Kind==ResourceKind.Meal||food.Kind==ResourceKind.Ingredients);RequireSave(pawn.ActionDuration==FoodDuration(food)&&pawn.ActionProgress<pawn.ActionDuration);
                 if(pawn.LifeActivity==LifeActivity.Eating)RequireSave(pawn.Position==food.Position);
                 else RequireSave(pawn.ActionProgress==0);
             }
@@ -145,7 +158,8 @@ namespace RimworldTweak.Simulation
             if(pawn.WorkActivity==WorkActivity.WorkingFeature)
             {
                 var id=pawn.WorkTargetId??-1;
-                if(pawn.FeatureStep==WorkStep.Cook)RequireSave(CookingOrder(id)!=null&&pawn.Position==CookingOrder(id).ServiceCell);
+                if(care)RequireSave(colonistsById.TryGetValue(id,out var patient)&&(patient==pawn||TileDistance(pawn.Position,patient.Position)==1));
+                else if(pawn.FeatureStep==WorkStep.Cook)RequireSave(CookingOrder(id)!=null&&pawn.Position==CookingOrder(id).ServiceCell);
                 else if(pawn.FeatureStep==WorkStep.Sow||pawn.FeatureStep==WorkStep.Harvest)RequireSave(Crop(id)!=null&&pawn.Position==Crop(id).Position);
                 else {var site=pawn.FeatureStep==WorkStep.Construct?Blueprint(id)?.Position:Building(id)?.Position;RequireSave(site.HasValue&&Math.Abs(site.Value.X-pawn.Position.X)+Math.Abs(site.Value.Y-pawn.Position.Y)==1);}
             }
@@ -182,6 +196,14 @@ namespace RimworldTweak.Simulation
                 held[pawn.Id]=held.TryGetValue(pawn.Id,out var count)?count+1:1;
                 RequireSave(bed.IsOccupied==(pawn.LifeActivity==LifeActivity.SleepingInBed));
             }
+            foreach(var patient in Colonists)
+                if(patient.TreatedBy is int workerId)
+                {
+                    RequireSave(colonistsById.TryGetValue(workerId,out var worker)&&worker.FeatureStep==WorkStep.Care&&
+                        worker.PendingDeliveryTargetId==patient.Id&&patient.PatientClaim.Matches(workerId,worker.ActionId)&&
+                        (patient==worker||!patient.IsWorking&&!patient.IsLifeBusy&&patient.Status!=MovementStatus.Moving));
+                    if(worker.WorkTargetId==patient.Id) held.Add(workerId,1);
+                }
             foreach(var pawn in Colonists)
             {
                 ValidatePawnStage(pawn);

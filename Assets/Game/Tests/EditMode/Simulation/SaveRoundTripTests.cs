@@ -171,8 +171,8 @@ namespace RimworldTweak.Tests.EditMode
             var s = new SimulationSession(Scenario());Only(s.World,WorkCategory.Build);s.World.PlaceBlueprint(BuildingKind.Bed,P(4,1));
             Until(s,()=>s.World.Colonists[0].CargoAmount>0);var delivery=Restore(s);Equivalent(s,delivery,15);
             Until(s,()=>s.World.Blueprints[0].Progress>=7);var building=Restore(s);Equivalent(s,building,110);
-            var built=s.World.Buildings.Single(b=>b.Exists); Assert.That(built.Kind,Is.EqualTo(BuildingKind.Bed));
-            s.World.SetDemolition(built.Id,true);Until(s,()=>s.World.Buildings[0].DemolitionProgress==29);
+            var built=s.World.Buildings.Single(b=>b.Exists && b.Position==P(4,1)); Assert.That(built.Kind,Is.EqualTo(BuildingKind.Bed));
+            s.World.SetDemolition(built.Id,true);Until(s,()=>built.DemolitionProgress==29);
             var demolition=Restore(s);Equivalent(s,demolition,2);
             Assert.That(demolition.World.ConstructionConsumedWood,Is.EqualTo(10));Assert.That(demolition.World.DemolitionReturnedWood,Is.EqualTo(10));
             Assert.That(demolition.World.Beds.Single(b=>b.Id==built.Id).Exists,Is.False);

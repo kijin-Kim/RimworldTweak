@@ -55,6 +55,7 @@ namespace RimworldTweak.Simulation
                 case WorkCategory.Haul: return "운반";
                 case WorkCategory.Build: return "건설";
                 case WorkCategory.Farm: return "농사";
+                case WorkCategory.Care: return "치료";
                 case WorkCategory.Cook: return "조리";
                 default: return "작업";
             }

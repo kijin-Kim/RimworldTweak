@@ -69,11 +69,13 @@ namespace RimworldTweak.Simulation
         public bool QueueMove(int colonistId, GridPosition destination)
         {
             if (!colonistsById.TryGetValue(colonistId, out var colonist)) return Reject("InvalidColonist");
+            if (colonist.IsDowned) return Reject("ColonistDowned");
             if (colonist.IsWorking) return Reject("WorkBusy");
             if (NeedsEnabled && colonist.IsLifeBusy) return Reject("LifeBusy");
             if (!colonist.IsDrafted) return Reject("NotDrafted");
             if (!InBounds(destination)) return Reject("OutOfBounds");
             if (blockedSet.Contains(destination)) return Reject("BlockedDestination");
+            colonist.Attack.Cancel();
             moveCommands.Add(new MoveCommand(colonistId, destination));
             colonist.MarkPending(destination);
             LastCommandError = string.Empty;
@@ -92,6 +94,8 @@ namespace RimworldTweak.Simulation
         public bool SetDrafted(int colonistId, bool drafted)
         {
             if (!colonistsById.TryGetValue(colonistId, out var colonist)) return Reject("InvalidColonist");
+            if (colonist.IsDowned) return Reject("ColonistDowned");
+            if (drafted) CancelPatientTreatment(colonist);
             var wasDrafted = colonist.IsDrafted;
             colonist.IsDrafted = drafted;
             if (drafted || wasDrafted)
@@ -109,6 +113,7 @@ namespace RimworldTweak.Simulation
         public bool QueueSetBlocked(GridPosition position, bool blocked)
         {
             if (!InBounds(position)) return Reject("OutOfBounds");
+            if (blocked && IsRaidEntrance(position)) return Reject("RaidEntranceBlocked");
             if (blocked && IsOccupied(position)) return Reject("OccupiedTile");
             topologyCommands.Add(new TopologyCommand(position, blocked));
             LastCommandError = string.Empty;
@@ -128,7 +133,7 @@ namespace RimworldTweak.Simulation
         {
             foreach (var colonist in Colonists)
                 if (colonist.Position == position) return true;
-            return false;
+            return raiders.Exists(raider => raider.Position == position);
         }
 
         // Equal-cost shortest path. Queue and neighbor order make ties deterministic.
@@ -282,6 +287,7 @@ namespace RimworldTweak.Simulation
             _ = checked(Tick + count);
             for (long i = 0; i < count; i++)
             {
+                if (RaidDefeatStopsTime) break;
                 advancingTick = true;
                 try
                 {
@@ -289,7 +295,7 @@ namespace RimworldTweak.Simulation
                     ApplyLifeCommands();
                     ApplyTopologyCommands();
                     GrowCrops();
-                ReconcileCookingCycles(true);
+                    ReconcileCookingCycles(true);
                     ValidateWork();
                     if (NeedsEnabled) { ValidateLifeTargets(); UpdateNeedsAndActions(); }
                     if (NeedsEnabled) DecideLife();
@@ -299,6 +305,8 @@ namespace RimworldTweak.Simulation
                     foreach (var colonist in Colonists) colonist.AdvanceMovement(NeedsEnabled && colonist.Nutrition == 0);
                     if (NeedsEnabled) HandleLifeArrivals();
                     HandleFeatureArrivals();
+                    TickCombat();
+                    if (!RaidDefeatStopsTime) ProgressRecovery();
                     Tick++;
                 }
                 finally { advancingTick = false; }
@@ -310,7 +318,7 @@ namespace RimworldTweak.Simulation
             var changed = false;
             foreach (var command in topologyCommands)
             {
-                if (command.Blocked && IsOccupied(command.Position)) { Reject("OccupiedTile"); continue; }
+                if (command.Blocked && (IsOccupied(command.Position) || IsRaidEntrance(command.Position))) { Reject("OccupiedTile"); continue; }
                 var applied = command.Blocked ? blockedSet.Add(command.Position) : blockedSet.Remove(command.Position);
                 if (applied)
                 {
@@ -450,6 +458,18 @@ namespace RimworldTweak.Simulation
             var world = new WorldState(scenario.Width, scenario.Height, blockedTiles, colonists, resources, beds, scenario.NeedsEnabled);
             world.gatherables.AddRange(nodes);
             foreach (var id in ids) world.nextEntityId = Math.Max(world.nextEntityId, id);
+            foreach (var bed in beds)
+                world.buildings.Add(new BuildingState(bed.Id, BuildingKind.Bed, bed.Position) { InitialPlacement = true });
+            if (scenario.InitialRaidStove is GridPosition stoveCell)
+            {
+                if (!world.CanPlaceProduction(stoveCell) || !world.CanPlaceProduction(ConstructionRules.ServiceCell(stoveCell)))
+                    throw new ScenarioValidationException("InvalidRaidStove", "The trial stove and its service tile must be free.");
+                var stove = new BuildingState(world.NewId(), BuildingKind.Stove, stoveCell) { InitialPlacement = true };
+                world.buildings.Add(stove);
+                world.SetProductionBlocked(stoveCell, true);
+                world.InitializeStove(stove);
+                world.RaidTrial = true;
+            }
             return world;
         }
 

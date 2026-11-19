@@ -61,6 +61,7 @@ namespace RimworldTweak.Runtime
     public sealed class SaveRepository
     {
         public const string LegacySlotId="legacy";
+        public const string RaidLegacySlotId="legacy-raid";
         private readonly SaveFileService files;
         public string SaveDirectory {get;}
         public SaveRepository(string saveDirectory,SaveFileService files=null)
@@ -75,7 +76,7 @@ namespace RimworldTweak.Runtime
                 if(!((c>='\uAC00'&&c<='\uD7A3')||(c>='\u3131'&&c<='\u3163')||(c>='\u0020'&&c<='\u007E')))return false;
             error=string.Empty;return true;
         }
-        private string SlotPath(string id) => Path.Combine(SaveDirectory,id==LegacySlotId?"settlement-v1.json":id+".save.json");
+        private string SlotPath(string id) => Path.Combine(SaveDirectory,id==LegacySlotId?"settlement-v1.json":id==RaidLegacySlotId?"settlement-v2.json":id+".save.json");
         private static string Validate(SaveEnvelope value,string expectedId)
         {
             if(value==null)return "SaveInvalidData";
@@ -110,12 +111,13 @@ namespace RimworldTweak.Runtime
                 // A copied file must not silently shadow the canonical slot.
                 foreach(var group in entries.Where(x=>IsSlotId(x.DeclaredSlotId)).GroupBy(x=>x.DeclaredSlotId).Where(x=>x.Count()>1))
                     foreach(var item in group)item.ErrorCode="SaveDuplicateSlot";
-                if(File.Exists(SlotPath(LegacySlotId)))
+                foreach(var legacyId in new[]{LegacySlotId,RaidLegacySlotId})
                 {
-                    var loaded=files.Load(SlotPath(LegacySlotId));var error=loaded.ErrorCode;
+                    if(!File.Exists(SlotPath(legacyId))) continue;
+                    var loaded=files.Load(SlotPath(legacyId));var error=loaded.ErrorCode;
                     if(loaded.Success&&!SimulationSession.TryRestoreSave(loaded.Data,out _,out error))loaded=new SaveLoadResult(false,errorCode:error);
-                    entries.Add(new SaveSlotInfo {SlotId=LegacySlotId,DisplayName="기존 저장",IsLegacy=true,ErrorCode=loaded.Success?string.Empty:error,
-                        SavedAtUtc=File.GetLastWriteTimeUtc(SlotPath(LegacySlotId)),Tick=loaded.Success?loaded.Data.World.Tick:0,
+                    entries.Add(new SaveSlotInfo {SlotId=legacyId,DisplayName=legacyId==LegacySlotId?"기존 저장":"기존 습격 저장",IsLegacy=true,ErrorCode=loaded.Success?string.Empty:error,
+                        SavedAtUtc=File.GetLastWriteTimeUtc(SlotPath(legacyId)),Tick=loaded.Success?loaded.Data.World.Tick:0,
                         ColonistCount=loaded.Success?loaded.Data.World.Colonists.Count:0});
                 }
                 return new SaveSlotListResult(true,string.Empty,entries.OrderByDescending(x=>x.SavedAtUtc).ThenBy(x=>x.SlotId,StringComparer.Ordinal).ToList().AsReadOnly());
@@ -149,12 +151,12 @@ namespace RimworldTweak.Runtime
         }
         public SaveSlotLoadResult Load(string slotId)
         {
-            if(slotId!=LegacySlotId&&!IsSlotId(slotId))return new SaveSlotLoadResult(false,"SaveInvalidSlot");
+            if(slotId!=LegacySlotId&&slotId!=RaidLegacySlotId&&!IsSlotId(slotId))return new SaveSlotLoadResult(false,"SaveInvalidSlot");
             var list=ListSlots();if(!list.Success)return new SaveSlotLoadResult(false,list.ErrorCode);
             var slot=list.Slots.FirstOrDefault(x=>x.SlotId==slotId);
             if(slot==null)return new SaveSlotLoadResult(false,"SaveNotFound");
             if(!slot.IsValid)return new SaveSlotLoadResult(false,slot.ErrorCode);
-            if(slotId==LegacySlotId)
+            if(slotId==LegacySlotId||slotId==RaidLegacySlotId)
             {
                 var old=files.Load(SlotPath(slotId));
                 if(!old.Success)return new SaveSlotLoadResult(false,old.ErrorCode);

@@ -99,6 +99,8 @@ namespace RimworldTweak.Simulation
         }
         private void ClearWork(ColonistState pawn)
         {
+            foreach (var patient in Colonists) patient.PatientClaim.Release(pawn.Id, pawn.ActionId);
+            pawn.CareProgress = 0;
             ClearProductionWork(pawn);
             foreach (var node in gatherables) node.Claim.Release(pawn.Id, pawn.ActionId);
             foreach (var zone in storageZones) foreach (var slot in zone.Slots) slot.Claim.Release(pawn.Id, pawn.ActionId);
@@ -150,7 +152,7 @@ namespace RimworldTweak.Simulation
         {
             if (pawn.CargoKind == ResourceKind.Meal && pawn.CargoAmount >= 1 || pawn.CargoKind == ResourceKind.Ingredients && pawn.CargoAmount >= 4) return true;
             foreach (var item in Resources)
-                if (item.Exists && item.Kind != ResourceKind.Wood && item.Amount >= FoodAmount(item) &&
+                if (item.Exists && (item.Kind == ResourceKind.Meal || item.Kind == ResourceKind.Ingredients) && item.Amount >= FoodAmount(item) &&
                     (!item.OwnerId.HasValue || item.Claim.Matches(pawn.Id, pawn.ActionId)) && FindPath(pawn.Position, item.Position) != null) return true;
             return false;
         }
@@ -178,7 +180,7 @@ namespace RimworldTweak.Simulation
         }
         private void DecideWork()
         {
-            if (gatherables.Count == 0 && storageZones.Count == 0 && blueprints.Count == 0 && buildings.Count == 0 && crops.Count == 0) return;
+            if (gatherables.Count == 0 && storageZones.Count == 0 && blueprints.Count == 0 && buildings.Count == 0 && crops.Count == 0 && !System.Linq.Enumerable.Any(Colonists, pawn => pawn.Health < 100)) return;
             foreach (var pawn in Colonists)
             {
                 if (!CanSelectWork(pawn)) continue;
@@ -206,7 +208,7 @@ namespace RimworldTweak.Simulation
         {
             foreach (var pawn in Colonists)
             {
-                if (!pawn.IsWorking || Tick < pawn.WorkReadyTick) continue;
+                if (!pawn.IsWorking || IsRecovery(pawn.FeatureStep) || Tick < pawn.WorkReadyTick) continue;
                 if (pawn.FeatureStep.HasValue) { ProgressProductionWork(pawn); continue; }
                 switch (pawn.WorkActivity)
                 {

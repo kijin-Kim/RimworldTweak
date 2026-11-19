@@ -55,10 +55,10 @@ namespace RimworldTweak.Presentation
                 if (objectIds.Count > 0) SelectedObjectId = objectIds[(objectIds.IndexOf(SelectedObjectId ?? -1) + 1) % objectIds.Count];
                 RefreshNow();
             });
-            for (var i = 0; i < 3; i++)
+            for (var i = 0; i < 4; i++)
             {
                 var kind = (ResourceKind)i;
-                var button = MakeButton(kind.ToString(), workPanel, 28 + i * 166, 52, i == 2 ? 168 : 150);
+                var button = MakeButton(kind.ToString(), workPanel, 28 + i * 126, 52, 120);
                 button.onClick.AddListener(() => ToggleStorageFilter(kind)); filterButtons.Add(button);
             }
             StockTotalsText = Label("Stock totals", workPanel, "", 28, 2, 500, 48, 12, Ink);
@@ -167,7 +167,7 @@ namespace RimworldTweak.Presentation
                 filterButtons[i].GetComponentInChildren<Text>().text = (selectedZone == null ? "-- " : selectedZone.Allows(kind) ? "[x] " : "[ ] ") + ResourceName(kind);
             }
             var totals = new StringBuilder();
-            foreach (var kind in new[] { ResourceKind.Wood, ResourceKind.Ingredients, ResourceKind.Meal })
+            foreach (var kind in new[] { ResourceKind.Wood, ResourceKind.Ingredients, ResourceKind.Meal, ResourceKind.Medicine })
             {
                 var loose = world.ResourceTotal(kind, false); var stored = world.ResourceTotal(kind, true); var cargo = world.CargoTotal(kind);
                 var onSite = kind == ResourceKind.Wood ? world.ConstructionWood : kind == ResourceKind.Ingredients ? world.CookingInputTotal : 0;

@@ -36,7 +36,7 @@ namespace RimworldTweak.Tests.EditMode
         public void DefaultsAndSnapshotsAreIndependentAndInvalidCommandsAreAtomic()
         {
             var w = World(two: true); var first = Policy(w); var second = Policy(w, 2); var snapshot = first.CreateSnapshot();
-            foreach (WorkCategory kind in Enum.GetValues(typeof(WorkCategory))) Assert.That(first.GetPriority(kind), Is.EqualTo(kind == WorkCategory.Haul ? 1 : 2));
+            foreach (WorkCategory kind in Enum.GetValues(typeof(WorkCategory))) Assert.That(first.GetPriority(kind), Is.EqualTo(kind == WorkCategory.Haul || kind == WorkCategory.Care ? 1 : 2));
             Assert.That(w.SetWorkPriority(1, WorkCategory.Farm, 0), Is.True);
             Assert.That(first.GetPriority(WorkCategory.Farm), Is.Zero); Assert.That(second.GetPriority(WorkCategory.Farm), Is.EqualTo(2));
             Assert.That(snapshot.GetPriority(WorkCategory.Farm), Is.EqualTo(2));

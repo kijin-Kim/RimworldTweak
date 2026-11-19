@@ -4,7 +4,8 @@ namespace RimworldTweak.Simulation
     {
         Wood,
         Ingredients,
-        Meal
+        Meal,
+        Medicine
     }
 
     public sealed class ColonistSeed

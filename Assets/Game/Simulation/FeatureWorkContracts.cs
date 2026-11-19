@@ -5,8 +5,8 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("RimworldTweak.Tests.EditMode")]
 namespace RimworldTweak.Simulation
 {
-    public enum WorkCategory { Gather, Haul, Build, Farm, Cook }
-    public enum WorkStep { Gather, HaulToStorage, DeliverBuild, Construct, Demolish, Sow, Harvest, DeliverCook, Cook }
+    public enum WorkCategory { Gather, Haul, Build, Farm, Cook, Care }
+    public enum WorkStep { Gather, HaulToStorage, DeliverBuild, Construct, Demolish, Sow, Harvest, DeliverCook, Cook, Care, DeliverRepair, Repair }
     public enum WorkReasonCode { None, Disabled, Drafted, NeedsPriority, NoDesignation, MissingMaterials, NoWorker,
         Unreachable, TargetReserved, OutputFull, TargetReached, AwaitingClearance, InvalidTarget,
         NoAllowedStorage, DestinationReserved, StorageFull }

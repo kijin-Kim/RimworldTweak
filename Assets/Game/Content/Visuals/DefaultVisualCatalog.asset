@@ -579,6 +579,13 @@ MonoBehaviour:
     isFinalArt: 0
     source: 'Original settlement art 2026-11-18, source exec-7626dd5a-912b-4800-8031-c0bc20a5bee5.png:
       meal'
+  - key: item.medicine
+    sprite: {fileID: 21300000, guid: f34e4838b0c44b238338c31f341ca5be, type: 3}
+    worldSize: {x: 1, y: 1}
+    groundAnchorNormalized: {x: 0.5, y: 0.5}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    isFinalArt: 1
+    source: Original code-native geometry / BuildArtAssets
   - key: icon.draft
     sprite: {fileID: 21300000, guid: 432609cf3eec2d14cac834fb4ecfa162, type: 3}
     worldSize: {x: 1, y: 1}

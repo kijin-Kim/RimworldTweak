@@ -119,5 +119,6 @@
   "RimworldTweak.Tests.PlayMode.WorldMapViewTests.ConstructionFacesItsTargetFromEverySide",
   "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.FarmNoticeGroupsAffectedCellsAndClearsAfterPolicyChange",
   "RimworldTweak.Tests.PlayMode.WorldMapViewTests.ModularPawnsKeepTheirLayersTogetherAcrossDirectionsAndCatalogChanges",
-  "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.PawnMovesBetweenSimulationTicksAndFreezesAtItsRenderedPosition"
+  "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.PawnMovesBetweenSimulationTicksAndFreezesAtItsRenderedPosition",
+  "RimworldTweak.Tests.PlayMode.RaidIntegrationTests.DeveloperRaidStartsInPlaceAndAcceptsPausedOrders"
 ]

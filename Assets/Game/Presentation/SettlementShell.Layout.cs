@@ -268,8 +268,9 @@ namespace RimworldTweak.Presentation
             if (size == layoutSize && scale == layoutScale) return;
             layoutSize = size;
             layoutScale = scale;
-            Place(resources, 8, 8, 136, 78);
-            Place(resourceTooltip, 8, 90, 272, 88);
+            var resourceHeight=resourceTotals.Count*26;
+            Place(resources, 8, 8, 136, resourceHeight);
+            Place(resourceTooltip, 8, 12+resourceHeight, 272, 88);
             LayoutPortraits(width);
             Place(timeControls, width - 184, height - 106, 176, 62);
             var alertHeight = Mathf.Clamp(height - 204, 72, 180);
@@ -372,6 +373,7 @@ namespace RimworldTweak.Presentation
         public void OpenTab(string tab)
         {
             if (tab == "development" && !developmentUi) return;
+            if (Runner != null && Runner.DeveloperMode != (tab == "development")) Runner.ToggleDeveloperMode();
             var wasArchitect = openTab == "architect";
             architectCategory = tab=="build" ? "structure" : tab=="zone" ? "zones" : null;
             openTab = tab=="build" || tab=="zone" ? "architect" : tab;
@@ -432,6 +434,14 @@ namespace RimworldTweak.Presentation
                     Runner.ResetWorld();
                     Refresh();
                 });
+                var raid = RowButton(row, "dev.raid", "일반 습격 발생", () =>
+                {
+                    var started = Runner.StartDebugRaid();
+                    Report(started, "동쪽에서 일반 습격이 시작됐어.");
+                    if (started) Map.Focus(Runner.Session.World.RaidEntrance(0));
+                });
+                panelRefreshers.Add(() => raid.interactable = Runner.DeveloperMode &&
+                    (Runner.Session.World.RaidPhase == RaidPhase.Idle || Runner.Session.World.RaidPhase == RaidPhase.Resolved));
                 EqualizeWorkCells(row);
             }
         }
@@ -698,7 +708,8 @@ namespace RimworldTweak.Presentation
             if (pawn != null)
             {
                 SetSelectionSummary(() => "정착민 " + pawn.Id + (pawn.IsDrafted ? " · 소집" : "") +
-                    "\n행동: " + PawnAction(pawn) + "\n운반: " + (pawn.CargoAmount > 0
+                    " · 체력 " + pawn.Health + "/100" + (pawn.IsDowned ? " · 전투 불능" : "") +
+                    (pawn.Attack.TargetId.HasValue ? " · 표적 #" + pawn.Attack.TargetId : "") + "\n행동: " + PawnAction(pawn) + "\n운반: " + (pawn.CargoAmount > 0
                         ? SettlementView.ResourceName(pawn.CargoKind) + " " + pawn.CargoAmount : "없음") +
                     "\n목적지: " + (pawn.Destination?.ToString() ?? "없음"));
                 BoundLabel(inspectContent, () => "욕구\n포만도 " + pawn.Nutrition / 100 + "   휴식 " + pawn.Rest / 100, detailRefreshers);
@@ -715,6 +726,13 @@ namespace RimworldTweak.Presentation
 
         private void BuildObjectInspector(WorldState world, int id, GridPosition? hitCell)
         {
+            var enemy=world.Raiders.FirstOrDefault(x=>x.Id==id);
+            if(enemy!=null)
+            {
+                SetSelectionSummary(()=>"습격자 #"+id+" · 체력 "+enemy.Health+"\n표적 정착민 #"+enemy.Attack.TargetId);
+                AddSelectionNavigation(()=>enemy.Position);
+                return;
+            }
             var building = world.Buildings.FirstOrDefault(x => x.Id == id && x.Exists);
             var bed = world.Beds.FirstOrDefault(x => x.Id == id && x.Exists);
             var blueprint = world.Blueprints.FirstOrDefault(x => x.Id == id && x.Exists);
@@ -732,6 +750,9 @@ namespace RimworldTweak.Presentation
                     (building.Kind == BuildingKind.Stove ? "\n" + WorkDiagnostics.GetReasonText(world.GetWorkDiagnostic(WorkCategory.Cook,id)) : ""));
                 CommandTile("demolish", () => building.DemolitionDesignated ? "철거 취소" : "철거 지정",
                     () => Runner.SetDemolition(id, !building.DemolitionDesignated));
+                if (building.Durability < 100)
+                    CommandTile("repair", () => building.RepairDesignated ? "수리 취소" : "수리 지정",
+                        () => Runner.SetRepair(id, !building.RepairDesignated));
                 if (building.Kind == BuildingKind.Stove)
                 {
                     AddDetailToggle("조리 주문");

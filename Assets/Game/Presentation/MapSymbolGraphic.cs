@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 namespace RimworldTweak.Presentation
 {
-    public enum MapSymbol { Person, Tree, Plant, Meal, Ingredients, Wood, Bed, Wall, Door, Stove, Crop }
+    public enum MapSymbol { Person, Tree, Plant, Meal, Ingredients, Wood, Bed, Wall, Door, Stove, Crop, Medicine }
 
     /// <summary>Resolution independent, distinct silhouettes; no downloaded art or font icons.</summary>
     public sealed class MapSymbolGraphic : MaskableGraphic
@@ -21,6 +21,11 @@ namespace RimworldTweak.Presentation
             var light = Color.Lerp(color, Color.white, 0.4f);
             switch (Symbol)
             {
+                case MapSymbol.Medicine:
+                    Quad(mesh, .18f, .18f, .82f, .82f, color);
+                    Quad(mesh, .43f, .28f, .57f, .72f, Color.white);
+                    Quad(mesh, .28f, .43f, .72f, .57f, Color.white);
+                    break;
                 case MapSymbol.Wall:
                     Quad(mesh,.05f,.05f,.95f,.95f,dark);Quad(mesh,.10f,.55f,.48f,.90f,color);Quad(mesh,.52f,.55f,.90f,.90f,light);
                     Quad(mesh,.10f,.10f,.30f,.50f,light);Quad(mesh,.34f,.10f,.70f,.50f,color);Quad(mesh,.74f,.10f,.90f,.50f,light);break;

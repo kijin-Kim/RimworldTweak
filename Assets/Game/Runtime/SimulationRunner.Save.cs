@@ -9,7 +9,7 @@ namespace RimworldTweak.Runtime
         private readonly SaveFileService saveFiles=new SaveFileService();
         private string savePath;
         private bool skipNextAutomaticFrame;
-        public string SavePath {get=>savePath??Path.Combine(Application.persistentDataPath,"Saves","settlement-v1.json");set=>savePath=value;}
+        public string SavePath {get=>savePath??Path.Combine(Application.persistentDataPath,"Saves","settlement-v2.json");set=>savePath=value;}
         public string SaveMessage {get;private set;}=string.Empty;
         public bool SaveBusy {get;private set;}
         public bool IsLoadConfirmationOpen {get;private set;}

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using RimworldTweak.Simulation;
 using UnityEngine;
 using UnityEngine.UI;
@@ -26,7 +27,7 @@ namespace RimworldTweak.Presentation
             return palette[(id - 1) % palette.Length];
         }
         public static string PawnName(int id) => id + " · 정착민";
-        public static string ResourceName(ResourceKind kind) => kind == ResourceKind.Wood ? "목재" : kind == ResourceKind.Meal ? "식사" : "식재료";
+        public static string ResourceName(ResourceKind kind) => kind == ResourceKind.Medicine ? "의약품" : kind == ResourceKind.Wood ? "목재" : kind == ResourceKind.Meal ? "식사" : "식재료";
         private static void Layout(RectTransform rect, Transform parent, float x, float y, float width, float height)
         {
             rect.SetParent(parent, false); rect.anchorMin = rect.anchorMax = rect.pivot = Vector2.zero;
@@ -62,8 +63,8 @@ namespace RimworldTweak.Presentation
             PlaceButton(DeleteStorageButton,workPanel,190,188,160,"저장 구역 삭제");
             PlaceButton(NextObjectButton,workPanel,360,188,160,"다음 오브젝트");
             for(var i=0;i<filterButtons.Count;i++) PlaceButton(filterButtons[i],workPanel,20+i*170,140,160,"");
-            Layout(StockTotalsText.rectTransform,workPanel,20,58,668,76); StockTotalsText.fontSize=16;
-            Label("Tools help",workPanel,"R 소집/해제   우클릭 이동   Space 정지   Esc 도구 취소",20,12,668,30,14,Muted);
+            Layout(StockTotalsText.rectTransform,workPanel,20,49,668,86); StockTotalsText.fontSize=16;
+            Label("Tools help",workPanel,"R 소집/해제   우클릭 이동   Space 정지   Esc 도구 취소",20,12,514,30,14,Muted);
 
             inspectionPanel=Panel("Selection inspector",uiRoot.transform,32,20,1216,228,new Color(.08f,.12f,.14f));
             inspectionPanel.GetComponent<Image>().raycastTarget=true;
@@ -114,7 +115,7 @@ namespace RimworldTweak.Presentation
             }
             else
             {
-                SelectionText.text=PawnName(pawn.Id)+(pawn.IsDrafted ? "  [소집]" : ""); SelectionText.color=PawnColor(pawn.Id);
+                SelectionText.text=PawnName(pawn.Id)+(pawn.IsDowned ? "  [전투 불능]" : pawn.IsDrafted ? "  [소집]" : ""); SelectionText.color=PawnColor(pawn.Id);
                 NeedsText.text="포만도 "+NeedValue(pawn.Nutrition)+"   휴식 "+NeedValue(pawn.Rest);
                 nutritionFill.rectTransform.sizeDelta=new Vector2(270f*pawn.Nutrition/10000,12);
                 restFill.rectTransform.sizeDelta=new Vector2(270f*pawn.Rest/10000,12);
@@ -164,7 +165,7 @@ namespace RimworldTweak.Presentation
                 var cell=480f/Mathf.Max(world.Width,world.Height); var rank=0;
                 foreach(var other in world.Colonists) if(other.Position==c.Position && other.Id<c.Id) rank++;
                 label.rectTransform.anchoredPosition=new Vector2(Mathf.Clamp((c.Position.X+.5f)*cell-52,0,board.rect.width-104),Mathf.Max(0,(c.Position.Y+1)*cell-22-rank*18));
-                label.text=PawnName(c.Id)+(c.IsDrafted?" [R]":""); label.color=PawnColor(c.Id); label.gameObject.SetActive(true); label.transform.SetAsLastSibling();
+                label.text=PawnName(c.Id)+(c.IsDowned?" [전투 불능]":c.IsDrafted?" [R]":""); label.color=PawnColor(c.Id); label.gameObject.SetActive(true); label.transform.SetAsLastSibling();
             }
             foreach(var entry in pawnNames)
             { var exists=false; foreach(var c in world.Colonists) if(c.Id==entry.Key) exists=true; if(!exists) entry.Value.gameObject.SetActive(false); }
@@ -236,6 +237,18 @@ namespace RimworldTweak.Presentation
         }
         private static string CurrentAction(ColonistState pawn)
         {
+            if (pawn.IsDowned) return "전투 불능";
+            if (pawn.FeatureStep == WorkStep.Care)
+            {
+                if (pawn.WorkActivity == WorkActivity.GoingToBuildPickup) return "의약품으로 이동 중";
+                if (pawn.WorkActivity == WorkActivity.PickingUpBuild) return "의약품 집기";
+                return pawn.WorkActivity == WorkActivity.WorkingFeature ? "치료 중" : "환자에게 이동 중";
+            }
+            if (pawn.TreatedBy.HasValue) return "치료 대기";
+            if (pawn.FeatureStep == WorkStep.Repair)
+                return pawn.WorkActivity == WorkActivity.WorkingFeature ? "시설 수리 중" : "고장 시설로 이동 중";
+            if (pawn.FeatureStep == WorkStep.DeliverRepair)
+                return pawn.CargoAmount > 0 ? "수리 목재 반입 중" : "수리 목재 확보 중";
             if(pawn.IsDrafted) return pawn.Status==MovementStatus.Moving?"소집 · 지정 위치로 이동 중":"소집 · 플레이어 명령 대기";
             switch(pawn.LifeActivity)
             {
@@ -289,7 +302,8 @@ namespace RimworldTweak.Presentation
                 string caption=null; int? owner=null;
                 if(marker.Kind==ViewKind.Colonist)
                 {
-                    var person=SymbolOn(rect,MapSymbol.Person,PawnColor(marker.EntityId));
+                    var actor = world.Colonists.First(c => c.Id == marker.EntityId);
+                    var person=SymbolOn(rect,MapSymbol.Person,actor.IsDowned ? new Color(.48f,.49f,.52f) : PawnColor(marker.EntityId));
                     var shares=false;
                     foreach(var r in world.Resources) if(r.Exists&&r.Amount>0&&r.Position==marker.Position) shares=true;
                     foreach(var n in world.Gatherables) if(!n.Depleted&&n.Position==marker.Position) shares=true;
@@ -309,7 +323,7 @@ namespace RimworldTweak.Presentation
                     if(item==null || !item.Exists || item.Amount<=0) continue;
                     if(!seenResources.Add(item.Position)) { marker.gameObject.SetActive(false); continue; }
                     marker.gameObject.SetActive(true);
-                    SymbolOn(rect,item.Kind==ResourceKind.Wood?MapSymbol.Wood:item.Kind==ResourceKind.Meal?MapSymbol.Meal:MapSymbol.Ingredients,ResourceColor(item.Kind));
+                    SymbolOn(rect,item.Kind==ResourceKind.Medicine?MapSymbol.Medicine:item.Kind==ResourceKind.Wood?MapSymbol.Wood:item.Kind==ResourceKind.Meal?MapSymbol.Meal:MapSymbol.Ingredients,ResourceColor(item.Kind));
                     caption=ResourceName(item.Kind)+" ×"+item.Amount; owner=item.OwnerId;
                     var extra=0; foreach(var r in world.Resources) if(r.Exists&&r.Amount>0&&r.Position==item.Position&&r.Id!=item.Id) extra++;
                     if(extra>0) caption+=" +"+extra+"묶음";

@@ -13,6 +13,7 @@ namespace RimworldTweak.Simulation
             if(pawn.IsCookingDelivery)return WorkCategory.Cook;
             if (pawn.FeatureStep == WorkStep.DeliverCook || pawn.FeatureStep == WorkStep.Cook) return WorkCategory.Cook;
             if (pawn.FeatureStep == WorkStep.Sow || pawn.FeatureStep == WorkStep.Harvest) return WorkCategory.Farm;
+            if (pawn.FeatureStep == WorkStep.Care) return WorkCategory.Care;
             if (pawn.FeatureStep.HasValue) return WorkCategory.Build;
             return pawn.WorkActivity == WorkActivity.GoingToGather || pawn.WorkActivity == WorkActivity.Gathering ? WorkCategory.Gather : WorkCategory.Haul;
         }
@@ -95,7 +96,7 @@ namespace RimworldTweak.Simulation
             return false;
         }
         private bool AnyWorkerReaches(WorkCategory category,GridPosition target,bool adjacent)
-        {foreach(var pawn in Colonists)if(PolicyFor(pawn.Id).GetPriority(category)>0&&ReadReach(pawn.Position,target,adjacent))return true;return false;}
+        {foreach(var pawn in Colonists)if(!pawn.IsDowned&&PolicyFor(pawn.Id).GetPriority(category)>0&&ReadReach(pawn.Position,target,adjacent))return true;return false;}
         private WorkReasonCode MaterialDiagnostic(WorkCategory category,ResourceKind kind,GridPosition destination,bool adjacent)
         {
             var found=false;var reserved=false;
@@ -118,7 +119,7 @@ namespace RimworldTweak.Simulation
             return o.InputIngredients>=2?WorkReasonCode.None:MaterialDiagnostic(WorkCategory.Cook,ResourceKind.Ingredients,o.ServiceCell,false);
         }
         private readonly object workContextToken = new object();
-        private bool CanSelectWork(ColonistState pawn) => !pawn.IsDrafted && !pawn.IsLifeBusy && !pawn.IsWorking &&
+        private bool CanSelectWork(ColonistState pawn) => !pawn.IsDowned && (!pawn.PatientClaim.OwnerId.HasValue) && !pawn.IsDrafted && !pawn.IsLifeBusy && !pawn.IsWorking &&
             !pawn.HasSleepIntent && !cancelledThisTick.Contains(pawn.Id) && !pawn.HasPendingCommand &&
             pawn.Status != MovementStatus.Moving && pawn.Status != MovementStatus.Blocked;
 
@@ -157,6 +158,7 @@ namespace RimworldTweak.Simulation
             candidates.AddRange(ConstructionRules.GetCandidates(context, pawn.Id));
             candidates.AddRange(FarmingRules.GetCandidates(context, pawn.Id));
             candidates.AddRange(CookingRules.GetCandidates(context, pawn.Id));
+            CollectRecoveryCandidates(context, pawn, candidates);
             candidates.Sort((a, b) => {
                 var result = a.PathLength.CompareTo(b.PathLength);
                 if (result == 0) result = a.RequestOrder.CompareTo(b.RequestOrder);
@@ -192,7 +194,7 @@ namespace RimworldTweak.Simulation
                 source.Reserve(pawn.Id, pawn.ActionId, Math.Min(10, source.Amount));
                 pawn.WorkActivity = WorkActivity.GoingToPickup;
             }
-            else return StartProductionWork(pawn, candidate);
+            else return IsRecovery(candidate.Step) ? StartRecovery(pawn, candidate) : StartProductionWork(pawn, candidate);
             pawn.WorkTargetId = candidate.TargetId; pawn.SetRoute(candidate.WorkCell, candidate.Route);
             pawn.WorkReason = string.Empty; availabilityRevision++; return true;
         }

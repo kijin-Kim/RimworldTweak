@@ -1,7 +1,7 @@
 #requires -Version 7.0
 [CmdletBinding()]
 param(
-    [ValidateSet('Capture','Restart','WorkFeedback','MapPerformance','SettlementArt')][string] $Action='Capture',
+    [ValidateSet('Capture','Restart','WorkFeedback','MapPerformance','SettlementArt','RaidIntegration')][string] $Action='Capture',
     [int] $Width=1920,
     [int] $Height=1080,
     [ValidateSet(100,125,150)][int] $Scale=100
@@ -19,6 +19,7 @@ try {
     [IO.Directory]::CreateDirectory($run)|Out-Null
     $storage=Join-Path $run 'storage'
     $modes=switch($Action){
+        'RaidIntegration' {'raid-integration'}
         'Restart' {@('save','load')}
         'WorkFeedback' {'work-feedback'}
         'SettlementArt' {'settlement-art'}
@@ -54,7 +55,7 @@ try {
             $process.Dispose()
             continue
         }
-        $diagnostic=$mode -in @('work-feedback','settlement-art')
+        $diagnostic=$mode -in @('work-feedback','settlement-art','raid-integration')
         $imageFilter=if($diagnostic){'*-offscreen.png'}else{'*.png'}
         $images=@(Get-ChildItem -LiteralPath $output -Filter $imageFilter)
         if($images.Count -eq 0){throw 'No screenshot evidence.'}
@@ -67,6 +68,7 @@ try {
             'capture' {@('default','sample-five','stove','work','building','save','confirmation','error')}
             'work-feedback' {@('cooking-start','cooking-half','cooking-done','neighbor-work','distant-selected-work','construction-route')}
             'settlement-art' {@('settlement-default','settlement-details','settlement-distant','settlement-cooking','settlement-harvest')}
+            'raid-integration' {@('raid-start','raid-result')}
             'save' {'saved'}
             'load' {'restored'}
         }

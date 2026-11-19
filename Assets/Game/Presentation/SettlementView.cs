@@ -86,7 +86,7 @@ namespace RimworldTweak.Presentation
                 case Key.Period:
                     if (!Runner.IsPaused) return false;
                     Runner.StepOnce(); break;
-                case Key.Escape: if (CancelWorkTool()) return true; ClearSelection(); ClearObjectSelection(); return true;
+                case Key.Escape: if (choosingAttackTarget) { choosingAttackTarget = false; RefreshNow(); return true; } if (CancelWorkTool()) return true; ClearSelection(); ClearObjectSelection(); return true;
                 case Key.R: return ToggleDraftSelected();
                 default: return false;
             }
@@ -135,6 +135,7 @@ namespace RimworldTweak.Presentation
             var world = Runner.Session.World;
             if (position.X < 0 || position.Y < 0 || position.X >= world.Width || position.Y >= world.Height) return false;
             if (TextInputFocused()) return false;
+            if (TryHandleAttackClick(world, position, rightButton)) return true;
             if (HandleWorkToolClick(position, rightButton, out var handled)) return handled;
             if (rightButton) return MoveSelected(position);
             SelectWorldObject(position);
@@ -169,6 +170,7 @@ namespace RimworldTweak.Presentation
             if (!ReferenceEquals(displayedWorld, world))
             {
                 SelectedColonistId = null;
+                choosingAttackTarget = false;
                 ResetWorkView(world);
                 DrawWorld(world);
                 EnsureSelectionUI(world);
@@ -193,6 +195,7 @@ namespace RimworldTweak.Presentation
             RefreshProductionUI(world);
             RefreshPlanningUI(world);
             RefreshInspection(world);
+            RefreshCombatUI(world);
             RefreshSaveUI();
         }
 
@@ -253,6 +256,7 @@ namespace RimworldTweak.Presentation
             BuildInspectionLayout();
             BuildProductionUI();
             BuildPlanningUI();
+            BuildCombatUI();
             BuildSaveUI();
         }
 
@@ -352,6 +356,8 @@ namespace RimworldTweak.Presentation
         {
             switch (code)
             {
+                case "RaidEntranceBlocked": return "습격 진입 칸이 막혀 있습니다.";
+                case "RaidNotReady": return "진행 중인 습격 또는 전투 가능한 정착민을 확인하세요.";
                 case "NotDrafted": return "R로 소집한 뒤 이동할 수 있습니다.";
                 case "InvalidColonist": return "No valid colonist selected.";
                 case "OutOfBounds": return "Outside the map. Previous order kept.";
@@ -453,7 +459,7 @@ namespace RimworldTweak.Presentation
             summary.Append("\nWOOD ").Append(wood).Append("    MEALS ").Append(meals).Append(" / ").Append(mealReserved).Append(" / ").Append(mealOpen);
             summary.Append("\nINGREDIENTS ").Append(ingredients).Append(" / ").Append(ingredientReserved).Append(" / ").Append(ingredientOpen);
             foreach (var resource in world.Resources)
-                if (resource.Exists && resource.Kind != ResourceKind.Wood)
+                if (resource.Exists && (resource.Kind == ResourceKind.Meal || resource.Kind == ResourceKind.Ingredients))
                     summary.Append("\nFOOD ").Append(resource.Id).Append(!resource.OwnerId.HasValue ? " FREE" : (resource.IsInUse ? " USING C" : " APPROACH C") + resource.OwnerId.Value);
             foreach (var bed in world.Beds)
             {
@@ -544,7 +550,7 @@ namespace RimworldTweak.Presentation
 
         private static Color ResourceColor(ResourceKind kind)
         {
-            return kind == ResourceKind.Wood ? new Color(0.82f, 0.62f, 0.36f) :
+            return kind == ResourceKind.Medicine ? new Color(.65f, .83f, .96f) : kind == ResourceKind.Wood ? new Color(0.82f, 0.62f, 0.36f) :
                 kind == ResourceKind.Meal ? new Color(0.78f, 0.81f, 0.48f) : new Color(0.63f, 0.76f, 0.49f);
         }
 
