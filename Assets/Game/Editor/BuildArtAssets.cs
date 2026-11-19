@@ -58,7 +58,7 @@ namespace RimworldTweak.Editor
             AddGenerated(entries, "item.wood", "wood", new Vector2(.9f,.9f), new Vector2(.5f,.5f), productionSource);
             AddGenerated(entries, "item.ingredients", "ingredients", new Vector2(.9f,.9f), new Vector2(.5f,.5f), productionSource);
             AddGenerated(entries, "item.meal", "meal", new Vector2(.9f,.9f), new Vector2(.5f,.5f), productionSource);
-            AddStructural(entries,"item.medicine","medicine",c => { Fill(c,18,22,92,84,new Color(.14f,.52f,.47f)); Fill(c,55,39,18,50,Color.white); Fill(c,39,55,50,18,Color.white); },true);
+            AddGenerated(entries, "item.medicine", "medicine", new Vector2(.9f,.9f), new Vector2(.5f,.5f), "Original settlement medicine pouch");
             AddStructural(entries,"icon.draft","draft",c => { Line(c,30,25,98,104,8,Ink); Line(c,30,104,98,25,8,Ink); Line(c,30,25,98,104,4,new Color(.96f,.75f,.3f)); Line(c,30,104,98,25,4,new Color(.96f,.75f,.3f)); },true);
             AddStructural(entries,"icon.sleep","sleep",c => { Line(c,28,90,95,90,7,Teal); Line(c,95,90,28,35,7,Teal); Line(c,28,35,95,35,7,Teal); },true);
             AddStructural(entries,"icon.work","work",c => { Line(c,38,23,83,89,9,Wood); Fill(c,51,77,48,25,Ink); Fill(c,55,81,40,17,new Color(.75f,.77f,.70f)); },true);

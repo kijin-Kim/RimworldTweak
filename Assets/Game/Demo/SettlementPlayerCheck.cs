@@ -339,6 +339,10 @@ namespace RimworldTweak.Demo
                 }))yield break;
                 yield return null;shell.SelectPawn(runner.Session.World.Colonists[0].Id);
                 yield return Capture("weapon-equipped");
+                var medicine = runner.Session.World.Resources.First(r => r.Exists && r.Kind == ResourceKind.Medicine);
+                shell.SelectObject(medicine.Id);
+                shell.Map.Focus(medicine.Position);
+                yield return Capture("medicine-selected");
                 if(!Check(()=>{
                     var scene=new ScenarioDefinition(12,10,Array.Empty<GridPosition>(),
                         new[]{new ColonistSeed(1,new GridPosition(1,1)),new ColonistSeed(2,new GridPosition(4,2))},

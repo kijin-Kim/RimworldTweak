@@ -70,7 +70,7 @@ try {
             'work-feedback' {@('cooking-start','cooking-half','cooking-done','neighbor-work','distant-selected-work','construction-route')}
             'settlement-art' {@('settlement-default','settlement-details','settlement-distant','settlement-cooking','settlement-harvest')}
             'raid-integration' {@('raid-start','raid-result')}
-            'settlement-commands' {@('weapon-equipped','priority-work','rescue-carry','rescue-bed')}
+            'settlement-commands' {@('weapon-equipped','medicine-selected','priority-work','rescue-carry','rescue-bed')}
             'save' {'saved'}
             'load' {'restored'}
         }

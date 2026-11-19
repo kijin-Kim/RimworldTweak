@@ -61,9 +61,14 @@ namespace RimworldTweak.Tests.PlayMode
                 Assert.That(positions[i] - positions[i-1], Is.EqualTo(.032f).Within(.0001f));
             var route = mapContent.Find("Selected route").GetComponent<LineRenderer>();
             Assert.That(route.GetPosition(0), Is.EqualTo(Position(1)));
-            var groupOutline = mapContent.Find("Selected pawn 2").GetComponent<LineRenderer>();
-            var groupCenter = (groupOutline.GetPosition(0) + groupOutline.GetPosition(2)) * .5f;
-            Assert.That(Vector3.Distance(groupCenter, Position(2)), Is.LessThan(.0001f));
+            var groupOutline = mapContent.Find("Selected pawn 2").GetComponent<SpriteRenderer>();
+            Assert.That(groupOutline.enabled, Is.True);
+            var primaryOutline = mapContent.Find("Selection").GetComponent<SpriteRenderer>();
+            Assert.That(primaryOutline.enabled, Is.True);
+            Assert.That(groupOutline.sprite, Is.SameAs(primaryOutline.sprite));
+            var offset = primaryOutline.bounds.center - Position(1);
+            Assert.That(offset.y, Is.InRange(.3f, .5f));
+            Assert.That(Vector3.Distance(groupOutline.bounds.center, Position(2) + offset), Is.LessThan(.0001f));
 
             runner.SetPaused(true);
             var paused = Position(1);

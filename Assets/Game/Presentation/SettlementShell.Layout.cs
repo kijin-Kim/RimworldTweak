@@ -572,9 +572,15 @@ namespace RimworldTweak.Presentation
             Place(selectionCommands, commandX, height - 188, commandWidth, 144);
             var detailHeight = Mathf.Clamp(height - 282, 72, 360);
             Place(inspection, 8, height - 192 - detailHeight, Mathf.Min(540, width - 244), detailHeight);
-            var columns = Mathf.Clamp(Mathf.FloorToInt((commandWidth + 6) / 72), 2, 4);
+            var columns = Mathf.Max(1, Mathf.FloorToInt((commandWidth + 6) / 72));
+            var visibleIndex = 0;
             for (var index = 0; index < selectionCommands.childCount; index++)
-                Place((RectTransform)selectionCommands.GetChild(index), index % columns * 72, 144 - 66 - index / columns * 72, 66, 66);
+            {
+                var tile = (RectTransform)selectionCommands.GetChild(index);
+                if (!tile.gameObject.activeSelf) continue;
+                Place(tile, visibleIndex % columns * 72, 78 - visibleIndex / columns * 72, 66, 66);
+                visibleIndex++;
+            }
         }
 
         private Button CommandTile(string key, Func<string> caption, Action action)
@@ -716,7 +722,13 @@ namespace RimworldTweak.Presentation
                 AddDetailToggle("욕구");
                 CommandTile("draft", () => pawn.IsDrafted ? "해제 [R]" : "소집 [R]", () => Runner.ToggleDraft(pawn.Id));
                 var cancel=CommandTile("direct.cancel",()=>"지시 취소",()=>ReportDirect(Runner.CancelDirectOrder(pawn.Id),"개인 지시 취소"));
-                void UpdateCancel() => cancel.gameObject.SetActive(world.HasEquipOrder(pawn.Id)||world.HasRescueCommand(pawn.Id)||world.PriorityWorkTarget(pawn.Id).HasValue);
+                void UpdateCancel()
+                {
+                    var visible = world.HasEquipOrder(pawn.Id) || world.HasRescueCommand(pawn.Id) || world.PriorityWorkTarget(pawn.Id).HasValue;
+                    if (cancel.gameObject.activeSelf == visible) return;
+                    cancel.gameObject.SetActive(visible);
+                    LayoutSelection(canvasRoot.rect.width, canvasRoot.rect.height);
+                }
                 UpdateCancel();detailRefreshers.Add(UpdateCancel);
                 AddSelectionNavigation(() => pawn.Position);
             }

@@ -27,8 +27,12 @@ namespace RimworldTweak.Presentation
         private Transform content;
         private Tilemap ground;
         private Tile soilTile, blockedTile;
-        private LineRenderer selection, preview, route;
-        private readonly Dictionary<int,LineRenderer> pawnSelections=new Dictionary<int,LineRenderer>();
+        private LineRenderer preview, route;
+        private SpriteRenderer selection;
+        private Sprite selectionSprite;
+        private Texture2D selectionTexture;
+        private static readonly Vector2 PawnSelectionOffset = new Vector2(0, .38f);
+        private readonly Dictionary<int, SpriteRenderer> pawnSelections = new Dictionary<int, SpriteRenderer>();
         private SpriteRenderer placementGhost;
         private Material spriteMaterial;
         private Sprite fallback;
@@ -93,7 +97,8 @@ namespace RimworldTweak.Presentation
             soilTile = ScriptableObject.CreateInstance<Tile>();
             blockedTile = ScriptableObject.CreateInstance<Tile>();
             UpdateGroundVisuals();
-            selection = CreateLine("Selection", new Color(1, .86f, .3f), 32000, .045f);
+            BuildSelectionSprite();
+            selection = CreateSelection("Selection", new Color(.94f, .96f, .77f));
             preview = CreateLine("Placement preview", Color.cyan, 32001, .045f);
             var ghost = new GameObject("Building ghost", typeof(SpriteRenderer));
             ghost.layer = MapLayer;
@@ -145,7 +150,8 @@ namespace RimworldTweak.Presentation
             renderedBlocked.Clear();
             nextBlocked.Clear();
             FullTerrainUpdates = ChangedTerrainCells = 0;
-            selection.positionCount = preview.positionCount = route.positionCount = 0;
+            selection.enabled = false;
+            preview.positionCount = route.positionCount = 0;
             placementGhost.enabled = false;
             ground.ClearAllTiles();
             if (world == null) return;
@@ -241,13 +247,14 @@ namespace RimworldTweak.Presentation
                     Draw("cargo." + pawn.Id, VisualCatalog.ResourceKey(pawn.CargoKind), position + new Vector2(.28f, .08f), Color.white,
                         Sort(position.y, 45), pawn.CargoAmount.ToString(), new Vector2(.28f, .28f));
             }
-            selection.positionCount = route.positionCount = 0;
+            selection.enabled = false;
+            route.positionCount = 0;
             if (selectedPawnId.HasValue)
             {
                 foreach (var pawn in world.Colonists) if (pawn.Id == selectedPawnId.Value)
                 {
                     var position = DisplayedPawnPosition(world,pawn);
-                    DrawBox(selection, position, new Vector2(.92f, .92f));
+                    ShowSelection(selection, position + PawnSelectionOffset);
                     route.positionCount = pawn.Path.Count > 0 ? pawn.Path.Count + 1 : 0;
                     if (route.positionCount > 0)
                     {
@@ -258,7 +265,12 @@ namespace RimworldTweak.Presentation
                 }
             }
             else if (selectedObjectId.HasValue && TryFindPosition(world, selectedObjectId.Value, out var selected))
-                DrawBox(selection, CellCenter(selected), new Vector2(.98f, .98f));
+            {
+                var center = CellCenter(selected);
+                if (world.Raiders.Any(enemy => enemy.Id == selectedObjectId.Value))
+                    center += PawnSelectionOffset;
+                ShowSelection(selection, center);
+            }
             removedMarks.Clear();
             foreach (var pair in marks) if (!pair.Value.Drawn) removedMarks.Add(pair.Key);
             foreach (var key in removedMarks) { marks[key].Root.SetActive(false); Destroy(marks[key].Root); marks.Remove(key); }
@@ -540,19 +552,19 @@ namespace RimworldTweak.Presentation
         private static int Sort(float y, int offset) => Mathf.Clamp(10000 - Mathf.RoundToInt(y * 100) + offset, -20000, 30000);
         public void ShowPawnSelections(IEnumerable<int> ids,int? primary)
         {
-            foreach(var line in pawnSelections.Values)line.positionCount=0;
+            foreach (var marker in pawnSelections.Values) marker.enabled = false;
             if(displayedWorld==null)return;
             foreach(var id in ids)
             {
                 if(id==primary)continue;
                 var pawn=displayedWorld.Colonists.FirstOrDefault(p=>p.Id==id);
                 if(pawn==null)continue;
-                if(!pawnSelections.TryGetValue(id,out var line))
+                if(!pawnSelections.TryGetValue(id,out var marker))
                 {
-                    line=CreateLine("Selected pawn "+id,new Color(1,.86f,.3f),32000,.045f);
-                    pawnSelections.Add(id,line);
+                    marker = CreateSelection("Selected pawn " + id, new Color(.79f, .87f, .65f));
+                    pawnSelections.Add(id, marker);
                 }
-                DrawBox(line,DisplayedPawnPosition(displayedWorld,pawn),new Vector2(.92f,.92f));
+                ShowSelection(marker, DisplayedPawnPosition(displayedWorld, pawn) + PawnSelectionOffset);
             }
         }
         private LineRenderer CreateLine(string name, Color color, int order, float width)
@@ -563,11 +575,42 @@ namespace RimworldTweak.Presentation
             if (spriteMaterial != null) line.sharedMaterial = spriteMaterial;
             return line;
         }
-        private static void DrawBox(LineRenderer line, Vector2 center, Vector2 size)
+        private void BuildSelectionSprite()
         {
-            var h = size / 2; line.positionCount = 5;
-            line.SetPosition(0, center + new Vector2(-h.x, -h.y)); line.SetPosition(1, center + new Vector2(h.x, -h.y));
-            line.SetPosition(2, center + new Vector2(h.x, h.y)); line.SetPosition(3, center + new Vector2(-h.x, h.y)); line.SetPosition(4, center + new Vector2(-h.x, -h.y));
+            const int size = 64, arm = 16, stroke = 3;
+            var pixels = new Color32[size * size];
+            for (var y = 0; y < size; y++)
+            for (var x = 0; x < size; x++)
+            {
+                var dx = Mathf.Min(x, size - 1 - x);
+                var dy = Mathf.Min(y, size - 1 - y);
+                if ((dx < arm && dy < stroke) || (dy < arm && dx < stroke))
+                    pixels[y * size + x] = Color.white;
+            }
+            selectionTexture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            selectionTexture.wrapMode = TextureWrapMode.Clamp;
+            selectionTexture.SetPixels32(pixels);
+            selectionTexture.Apply(false, true);
+            selectionSprite = Sprite.Create(selectionTexture, new Rect(0, 0, size, size),
+                new Vector2(.5f, .5f), size, 0, SpriteMeshType.FullRect);
+        }
+        private SpriteRenderer CreateSelection(string name, Color color)
+        {
+            var go = new GameObject(name, typeof(SpriteRenderer));
+            go.layer = MapLayer;
+            go.transform.SetParent(content, false);
+            var marker = go.GetComponent<SpriteRenderer>();
+            marker.sprite = selectionSprite;
+            marker.color = color;
+            marker.sortingOrder = 32000;
+            if (spriteMaterial != null) marker.sharedMaterial = spriteMaterial;
+            marker.enabled = false;
+            return marker;
+        }
+        private static void ShowSelection(SpriteRenderer marker, Vector2 center)
+        {
+            marker.transform.position = center;
+            marker.enabled = true;
         }
         private static bool TryFindPosition(WorldState world, int id, out GridPosition position)
         {
@@ -590,6 +633,8 @@ namespace RimworldTweak.Presentation
         {
             if (soilTile != null) Destroy(soilTile); if (blockedTile != null) Destroy(blockedTile);
             DestroyZoneTiles();
+            if (selectionSprite != null) Destroy(selectionSprite);
+            if (selectionTexture != null) Destroy(selectionTexture);
             if (fallback != null) Destroy(fallback); if (fallbackTexture != null) Destroy(fallbackTexture);
             if (spriteMaterial != null) Destroy(spriteMaterial);
             if (content != null) Destroy(content.gameObject); if (MapCamera != null) Destroy(MapCamera.gameObject);
