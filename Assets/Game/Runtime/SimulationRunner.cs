@@ -97,6 +97,10 @@ namespace RimworldTweak.Runtime
         public bool CreateGrowingZone(GridPosition first,GridPosition second) => PlayerCommand(() => Session.World.CreateGrowingZone(first,second));
         public bool SetSowingEnabled(int id,bool enabled) => PlayerCommand(() => Session.World.SetSowingEnabled(id,enabled));
         public bool DeleteGrowingZone(int id) => PlayerCommand(() => Session.World.DeleteGrowingZone(id));
+        public bool Equip(int pawn,int target) => PlayerCommand(()=>Session.World.OrderEquip(pawn,target));
+        public bool Prioritize(int pawn,int target) => PlayerCommand(()=>Session.World.PrioritizeWork(pawn,target));
+        public bool Rescue(int pawn,int target) => PlayerCommand(()=>Session.World.OrderRescue(pawn,target));
+        public bool CancelDirectOrder(int pawn) => PlayerCommand(()=>Session.World.CancelDirectOrder(pawn));
         public bool ToggleDraft(int id) => PlayerCommand(() => Session.World.ToggleDraft(id));
     }
 }

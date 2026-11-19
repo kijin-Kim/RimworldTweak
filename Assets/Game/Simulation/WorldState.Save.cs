@@ -9,7 +9,7 @@ namespace RimworldTweak.Simulation
         internal WorldSaveData CaptureSave()
         {
             return new WorldSaveData {
-                Raid=CaptureRaid(),
+                Raid=CaptureRaid(),Equipment=CaptureEquipment(),PriorityWork=CapturePriorityWork(),Rescues=CaptureRescues(),
                 MedicineConsumed=MedicineConsumed,RepairWoodConsumed=RepairWoodConsumed,
                 Width=Width,Height=Height,NeedsEnabled=NeedsEnabled,Tick=Tick,MapRevision=MapRevision,PathSearchCount=PathSearchCount,LastCommandError=LastCommandError,
                 NextEntityId=checked(nextEntityId+1),RequestSequence=requestSequence,AvailabilityRevision=availabilityRevision,
@@ -64,6 +64,14 @@ namespace RimworldTweak.Simulation
             }
             foreach(var x in d.WorkPolicies)foreach(var p in x.Priorities)w.PolicyFor(x.PawnId).SetPriority(SaveState.Enum<WorkCategory>(p.Category),p.Priority);
             w.RestoreRaid(d.Raid);
+            w.RestoreEquipment(d.Equipment);
+            w.RestorePriorityWork(d.PriorityWork);
+            w.RestoreRescues(d.Rescues);
+            foreach(var pawn in pawns)
+            {
+                var orders=(w.HasEquipOrder(pawn.Id)?1:0)+(w.PriorityWorkTarget(pawn.Id).HasValue?1:0)+(w.HasRescueCommand(pawn.Id)?1:0);
+                RequireSave(orders<=1);
+            }
             w.ValidateRestoredActions();
             return w;
         }
@@ -192,7 +200,8 @@ namespace RimworldTweak.Simulation
             }
             foreach(var bed in Beds)if(bed.OwnerId.HasValue)
             {
-                RequireSave(colonistsById.TryGetValue(bed.OwnerId.Value,out var pawn)&&bed.OwnerActionId==pawn.ActionId&&pawn.LifeTargetId==bed.Id&&!pawn.IsDrafted);
+                if(IsRescueBedClaim(bed)) continue;
+                  RequireSave(colonistsById.TryGetValue(bed.OwnerId.Value,out var pawn)&&bed.OwnerActionId==pawn.ActionId&&pawn.LifeTargetId==bed.Id&&!pawn.IsDrafted);
                 held[pawn.Id]=held.TryGetValue(pawn.Id,out var count)?count+1:1;
                 RequireSave(bed.IsOccupied==(pawn.LifeActivity==LifeActivity.SleepingInBed));
             }

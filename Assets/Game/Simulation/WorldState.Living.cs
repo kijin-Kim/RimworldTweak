@@ -97,6 +97,8 @@ namespace RimworldTweak.Simulation
         }
         private void EndLife(ColonistState colonist)
         {
+            ReleaseEquipReservation(colonist.Id);
+            CancelRescueForPawn(colonist.Id);
             foreach (var resource in Resources)
                 if (resource.OwnerId == colonist.Id && resource.OwnerActionId == colonist.ActionId) { resource.Release(colonist.Id, colonist.ActionId); availabilityRevision++; }
             foreach (var bed in Beds)
@@ -169,7 +171,7 @@ namespace RimworldTweak.Simulation
             foreach (var colonist in order)
             {
                 if (colonist.PatientClaim.OwnerId.HasValue && NeedsUrgentCareBreak(colonist)) CancelPatientTreatment(colonist);
-                if (colonist.IsDowned || colonist.IsDrafted || cancelledThisTick.Contains(colonist.Id) ||
+                if (HasEquipOrder(colonist.Id) || HasRescueCommand(colonist.Id) || colonist.IsDowned || colonist.IsDrafted || cancelledThisTick.Contains(colonist.Id) ||
                     colonist.PatientClaim.OwnerId.HasValue) continue;
                 if (colonist.Nutrition > 3000) { colonist.SetFoodReason(string.Empty); continue; }
                 if (colonist.LifeActivity == LifeActivity.GoingToFood || colonist.LifeActivity == LifeActivity.Eating) continue;
@@ -193,7 +195,7 @@ namespace RimworldTweak.Simulation
             foreach (var colonist in order)
             {
                 if (colonist.PatientClaim.OwnerId.HasValue && NeedsUrgentCareBreak(colonist)) CancelPatientTreatment(colonist);
-                if (colonist.IsDowned || colonist.IsDrafted || cancelledThisTick.Contains(colonist.Id) ||
+                if (HasEquipOrder(colonist.Id) || HasRescueCommand(colonist.Id) || colonist.IsDowned || colonist.IsDrafted || cancelledThisTick.Contains(colonist.Id) ||
                     colonist.PatientClaim.OwnerId.HasValue) continue;
                 var floor = colonist.LifeActivity == LifeActivity.SleepingOnFloor;
                 if (colonist.IsLifeBusy && !floor) continue;

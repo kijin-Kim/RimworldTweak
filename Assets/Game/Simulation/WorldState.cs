@@ -75,6 +75,7 @@ namespace RimworldTweak.Simulation
             if (!colonist.IsDrafted) return Reject("NotDrafted");
             if (!InBounds(destination)) return Reject("OutOfBounds");
             if (blockedSet.Contains(destination)) return Reject("BlockedDestination");
+            StopDirectOrders(colonistId);
             colonist.Attack.Cancel();
             moveCommands.Add(new MoveCommand(colonistId, destination));
             colonist.MarkPending(destination);
@@ -84,6 +85,24 @@ namespace RimworldTweak.Simulation
 
         // Player control is immediate, including while the simulation clock is paused.
         public bool QueueStop(int colonistId) => SetDrafted(colonistId, true);
+
+        private void StopDirectOrders(int pawnId)
+        {
+            ReleaseEquipReservation(pawnId);
+            ReleasePriorityOrder(pawnId);
+            CancelRescueForPawn(pawnId);
+        }
+
+        public bool CancelDirectOrder(int pawnId)
+        {
+            if(!colonistsById.TryGetValue(pawnId,out var pawn)) return Reject("InvalidColonist");
+            if(!HasEquipOrder(pawnId) && !HasRescueCommand(pawnId) && !PriorityWorkTarget(pawnId).HasValue)
+                return Reject("NoDirectOrder");
+            StopDirectOrders(pawnId);
+            EndLife(pawn);
+            LastCommandError=string.Empty;
+            return true;
+        }
 
         public bool ToggleDraft(int colonistId)
         {
@@ -100,6 +119,7 @@ namespace RimworldTweak.Simulation
             colonist.IsDrafted = drafted;
             if (drafted || wasDrafted)
             {
+                StopDirectOrders(colonistId);
                 colonist.HasSleepIntent = false;
                 EndLife(colonist);
                 lifeCommands.RemoveAll(command => command.Kind == LifeCommandKind.Cancel && command.Id == colonistId);
@@ -303,6 +323,8 @@ namespace RimworldTweak.Simulation
                     DecideWork();
                     ApplyMoveCommands();
                     foreach (var colonist in Colonists) colonist.AdvanceMovement(NeedsEnabled && colonist.Nutrition == 0);
+                    FinishEquipArrivals();
+                    AdvanceRescues();
                     if (NeedsEnabled) HandleLifeArrivals();
                     HandleFeatureArrivals();
                     TickCombat();
@@ -470,6 +492,7 @@ namespace RimworldTweak.Simulation
                 world.InitializeStove(stove);
                 world.RaidTrial = true;
             }
+            if(scenario.StartWithWeapons) world.SeedStartingWeapons();
             return world;
         }
 

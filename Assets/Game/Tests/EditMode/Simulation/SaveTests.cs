@@ -57,7 +57,8 @@ namespace RimworldTweak.Tests.EditMode
             GridPosition Shift(GridPosition p) => P(p.X + offsetX, p.Y + offsetY);
             Assert.That(large.BlockedTiles, Is.EqualTo(small.BlockedTiles.Select(Shift)));
             Assert.That(large.Colonists.Select(p=>p.Position), Is.EqualTo(small.Colonists.Select(p=>Shift(p.Position))));
-            Assert.That(large.Resources.Select(r=>r.Position), Is.EqualTo(small.Resources.Select(r=>Shift(r.Position))));
+            Assert.That(large.Resources.Where(r=>r.Kind!=ResourceKind.Medicine).Select(r=>r.Position), Is.EqualTo(small.Resources.Select(r=>Shift(r.Position))));
+            Assert.That(large.Resources.Single(r=>r.Kind==ResourceKind.Medicine).Amount,Is.EqualTo(1));
             Assert.That(large.Beds.Select(b=>b.Position), Is.EqualTo(small.Beds.Select(b=>Shift(b.Position))));
             Assert.That(large.Gatherables.Select(g=>g.Position), Is.EqualTo(small.Gatherables.Select(g=>Shift(g.Position))));
 

@@ -52,13 +52,18 @@ namespace RimworldTweak.Simulation
 
         internal static void RestoreAttack(AttackState attack, AttackSaveData data)
         {
-            RequireSave(data != null && data.Preparation >= 0 && data.Preparation < 10 &&
-                data.Cooldown >= 0 && data.Cooldown <= 10 && data.BlockedReason != null &&
+            RequireSave(data != null && data.Preparation >= 0 && data.Preparation < PrototypeEquipment.Rifle.AimTicks &&
+                data.Cooldown >= 0 && data.Cooldown <= PrototypeEquipment.Rifle.RecoveryTicks && data.BlockedReason != null &&
                 (data.Target.HasValue || data.Preparation == 0) && (data.Preparation == 0 || data.Cooldown == 0));
             attack.TargetId = data.Target;
             attack.Preparation = data.Preparation;
             attack.Cooldown = data.Cooldown;
             attack.BlockedReason = data.BlockedReason;
+        }
+
+        private static void ValidateAttackTiming(AttackState attack, int aimTicks, int recoveryTicks)
+        {
+            RequireSave(attack.Preparation < System.Math.Max(1, aimTicks) && attack.Cooldown <= recoveryTicks);
         }
 
         private RaidSaveData CaptureRaid() => new RaidSaveData {
@@ -133,6 +138,7 @@ namespace RimworldTweak.Simulation
                     RetryTick = saved.RetryTick, RouteRevision = saved.RouteRevision
                 };
                 RestoreAttack(raider.Attack, saved.Attack);
+                ValidateAttackTiming(raider.Attack, 10, 10);
                 RequireSave(!raider.Attack.TargetId.HasValue || RaidPhase == RaidPhase.Active &&
                     (colonistsById.ContainsKey(raider.Attack.TargetId.Value) || RaidObjectiveId == raider.Attack.TargetId));
                 if (NormalRaid && RaidPhase == RaidPhase.Active)

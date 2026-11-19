@@ -15,9 +15,10 @@ namespace RimworldTweak.Simulation
 
             return new ScenarioDefinition(SettlementSize, SettlementSize, startingArea.BlockedTiles.Select(NearCenter),
                 startingArea.Colonists.Select(p => new ColonistSeed(p.Id, NearCenter(p.Position), p.Nutrition, p.Rest)),
-                startingArea.Resources.Select(r => new ResourceSeed(r.Id, r.Kind, r.Amount, NearCenter(r.Position))),
+                startingArea.Resources.Select(r => new ResourceSeed(r.Id, r.Kind, r.Amount, NearCenter(r.Position)))
+                    .Concat(new[]{new ResourceSeed(104,ResourceKind.Medicine,1,NearCenter(new GridPosition(3,5)))}),
                 startingArea.Beds.Select(b => new BedSeed(b.Id, NearCenter(b.Position))), startingArea.NeedsEnabled,
-                startingArea.Gatherables.Select(g => new GatherSeed(g.Id, g.Kind, NearCenter(g.Position))));
+                startingArea.Gatherables.Select(g => new GatherSeed(g.Id, g.Kind, NearCenter(g.Position))), startWithWeapons:true);
         }
 
         public static ScenarioDefinition CreateTestMap()

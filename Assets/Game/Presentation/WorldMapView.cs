@@ -187,6 +187,10 @@ namespace RimworldTweak.Presentation
                 if (!node.Depleted)
                     Draw("gather." + node.Id, node.Kind == GatherKind.Tree ? "tree" : "plant.gather", CellCenter(node.Position),
                         node.Designated ? new Color(1, .85f, .65f) : Color.white, Sort(CellCenter(node.Position).y, 20), node.Designated ? "채집" : null);
+            foreach(var weapon in world.Weapons)
+                if(!weapon.HolderId.HasValue)
+                    Draw("weapon."+weapon.Id,"preview."+weapon.Definition.Id,CellCenter(weapon.Position),Color.white,Sort(weapon.Position.Y+.5f,25),
+                        weapon.ReservedById.HasValue?"예약 #"+weapon.ReservedById:null);
             foreach (var enemy in world.Raiders)
                 DrawRaider(enemy, world);
             foreach (var bed in world.Beds)
@@ -220,11 +224,18 @@ namespace RimworldTweak.Presentation
                     direction = new Vector2(work.TargetCell.X - pawn.Position.X, work.TargetCell.Y - pawn.Position.Y);
                     if (direction == Vector2.zero) direction = Vector2.down;
                 }
-                var inBed = pawn.LifeActivity == LifeActivity.SleepingInBed;
+                var inBed = pawn.LifeActivity == LifeActivity.SleepingInBed || world.RescuedBedFor(pawn.Id).HasValue;
                 var sleeping = inBed || pawn.LifeActivity == LifeActivity.SleepingOnFloor;
                 if (inBed) direction = Vector2.down;
                 var label = "정착민 " + pawn.Id + (pawn.IsDrafted ? " [R]" : sleeping ? " Zz" : pawn.IsWorking ? " · 작업" : "");
-                DrawPawn(pawn, position, direction, inBed, sleeping, working, work, label, world.Tick, pendingSeconds);
+                if(world.RescuerFor(pawn.Id) is int rescuer && world.RescueFor(rescuer)?.Carrying==true)
+                {
+                    var carrier=world.Colonists.First(p=>p.Id==rescuer);
+                    position=PawnPosition(carrier,tickFraction,world.NeedsEnabled)+new Vector2(.27f,.08f);
+                    label="운반 중 #"+pawn.Id;
+                }
+                else if(pawn.IsDowned) label="전투 불능 #"+pawn.Id;
+                DrawPawn(pawn, position, direction, inBed, sleeping || pawn.IsDowned, working, work, label, world.Tick, pendingSeconds);
                 if (working) workBarsThisFrame.Add((pawn.Id, work));
                 if (pawn.CargoAmount > 0)
                     Draw("cargo." + pawn.Id, VisualCatalog.ResourceKey(pawn.CargoKind), position + new Vector2(.28f, .08f), Color.white,
@@ -235,7 +246,7 @@ namespace RimworldTweak.Presentation
             {
                 foreach (var pawn in world.Colonists) if (pawn.Id == selectedPawnId.Value)
                 {
-                    var position = PawnPosition(pawn, tickFraction, world.NeedsEnabled);
+                    var position = DisplayedPawnPosition(world,pawn);
                     DrawBox(selection, position, new Vector2(.92f, .92f));
                     route.positionCount = pawn.Path.Count > 0 ? pawn.Path.Count + 1 : 0;
                     if (route.positionCount > 0)
@@ -560,6 +571,7 @@ namespace RimworldTweak.Presentation
         }
         private static bool TryFindPosition(WorldState world, int id, out GridPosition position)
         {
+            foreach(var weapon in world.Weapons) if(weapon.Id==id&&!weapon.HolderId.HasValue){position=weapon.Position;return true;}
             foreach (var enemy in world.Raiders) if (enemy.Id == id) { position=enemy.Position; return true; }
             foreach (var b in world.Buildings) if (b.Exists && b.Id == id) { position = b.Position; return true; }
             foreach (var b in world.Blueprints) if (b.Exists && b.Id == id) { position = b.Position; return true; }

@@ -256,11 +256,11 @@ namespace RimworldTweak.Presentation
                     var ordered = false;
                     foreach (var id in selectedPawns.OrderBy(id => id))
                         ordered |= Runner.OrderAttack(id, enemy.Id);
-                    Feedback = ordered ? "적 #" + enemy.Id + " 공격 지정" : "소집한 정착민을 선택해.";
+                    Feedback = ordered ? "적 #" + enemy.Id + " 공격 지정" : selectedPawns.Count==0 ? "소집한 정착민을 선택해." : DirectFailure(Runner.Session.World.LastCommandError);
                     Refresh();
                     return;
                 }
-                if(ObjectsAt(position).Count>0){ShowContextMenu(position);return;}
+                if(ObjectsAt(position).Count>0 || Runner.Session.World.Colonists.Any(p=>p.IsDowned && p.Position==position)){ShowContextMenu(position);return;}
                 if (SelectedPawnId.HasValue)MoveSelectedPawns(position);
                 return;
             }
@@ -357,6 +357,33 @@ namespace RimworldTweak.Presentation
             if (ActiveTool == Tool.None) feedbackSeconds = 3f;
         }
 
+        private static string WeaponName(WeaponItemState weapon) => weapon==null ? "미장착" :
+            weapon.Definition.Kind==WeaponKind.Melee ? "칼" : weapon.Definition.Id=="rifle" ? "소총" : "카빈";
+
+        private void ReportDirect(bool ok,string action) => ShowResult(ok ? action : DirectFailure(Runner.Session.World.LastCommandError));
+
+        private static string DirectFailure(string code) => code switch
+        {
+            "WeaponReserved" or "TargetReserved" => "다른 정착민이 이미 맡고 있어.",
+            "WeaponNotOnGround" => "바닥에 있는 무기를 선택해.",
+            "AttackRequiresDraft" => "소집한 정착민을 선택해.",
+            "Unreachable" => "대상까지 갈 수 있는 길이 없어.",
+            "ColonistDowned" => "전투 불능인 정착민은 명령을 수행할 수 없어.",
+            "MissingMaterials" => "사용할 수 있는 자재가 부족해.",
+            "NoRescueBed" => "구조에 쓸 빈 침대가 없어.",
+            "PatientReserved" => "다른 정착민이 이미 환자를 돌보고 있어.",
+            "RescuerUnavailable" or "Drafted" => "소집을 해제한 활동 가능한 정착민을 선택해.",
+            "PatientInBed" => "이미 침대에 있는 환자야.",
+            "RescueRequiresDowned" => "전투 불능인 동료를 선택해.",
+            "Disabled" => "작업표에서 이 직종을 먼저 켜줘.",
+            "NeedsPriority" => "지금은 생존이나 치료가 먼저야.",
+            "AwaitingClearance" => "건설 위치가 비어야 작업할 수 있어.",
+            "NoDesignation" => "대상에 먼저 작업을 지정해.",
+            "WeaponRequired" or "NoWeapon" or "NoWeaponEquipped" => "공격하려면 무기를 장착해.",
+            "NoDirectOrder" => "취소할 개인 지시가 없어.",
+            _ => "명령을 수행할 수 없어 ("+code+")."
+        };
+
         private void Report(bool ok, string success)
         {
             ShowResult(ok ? success : Runner.Session.World.LastCommandError == "NotDrafted"
@@ -367,6 +394,7 @@ namespace RimworldTweak.Presentation
         private List<int> ObjectsAt(GridPosition p)
         {
             var w=Runner.Session.World;var ids=new List<int>();
+            ids.AddRange(w.Weapons.Where(x=>!x.HolderId.HasValue&&x.Position==p).Select(x=>x.Id));
             ids.AddRange(w.Raiders.Where(x=>x.Position==p).Select(x=>x.Id).OrderBy(id=>id));
             ids.AddRange(w.Buildings.Where(x=>x.Exists&&x.Position==p).Select(x=>x.Id).OrderBy(id=>id));
             ids.AddRange(w.Blueprints.Where(x=>x.Exists&&x.Position==p).Select(x=>x.Id).OrderBy(id=>id));
@@ -398,7 +426,7 @@ namespace RimworldTweak.Presentation
         private bool ObjectExists(int id)
         {
             var w=Runner.Session.World;
-            return w.Raiders.Any(x=>x.Id==id)||w.Buildings.Any(x=>x.Id==id&&x.Exists)||w.Blueprints.Any(x=>x.Id==id&&x.Exists)||w.Beds.Any(x=>x.Id==id&&x.Exists)
+            return w.Weapons.Any(x=>x.Id==id&&!x.HolderId.HasValue)||w.Raiders.Any(x=>x.Id==id)||w.Buildings.Any(x=>x.Id==id&&x.Exists)||w.Blueprints.Any(x=>x.Id==id&&x.Exists)||w.Beds.Any(x=>x.Id==id&&x.Exists)
                 ||w.Resources.Any(x=>x.Id==id&&x.Exists)||w.Gatherables.Any(x=>x.Id==id&&!x.Depleted)||w.StorageZones.Any(x=>x.Id==id&&x.Exists)
                 ||w.GrowingZones.Any(x=>x.Id==id&&x.Exists)||w.Crops.Any(x=>x.Id==id&&x.Exists);
         }

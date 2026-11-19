@@ -306,6 +306,7 @@ namespace RimworldTweak.Demo
                     shell.Buttons["new"].onClick.Invoke();runner.SetPaused(true);
                     var world=runner.Session.World;
                     if(world.Width!=250||world.Height!=250||world.RaidPhase!=RaidPhase.Idle)throw new InvalidOperationException("New settlement baseline");
+                    EquipThroughMap(world.Colonists[0].Id);
                     shell.OpenTab("development");shell.Buttons["dev.raid"].onClick.Invoke();
                     if(world.Raiders.Count!=2||world.Raiders.Any(r=>!r.Attack.TargetId.HasValue))throw new InvalidOperationException("Immediate raid targets");
                     shell.HandleMapClick(world.Raiders[0].Position,false);
@@ -326,6 +327,68 @@ namespace RimworldTweak.Demo
                     shell.Map.Focus(pawn.Position);
                 }))yield break;
                 yield return Capture("raid-result");
+            }
+            else if(mode=="settlement-commands")
+            {
+                if(!Check(()=>{
+                    shell.Buttons["new"].onClick.Invoke();runner.SetPaused(true);
+                    var world=runner.Session.World;var pawn=world.Colonists[0];
+                    EquipThroughMap(pawn.Id);
+                    shell.SelectPawn(pawn.Id);shell.Map.Focus(pawn.Position);
+                    SaveReloadCommands("무기 장착");
+                }))yield break;
+                yield return null;shell.SelectPawn(runner.Session.World.Colonists[0].Id);
+                yield return Capture("weapon-equipped");
+                if(!Check(()=>{
+                    var scene=new ScenarioDefinition(12,10,Array.Empty<GridPosition>(),
+                        new[]{new ColonistSeed(1,new GridPosition(1,1)),new ColonistSeed(2,new GridPosition(4,2))},
+                        new[]{new ResourceSeed(104,ResourceKind.Medicine,1,new GridPosition(7,2))},new[]{new BedSeed(201,new GridPosition(8,2))},false,
+                        new[]{new GatherSeed(301,GatherKind.Tree,new GridPosition(3,4))},startWithWeapons:true);
+                    runner.Initialize(scene);runner.SetPaused(true);
+                    var setup=runner.Session.CaptureSaveData(true,1).Data;
+                    setup.World.Colonists.Single(p=>p.Id==2).Health=0;
+                    var slot=runner.Slots.SaveNew("구조 검증 정착지",setup);
+                    if(!slot.Success||!runner.LoadSlot(slot.Slot.SlotId))throw new InvalidOperationException("Rescue setup "+slot.ErrorCode);
+                }))yield break;
+                yield return null;
+                if(!Check(()=>{
+                    var world=runner.Session.World;
+                    runner.SetWorkPriority(1,WorkCategory.Care,0);
+                    runner.SetWorkPriority(1,WorkCategory.Gather,0);
+                    runner.DesignateGather(301,true);runner.Session.Step(1);runner.SetWorkPriority(1,WorkCategory.Gather,1);
+                    shell.SelectPawn(1);shell.HandleMapClick(world.Gatherables[0].Position,true);
+                    shell.Buttons["context.priority.301"].onClick.Invoke();
+                    if(world.PriorityWorkTarget(1)!=301)throw new InvalidOperationException("Priority target "+world.LastCommandError);
+                    SaveReloadCommands("우선 작업");
+                }))yield break;
+                yield return null;shell.SelectPawn(1);
+                yield return Capture("priority-work");
+                if(!Check(()=>{
+                    var world=runner.Session.World;
+                    shell.HandleMapClick(world.Colonists[1].Position,true);shell.Buttons["context.rescue.2"].onClick.Invoke();
+                    for(var i=0;i<100 && world.RescueFor(1)?.Carrying!=true;i++)runner.Session.Step(1);
+                    if(world.RescueFor(1)?.Carrying!=true || world.PriorityWorkTarget(1).HasValue)
+                        throw new InvalidOperationException("Rescue pickup "+world.LastCommandError);
+                    SaveReloadCommands("환자 운반");
+                }))yield break;
+                yield return null;shell.SelectPawn(1);
+                yield return Capture("rescue-carry");
+                if(!Check(()=>{
+                    var world=runner.Session.World;
+                    for(var i=0;i<120 && !world.RescuedBedFor(2).HasValue;i++)runner.Session.Step(1);
+                    if(world.RescuedBedFor(2)!=201 || world.Colonists[1].Health!=0 || world.MedicineConsumed!=0)
+                        throw new InvalidOperationException("Bed handoff");
+                    shell.SelectPawn(2);
+                }))yield break;
+                yield return Capture("rescue-bed");
+                if(!Check(()=>{
+                    var world=runner.Session.World;
+                    runner.SetWorkPriority(1,WorkCategory.Care,1);
+                    for(var i=0;i<200 && world.MedicineConsumed==0;i++)runner.Session.Step(1);
+                    if(world.Colonists[1].Health!=40 || world.MedicineConsumed!=1 || world.RescuedBedFor(2).HasValue)
+                        throw new InvalidOperationException("Treatment after handoff");
+                    SaveReloadCommands("치료 완료");
+                }))yield break;
             }
             else if(mode=="settlement-art")
             {
@@ -417,6 +480,21 @@ namespace RimworldTweak.Demo
             else {Fail(new ArgumentException("Unknown ux-mode"));yield break;}
             if(!Check(()=>{result.tick=runner.Session.World.Tick;result.stateHash=Hash();result.slot=runner.ActiveSlotId;}))yield break;
             Finish(true);
+        }
+        private void EquipThroughMap(int pawnId)
+        {
+            var world=runner.Session.World;var rifle=world.Weapons.Single(w=>w.Definition.Id=="rifle");
+            shell.SelectPawn(pawnId);shell.HandleMapClick(rifle.Position,true);
+            shell.Buttons["context.equip."+rifle.Id].onClick.Invoke();
+            if(rifle.ReservedById!=pawnId)throw new InvalidOperationException("Rifle reservation "+world.LastCommandError);
+            for(var i=0;i<100 && rifle.HolderId!=pawnId;i++)runner.Session.Step(1);
+            if(rifle.HolderId!=pawnId)throw new InvalidOperationException("Rifle pickup");
+        }
+        private void SaveReloadCommands(string name)
+        {
+            var expected=Hash();
+            if(!runner.SaveSlot(name)||!runner.LoadSlot(runner.ActiveSlotId)||Hash()!=expected)
+                throw new InvalidOperationException(name+" 저장 복원 "+runner.SaveMessage);
         }
         private IEnumerator Capture(string name)
         {

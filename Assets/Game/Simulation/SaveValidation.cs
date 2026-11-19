@@ -19,7 +19,7 @@ namespace RimworldTweak.Simulation
         public static SaveValidationResult Validate(SaveData data)
         {
             if(data==null)return new SaveValidationResult(false,"SaveInvalidData","data");
-            if(data.SchemaVersion!=SaveData.CurrentSchemaVersion||data.ScenarioVersion!=1||(data.RulesVersion!=2&&data.RulesVersion!=3)||data.ContractVersion!="settlement-raid-v1")
+            if(data.SchemaVersion!=SaveData.CurrentSchemaVersion||data.ScenarioVersion!=1||(data.RulesVersion!=2&&data.RulesVersion!=3&&data.RulesVersion!=4)||data.ContractVersion!="settlement-raid-v1")
                 return new SaveValidationResult(false,"SaveUnsupportedVersion","header");
             try { ValidateCore(data); return new SaveValidationResult(true); }
             catch(InvalidSave e){return new SaveValidationResult(false,"SaveInvalidData",e.Path);}
@@ -35,7 +35,8 @@ namespace RimworldTweak.Simulation
             var w=d.World;Check(w!=null,"World");Check(ValidSize(w.Width,w.Height),"World.Size");
             var raid = w.Raid;
             Check(raid != null, "World.Raid");
-            if (d.RulesVersion == 3)
+            Check(d.Scenario.StartWithWeapons==(d.RulesVersion==4) && (w.Equipment!=null)==d.Scenario.StartWithWeapons,"World.Equipment.Version");
+            if (d.RulesVersion == 3 || d.RulesVersion==4 && raid.Kind=="Normal")
                 Check(raid.Kind == "Normal" && raid.RetargetPercent >= 0 && raid.RetargetPercent <= 100 &&
                     raid.RetargetState > 0, "World.Raid.Normal");
             else

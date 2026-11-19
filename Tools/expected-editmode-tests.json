@@ -237,5 +237,20 @@
   "RimworldTweak.Tests.EditMode.EquipmentRulesTests.PublicDataPropertiesCannotBeReassigned",
   "RimworldTweak.Tests.EditMode.CombatRulesIntegrationTests.BlockedAndOutOfRangeAttacksNeverProduceDamage",
   "RimworldTweak.Tests.EditMode.CombatRulesIntegrationTests.FrontCoverChangesSightInformationButDoesNotReduceDamageTwice",
-  "RimworldTweak.Tests.EditMode.CombatRulesIntegrationTests.RepeatedRuleQueriesPreserveLiveWorldAndSerializedSave"
+  "RimworldTweak.Tests.EditMode.CombatRulesIntegrationTests.RepeatedRuleQueriesPreserveLiveWorldAndSerializedSave",
+  "RimworldTweak.Tests.EditMode.WeaponOrderTests.PickupReservationSurvivesSaveAndSwapDropsExactlyOnePreviousWeapon",
+  "RimworldTweak.Tests.EditMode.WeaponOrderTests.DowningAndNewObstacleReleasePickupAndUnarmedAttackExplainsRejection",
+  "RimworldTweak.Tests.EditMode.WeaponOrderTests.RifleUsesRangeAimRecoveryDamageAndRestoresMidShot",
+  "RimworldTweak.Tests.EditMode.WeaponOrderTests.KnifeHitsOnlyAtContactAndWallBlocksRifle",
+  "RimworldTweak.Tests.EditMode.WeaponOrderTests.DuplicateItemOrMalformedOwnershipRejectsRestore",
+  "RimworldTweak.Tests.EditMode.PriorityWorkTests.PrioritySelectsOneWorkerAndRejectionPreservesCurrentJob",
+  "RimworldTweak.Tests.EditMode.PriorityWorkTests.DeliveryLocksSiteBeforePickupAndRestoresThroughConstruction",
+  "RimworldTweak.Tests.EditMode.PriorityWorkTests.RedirectCarriedWoodAndDraftDoNotLoseOrDuplicateIt",
+  "RimworldTweak.Tests.EditMode.PriorityWorkTests.PersonalWorkHonorsBlockedRoutesDutyNeedsAndRepairDesignation",
+  "RimworldTweak.Tests.EditMode.RescueCommandTests.MissingOrUnreachableBedAndReservedPatientRejectWithoutMovingThePatient",
+  "RimworldTweak.Tests.EditMode.RescueCommandTests.RescueSurvivesPickupCarryAndHandoffWithoutHealing",
+  "RimworldTweak.Tests.EditMode.RescueCommandTests.DraftOrCancelDuringTransportDropsPatientAndReleasesBothReservations",
+  "RimworldTweak.Tests.EditMode.RescueCommandTests.RescuerDownAndDestroyedBedReleasePatientAndAllowRecovery",
+  "RimworldTweak.Tests.EditMode.RescueCommandTests.FieldCareWithoutBedStillWorksAndActiveTreatmentRejectsRescue",
+  "RimworldTweak.Tests.EditMode.RescueCommandTests.InconsistentTransportSaveIsRejectedWithoutTouchingLivePatient"
 ]

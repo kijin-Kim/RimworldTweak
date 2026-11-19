@@ -240,6 +240,27 @@ namespace RimworldTweak.Tests.PlayMode
             Assert.That(shell.SelectedPawnId,Is.EqualTo(1));
             Assert.That(runner.Session.World.Tick,Is.Zero);
         }
+        [UnityTest] public IEnumerator GroundWeaponRequiresSingleSelectionAndPickupCanBeCancelledWhilePaused()
+        {
+            Setup();runner.StartNewSettlement();runner.SetPaused(true);yield return null;
+            var world=runner.Session.World;
+            var weapon=world.Weapons.First(w=>w.Definition.Id=="rifle");
+            var key="context.equip."+weapon.Id;
+            shell.SelectPawn(1);shell.SelectPawn(2,true);shell.HandleMapClick(weapon.Position,true);
+            var choice=shell.Buttons[key];
+            Assert.That(choice.interactable,Is.False);
+            Assert.That(choice.GetComponentInChildren<Text>().text,Does.Contain("한 명"));
+            Assert.That(weapon.ReservedById,Is.Null);
+            shell.ProcessShortcut(Key.Escape);
+            shell.SelectPawn(1);shell.HandleMapClick(weapon.Position,true);Click(key);
+            yield return null;
+            Assert.That(weapon.ReservedById,Is.EqualTo(1));Assert.That(weapon.HolderId,Is.Null);
+            Click("direct.cancel");
+            Assert.That(weapon.ReservedById,Is.Null);
+            shell.SelectPawn(2);shell.HandleMapClick(weapon.Position,true);Click(key);
+            Assert.That(weapon.ReservedById,Is.EqualTo(2));
+        }
+
         private void Setup(bool developmentUi = false)
         {
             directory=Path.GetFullPath(Path.Combine(Application.dataPath,"..","TestResults","ShellIntegration",Guid.NewGuid().ToString("N")));

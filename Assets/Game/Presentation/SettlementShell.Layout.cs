@@ -708,13 +708,16 @@ namespace RimworldTweak.Presentation
             if (pawn != null)
             {
                 SetSelectionSummary(() => "정착민 " + pawn.Id + (pawn.IsDrafted ? " · 소집" : "") +
-                    " · 체력 " + pawn.Health + "/100" + (pawn.IsDowned ? " · 전투 불능" : "") +
-                    (pawn.Attack.TargetId.HasValue ? " · 표적 #" + pawn.Attack.TargetId : "") + "\n행동: " + PawnAction(pawn) + "\n운반: " + (pawn.CargoAmount > 0
+                    (world.EquipmentEnabled ? " · "+WeaponName(world.EquippedWeapon(pawn.Id)) : "") + " · 체력 " + pawn.Health + "/100" + (pawn.IsDowned ? " · 전투 불능" : "") +
+                    (pawn.Attack.TargetId.HasValue ? " · 표적 #" + pawn.Attack.TargetId : "") + "\n행동: " + DirectAction(world,pawn) + "\n운반: " + (pawn.CargoAmount > 0
                         ? SettlementView.ResourceName(pawn.CargoKind) + " " + pawn.CargoAmount : "없음") +
                     "\n목적지: " + (pawn.Destination?.ToString() ?? "없음"));
                 BoundLabel(inspectContent, () => "욕구\n포만도 " + pawn.Nutrition / 100 + "   휴식 " + pawn.Rest / 100, detailRefreshers);
                 AddDetailToggle("욕구");
                 CommandTile("draft", () => pawn.IsDrafted ? "해제 [R]" : "소집 [R]", () => Runner.ToggleDraft(pawn.Id));
+                var cancel=CommandTile("direct.cancel",()=>"지시 취소",()=>ReportDirect(Runner.CancelDirectOrder(pawn.Id),"개인 지시 취소"));
+                void UpdateCancel() => cancel.gameObject.SetActive(world.HasEquipOrder(pawn.Id)||world.HasRescueCommand(pawn.Id)||world.PriorityWorkTarget(pawn.Id).HasValue);
+                UpdateCancel();detailRefreshers.Add(UpdateCancel);
                 AddSelectionNavigation(() => pawn.Position);
             }
             else if (SelectedObjectId.HasValue)
@@ -724,8 +727,25 @@ namespace RimworldTweak.Presentation
             LayoutSelection(canvasRoot.rect.width, canvasRoot.rect.height);
         }
 
+        private string DirectAction(WorldState world,ColonistState pawn)
+        {
+            if(world.HasEquipOrder(pawn.Id))return "무기 가지러 이동";
+            var rescue=world.RescueFor(pawn.Id);
+            if(rescue!=null)return (rescue.Carrying?"침대로 운반 중 #":"구조하러 이동 #")+rescue.PatientId;
+            if(world.RescuerFor(pawn.Id).HasValue)return "구조 중";
+            if(world.RescuedBedFor(pawn.Id).HasValue)return "침대에서 치료 대기";
+            return (world.PriorityWorkTarget(pawn.Id).HasValue?"우선 · ":"")+PawnAction(pawn);
+        }
+
         private void BuildObjectInspector(WorldState world, int id, GridPosition? hitCell)
         {
+            var weapon=world.Weapons.FirstOrDefault(w=>w.Id==id&&!w.HolderId.HasValue);
+            if(weapon!=null)
+            {
+                SetSelectionSummary(()=>WeaponName(weapon)+" · 바닥"+(weapon.ReservedById.HasValue?" · 예약 #"+weapon.ReservedById:"")+"\n사거리 "+weapon.Definition.Range+" · 피해 "+weapon.Definition.Damage);
+                AddSelectionNavigation(()=>weapon.Position);
+                return;
+            }
             var enemy=world.Raiders.FirstOrDefault(x=>x.Id==id);
             if(enemy!=null)
             {

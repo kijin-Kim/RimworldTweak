@@ -274,7 +274,7 @@ namespace RimworldTweak.Simulation
             {
                 var b=Blueprint(pawn.WorkTargetId.Value);
                 if(pawn.CargoAmount>b.Cost-b.DeliveredWood) { FinishProduction(pawn); return; }
-                b.DeliveredWood+=pawn.CargoAmount; pawn.CargoAmount=0; FinishProduction(pawn); return;
+                b.DeliveredWood+=pawn.CargoAmount; pawn.CargoAmount=0; FinishPriorityStage(pawn); return;
             }
             if(pawn.WorkActivity!=WorkActivity.WorkingFeature) return;
             var id=pawn.WorkTargetId.Value; var step=pawn.FeatureStep.Value;

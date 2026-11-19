@@ -56,6 +56,7 @@ namespace RimworldTweak.Simulation
     public sealed class ScenarioSaveData
     {
         [DataMember(IsRequired = true)] public PositionSaveData InitialRaidStove;
+        [DataMember(EmitDefaultValue=false)] public bool StartWithWeapons;
         [DataMember(Name="Width", IsRequired=true)] public int Width;
         [DataMember(Name="Height", IsRequired=true)] public int Height;
         [DataMember(Name="NeedsEnabled", IsRequired=true)] public bool NeedsEnabled;
@@ -98,6 +99,9 @@ namespace RimworldTweak.Simulation
     public sealed class WorldSaveData
     {
         [DataMember(IsRequired = true)] public RaidSaveData Raid;
+        [DataMember(EmitDefaultValue=false)] public EquipmentSaveData Equipment;
+        [DataMember(EmitDefaultValue=false)] public List<PriorityWorkSaveData> PriorityWork;
+        [DataMember(EmitDefaultValue=false)] public List<RescueSaveData> Rescues;
         [DataMember(IsRequired = true)] public int MedicineConsumed;
         [DataMember(IsRequired = true)] public int RepairWoodConsumed;
         [DataMember(Name="Width", IsRequired=true)] public int Width;

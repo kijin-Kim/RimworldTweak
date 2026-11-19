@@ -17,8 +17,12 @@ namespace RimworldTweak.Simulation
             NeedsEnabled && !patient.IsDowned &&
             (patient.IsLifeBusy || patient.HasSleepIntent || patient.Rest <= 2000 || patient.Nutrition <= 3000);
 
+        private bool BusyForCare(ColonistState patient) =>
+            RescuerFor(patient.Id).HasValue || HasRescueCommand(patient.Id) || HasEquipOrder(patient.Id) ||
+            PriorityWorkTarget(patient.Id).HasValue;
+
         private bool CanTreat(ColonistState patient) =>
-            !patient.IsDrafted && patient.Health < 100 && !NeedsUrgentCareBreak(patient);
+            !BusyForCare(patient) && !patient.IsDrafted && patient.Health < 100 && !NeedsUrgentCareBreak(patient);
 
         private bool CanRepair(BuildingState site) =>
             site != null && site.RepairDesignated && !site.DemolitionDesignated && site.Durability < 100;
@@ -28,7 +32,7 @@ namespace RimworldTweak.Simulation
             if (!colonistsById.TryGetValue(patientId, out var patient) || patient.Health == 100)
                 return WorkReasonCode.NoDesignation;
             if (patient.IsDrafted) return WorkReasonCode.Drafted;
-            if (patient.TreatedBy.HasValue) return WorkReasonCode.TargetReserved;
+            if (patient.TreatedBy.HasValue || BusyForCare(patient)) return WorkReasonCode.TargetReserved;
             if (NeedsUrgentCareBreak(patient)) return WorkReasonCode.NeedsPriority;
             var workers = Colonists.Where(p => !p.IsDowned && !p.IsDrafted && PolicyFor(p.Id).GetPriority(WorkCategory.Care) > 0);
             if (!workers.Any()) return WorkReasonCode.NoWorker;
@@ -135,7 +139,7 @@ namespace RimworldTweak.Simulation
                 var patient = colonistsById[target];
                 if (!CanTreat(patient) || patient.PatientClaim.OwnerId.HasValue ||
                     !ReserveRecoveryPickup(pawn, candidate, ResourceKind.Medicine, 1)) return false;
-                if (patient != pawn) EndLife(patient);
+                if (patient != pawn && !RescuedBedFor(patient.Id).HasValue) EndLife(patient);
                 patient.PatientClaim.Acquire(pawn.Id, pawn.ActionId);
             }
             else
@@ -257,6 +261,7 @@ namespace RimworldTweak.Simulation
             worker.CargoAmount = 0;
             MedicineConsumed++;
             patient.Health = Math.Min(100, patient.Health + 40);
+            ReleaseRescuedBed(patient);
             cancelledThisTick.Add(patient.Id);
             FinishProduction(worker);
         }
@@ -267,7 +272,7 @@ namespace RimworldTweak.Simulation
             if (TileDistance(pawn.Position, site.Position) != 1) { FinishProduction(pawn); return; }
             site.RepairWood += pawn.CargoAmount;
             pawn.CargoAmount = 0;
-            FinishProduction(pawn);
+            FinishPriorityStage(pawn);
         }
 
         private void ProgressRepair(ColonistState worker)
@@ -286,7 +291,7 @@ namespace RimworldTweak.Simulation
             if (site.Kind == BuildingKind.Bed) bedsById[site.Id].SetExists(true);
             if (closingWall) SetProductionBlocked(site.Position, true);
             if (site.Durability == 100) site.RepairDesignated = false;
-            FinishProduction(worker);
+            FinishPriorityStage(worker);
         }
     }
 }

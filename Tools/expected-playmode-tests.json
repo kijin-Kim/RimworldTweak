@@ -1,4 +1,5 @@
 [
+  "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.GroundWeaponRequiresSingleSelectionAndPickupCanBeCancelledWhilePaused",
   "RimworldTweak.Tests.PlayMode.DemoIntegrationTests.PausedRunnerStepsExactlyOneHundredAndResetPreservesPause",
   "RimworldTweak.Tests.PlayMode.DemoIntegrationTests.AutomaticRunnerAdvancesAndPauseStopsFurtherProgress",
   "RimworldTweak.Tests.PlayMode.DemoIntegrationTests.ViewObjectsMatchWorldCoordinatesBlockedTilesAndAmounts",

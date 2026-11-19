@@ -99,6 +99,7 @@ namespace RimworldTweak.Simulation
         }
         private void ClearWork(ColonistState pawn)
         {
+            priorityOrders.Remove(pawn.Id);
             foreach (var patient in Colonists) patient.PatientClaim.Release(pawn.Id, pawn.ActionId);
             pawn.CareProgress = 0;
             ClearProductionWork(pawn);

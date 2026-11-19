@@ -21,7 +21,7 @@ namespace RimworldTweak.Simulation
             BlockedReason = string.Empty;
         }
 
-        internal bool Advance(bool valid)
+        internal bool Advance(bool valid, int aimTicks = 10, int recoveryTicks = 10)
         {
             if (!valid) Preparation = 0;
             if (Cooldown > 0)
@@ -29,9 +29,9 @@ namespace RimworldTweak.Simulation
                 Cooldown--;
                 return false;
             }
-            if (!valid || ++Preparation < 10) return false;
+            if (!valid || ++Preparation < aimTicks) return false;
             Preparation = 0;
-            Cooldown = 10;
+            Cooldown = recoveryTicks;
             return true;
         }
     }
@@ -167,6 +167,8 @@ namespace RimworldTweak.Simulation
                 return Reject("AttackRequiresDraft");
             if (RaidPhase != RaidPhase.Active || !raiders.Exists(target => target.Id == targetId))
                 return Reject("InvalidAttackTarget");
+            if (EquipmentEnabled && EquippedWeapon(colonistId) == null) return Reject("WeaponRequired");
+            StopDirectOrders(colonistId);
             if (pawn.Attack.TargetId != targetId)
             {
                 EndLife(pawn);
@@ -185,9 +187,9 @@ namespace RimworldTweak.Simulation
             return blockedSet.Contains(cell);
         }
 
-        private bool HasClearShot(GridPosition from, GridPosition to)
+        private bool HasClearShot(GridPosition from, GridPosition to, int range)
         {
-            return from == to || SightRules.Evaluate(from, to, 4, cell => new SightCell(BlocksShot(cell), 0)).CanAttack;
+            return from == to || SightRules.Evaluate(from, to, range, cell => new SightCell(BlocksShot(cell), 0)).CanAttack;
         }
 
         private void TickCombat()
@@ -214,11 +216,15 @@ namespace RimworldTweak.Simulation
             {
                 var attack = pawn.Attack;
                 var target = raiders.Find(x => x.Id == attack.TargetId);
+                var weapon = EquipmentEnabled ? EquippedWeapon(pawn.Id)?.Definition : null;
+                var range = weapon?.Range ?? 4;
                 var reason = target == null || pawn.IsDowned || !pawn.IsDrafted ? "InvalidAttackTarget" :
-                    TileDistance(pawn.Position, target.Position) > 4 ? "AttackOutOfRange" :
-                    !HasClearShot(pawn.Position, target.Position) ? "AttackBlocked" : string.Empty;
+                    EquipmentEnabled && weapon == null ? "WeaponRequired" :
+                    TileDistance(pawn.Position, target.Position) > range ? "AttackOutOfRange" :
+                    weapon?.Kind != WeaponKind.Melee && !HasClearShot(pawn.Position, target.Position, range) ? "AttackBlocked" : string.Empty;
                 attack.BlockedReason = attack.TargetId.HasValue ? reason : string.Empty;
-                if (attack.Advance(reason.Length == 0)) AddDamage(damage, target.Id, ArmorRules.Resolve(new DamageInput(25), null).RemainingDamage);
+                if (attack.Advance(reason.Length == 0, weapon?.AimTicks ?? 10, weapon?.RecoveryTicks ?? 10))
+                    AddDamage(damage, target.Id, ArmorRules.Resolve(new DamageInput(weapon?.Damage ?? 25), null).RemainingDamage);
             }
 
             ResolveCombatDamage(damage);
@@ -354,6 +360,7 @@ namespace RimworldTweak.Simulation
                 raidInjured.Add(id);
                 if (!pawn.IsDowned) return;
                 raidDowned.Add(id);
+                StopDirectOrders(id);
                 pawn.IsDrafted = false;
                 pawn.HasSleepIntent = false;
                 EndLife(pawn);
@@ -371,7 +378,11 @@ namespace RimworldTweak.Simulation
             foreach (var worker in Colonists)
                 if (!IsRecovery(worker.FeatureStep) && (worker.WorkTargetId == id || worker.LifeTargetId == id ||
                     worker.PendingDeliveryTargetId == id)) FinishProduction(worker);
-            if (building.Kind == BuildingKind.Bed) bedsById[id].SetExists(false);
+            if (building.Kind == BuildingKind.Bed)
+            {
+                bedsById[id].SetExists(false);
+                InvalidateRescueBed(id);
+            }
             if (ConstructionRules.BlocksMovement(building.Kind)) SetProductionBlocked(building.Position, false);
             if (RaidObjectiveId == id) RaidOutcome = RaidOutcome.ObjectiveLost;
             availabilityRevision++;

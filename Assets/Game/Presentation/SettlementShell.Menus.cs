@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using RimworldTweak.Runtime;
+using RimworldTweak.Simulation;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -44,15 +45,35 @@ namespace RimworldTweak.Presentation
                     drafted == selectedPawns.Count ? "선택한 정착민 이동" : $"소집된 {drafted}명 이동", () => MoveSelectedPawns(position));
                 buttons["context.move"].interactable = drafted > 0;
             }
+            void Direct(string key,string label,Func<int,bool> command)
+            {
+                if(selectedPawns.Count==1)
+                    add(key,label,()=>ReportDirect(command(selectedPawns.First()),label));
+                else
+                {
+                    add(key,"정착민 한 명을 선택해",()=>{});
+                    buttons["context."+key].interactable=false;
+                }
+            }
+            foreach(var patient in world.Colonists.Where(p=>p.IsDowned && p.Position==position))
+                Direct("rescue."+patient.Id,"정착민 "+patient.Id+" 구조",worker=>Runner.Rescue(worker,patient.Id));
             foreach(var id in ObjectsAt(position))
             {
                 var target=id;
+                var weapon=world.Weapons.FirstOrDefault(w=>w.Id==id&&!w.HolderId.HasValue);
+                if(weapon!=null)
+                {
+                    Direct("equip."+id,WeaponName(weapon)+" 장착",pawn=>Runner.Equip(pawn,target));
+                    continue;
+                }
                 add("select."+id,AlertTargetName(id)+" 선택",()=>SelectObject(target,position));
                 var node=world.Gatherables.FirstOrDefault(n=>n.Id==id&&!n.Depleted);
                 if(node!=null)add("gather."+id,node.Designated?"채집 지정 취소":"채집 지정",()=>Report(Runner.DesignateGather(target,!node.Designated),"채집 지정을 변경했어."));
                 var blueprint=world.Blueprints.FirstOrDefault(b=>b.Id==id&&b.Exists);
                 if(blueprint!=null)add("cancel."+id,"건설 취소",()=>Report(Runner.CancelBlueprint(target),"건설을 취소했어."));
                 var building=world.Buildings.FirstOrDefault(b=>b.Id==id&&b.Exists);
+                if(node?.Designated==true && node.Kind==GatherKind.Tree || blueprint!=null || building?.RepairDesignated==true)
+                    Direct("priority."+id,(blueprint!=null?"건설":building!=null?"수리":"벌목")+" 우선 작업",pawn=>Runner.Prioritize(pawn,target));
                 if(building!=null)add("demolish."+id,building.DemolitionDesignated?"철거 취소":"철거 지정",
                     ()=>Report(Runner.SetDemolition(target,!building.DemolitionDesignated),"철거 지정을 변경했어."));
             }

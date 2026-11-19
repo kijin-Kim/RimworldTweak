@@ -119,7 +119,7 @@ namespace RimworldTweak.Simulation
             return o.InputIngredients>=2?WorkReasonCode.None:MaterialDiagnostic(WorkCategory.Cook,ResourceKind.Ingredients,o.ServiceCell,false);
         }
         private readonly object workContextToken = new object();
-        private bool CanSelectWork(ColonistState pawn) => !pawn.IsDowned && (!pawn.PatientClaim.OwnerId.HasValue) && !pawn.IsDrafted && !pawn.IsLifeBusy && !pawn.IsWorking &&
+        private bool CanSelectWork(ColonistState pawn) => !HasEquipOrder(pawn.Id) && !HasRescueCommand(pawn.Id) && !pawn.IsDowned && (!pawn.PatientClaim.OwnerId.HasValue) && !pawn.IsDrafted && !pawn.IsLifeBusy && !pawn.IsWorking &&
             !pawn.HasSleepIntent && !cancelledThisTick.Contains(pawn.Id) && !pawn.HasPendingCommand &&
             pawn.Status != MovementStatus.Moving && pawn.Status != MovementStatus.Blocked;
 
@@ -159,6 +159,7 @@ namespace RimworldTweak.Simulation
             candidates.AddRange(FarmingRules.GetCandidates(context, pawn.Id));
             candidates.AddRange(CookingRules.GetCandidates(context, pawn.Id));
             CollectRecoveryCandidates(context, pawn, candidates);
+            if (priorityOrders.Count > 0) candidates.RemoveAll(c => PriorityTargetHeldByOther(pawn.Id, c.TargetId));
             candidates.Sort((a, b) => {
                 var result = a.PathLength.CompareTo(b.PathLength);
                 if (result == 0) result = a.RequestOrder.CompareTo(b.RequestOrder);
@@ -178,6 +179,11 @@ namespace RimworldTweak.Simulation
             // Only candidates issued by S0 are executable; feature rules cannot invent an authority token.
             var issued = false; foreach (var entry in context.Candidates) if (ReferenceEquals(entry, candidate)) issued = true;
             if (!issued || PolicyFor(pawnId).GetPriority(candidate.Category) == 0) return false;
+            return StartValidatedWork(pawn, candidate);
+        }
+
+        private bool StartValidatedWork(ColonistState pawn, WorkCandidate candidate)
+        {
             if (candidate.Step == WorkStep.Gather && candidate.Category == WorkCategory.Gather)
             {
                 var node = Gather(candidate.TargetId);
