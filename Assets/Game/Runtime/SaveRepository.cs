@@ -77,7 +77,7 @@ namespace RimworldTweak.Runtime
             error=string.Empty;return true;
         }
         private string SlotPath(string id) => Path.Combine(SaveDirectory,id==LegacySlotId?"settlement-v1.json":id==RaidLegacySlotId?"settlement-v2.json":id+".save.json");
-        private static string Validate(SaveEnvelope value,string expectedId)
+        private static string Validate(SaveEnvelope value,string expectedId,bool verifyRestore = true)
         {
             if(value==null)return "SaveInvalidData";
             if(value.FormatVersion!=1)return "SaveUnsupportedVersion";
@@ -86,13 +86,20 @@ namespace RimworldTweak.Runtime
             if(!DateTime.TryParseExact(value.SavedAtUtc,"O",CultureInfo.InvariantCulture,DateTimeStyles.RoundtripKind,out var date)||date.Kind!=DateTimeKind.Utc)return "SaveInvalidData";
             var valid=SaveValidation.Validate(value.Payload);if(!valid.IsValid)return valid.ErrorCode;
             if(value.Tick!=value.Payload.World.Tick||value.ColonistCount!=value.Payload.World.Colonists.Count)return "SaveInvalidSummary";
+            if (!verifyRestore) return string.Empty;
             return SimulationSession.TryRestoreSave(value.Payload,out _,out var error)?string.Empty:error;
         }
         private static SaveSlotInfo Info(SaveEnvelope value) => new SaveSlotInfo {
             SlotId=value.SlotId,DeclaredSlotId=value.SlotId,DisplayName=value.DisplayName,
             SavedAtUtc=DateTime.ParseExact(value.SavedAtUtc,"O",CultureInfo.InvariantCulture,DateTimeStyles.RoundtripKind),Tick=value.Tick,ColonistCount=value.ColonistCount };
 
-        public SaveSlotListResult ListSlots()
+        public SaveSlotListResult ListSlots() => ListSlots(true);
+
+        // A title screen can inspect the file structure without instantiating simulation worlds.
+        // The selected slot still goes through full restore validation when loaded.
+        public SaveSlotListResult ListSlotSummaries() => ListSlots(false);
+
+        private SaveSlotListResult ListSlots(bool verifyRestore)
         {
             var entries=new List<SaveSlotInfo>();
             try
@@ -104,7 +111,7 @@ namespace RimworldTweak.Runtime
                     var bad=new SaveSlotInfo {SlotId=id,DisplayName=fileName,ErrorCode="SaveInvalidSlot"};
                     if(!files.ReadJson<SaveEnvelope>(path,out var data,out var error)){bad.ErrorCode=error;entries.Add(bad);continue;}
                     bad.DeclaredSlotId=data?.SlotId;
-                    error=Validate(data,id);
+                    error=Validate(data,id,verifyRestore);
                     if(!string.IsNullOrEmpty(error)){bad.ErrorCode=error;entries.Add(bad);continue;}
                     entries.Add(Info(data));
                 }
@@ -115,7 +122,7 @@ namespace RimworldTweak.Runtime
                 {
                     if(!File.Exists(SlotPath(legacyId))) continue;
                     var loaded=files.Load(SlotPath(legacyId));var error=loaded.ErrorCode;
-                    if(loaded.Success&&!SimulationSession.TryRestoreSave(loaded.Data,out _,out error))loaded=new SaveLoadResult(false,errorCode:error);
+                    if(verifyRestore&&loaded.Success&&!SimulationSession.TryRestoreSave(loaded.Data,out _,out error))loaded=new SaveLoadResult(false,errorCode:error);
                     entries.Add(new SaveSlotInfo {SlotId=legacyId,DisplayName=legacyId==LegacySlotId?"기존 저장":"기존 습격 저장",IsLegacy=true,ErrorCode=loaded.Success?string.Empty:error,
                         SavedAtUtc=File.GetLastWriteTimeUtc(SlotPath(legacyId)),Tick=loaded.Success?loaded.Data.World.Tick:0,
                         ColonistCount=loaded.Success?loaded.Data.World.Colonists.Count:0});
@@ -152,7 +159,7 @@ namespace RimworldTweak.Runtime
         public SaveSlotLoadResult Load(string slotId)
         {
             if(slotId!=LegacySlotId&&slotId!=RaidLegacySlotId&&!IsSlotId(slotId))return new SaveSlotLoadResult(false,"SaveInvalidSlot");
-            var list=ListSlots();if(!list.Success)return new SaveSlotLoadResult(false,list.ErrorCode);
+            var list=ListSlotSummaries();if(!list.Success)return new SaveSlotLoadResult(false,list.ErrorCode);
             var slot=list.Slots.FirstOrDefault(x=>x.SlotId==slotId);
             if(slot==null)return new SaveSlotLoadResult(false,"SaveNotFound");
             if(!slot.IsValid)return new SaveSlotLoadResult(false,slot.ErrorCode);

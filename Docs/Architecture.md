@@ -19,6 +19,7 @@ Assets/Game/
   Editor/
   Content/Scenarios/
   Content/Definitions/
+  Scenes/Title.unity
   Scenes/SimulationSandbox.unity
   Tests/EditMode/Simulation/
   Tests/PlayMode/Integration/
@@ -28,6 +29,8 @@ Tools/Run-Tests.ps1
 ```
 
 ## 코드 경계
+
+일반 실행은 Title 씬의 TitleBootstrap에서 시작한다. TitleMenu는 SettlementStorage를 통해 표시 설정과 저장 요약을 읽는다. 새 게임 또는 슬롯 선택 시 SimulationSandbox 씬이 실행기를 준비하고, 새 정착지 생성이나 저장 복원을 마친 후 SettlementShell을 지도에 연결한다. 플레이 중 메인으로 돌아오면 씬 교체로 세션과 HUD를 해제한다. [씬 전환과 검증 기준](Plans/Main-Menu.md)
 
 2026-11-17 적용 기준: 기존 아래 경계를 유지하는 것으로 프로토타입의 최소 확장성을 확보한다. 미래 성능만을 위한 검색 인터페이스·DI·캐시 관리자·변경 이벤트·계측 프레임워크를 추가하지 않는다. 기능 연결 후 대표 Player 측정에서 확인한 구간만 개선한다. 현재 규칙·예약·수명 오류는 즉시 수정하며, 기능 확인을 막는 실제 지연에는 좁은 측정과 최소 수정만 허용한다. 상세 판단은 [프로토타입 우선 지침](Plans/RimWorld-Performance-Application.md)을 따른다.
 

@@ -161,8 +161,8 @@ namespace RimworldTweak.Presentation
                     truncatedPortraits[(RectTransform)button.transform]=fullName+"\n"+PawnAction(pawn)+
                         "\n포만도 "+pawn.Nutrition/100+" · 휴식 "+pawn.Rest/100;
                     button.GetComponent<Image>().color = selectedPawns.Contains(id)
-                        ? ActiveColor
-                        : pawn.IsDrafted ? new Color(.35f,.41f,.46f) : ControlColor;
+                        ? MenuStyle.Active
+                        : pawn.IsDrafted ? new Color(.35f,.41f,.46f) : MenuStyle.Control;
                 });
                 index++;
             }
@@ -289,24 +289,18 @@ namespace RimworldTweak.Presentation
         {
             var r=new GameObject(name,typeof(RectTransform)).GetComponent<RectTransform>();r.SetParent(parent,false);
             r.anchorMin=r.anchorMax=r.pivot=new Vector2(0,1);
-            var image=r.gameObject.AddComponent<Image>();image.color=color??PanelColor;image.raycastTarget=color!=Color.clear;
-            if (!color.HasValue) ApplySurface(image);
+            var image=r.gameObject.AddComponent<Image>();image.color=color??MenuStyle.Panel;image.raycastTarget=color!=Color.clear;
+            if (!color.HasValue) MenuStyle.ApplySurface(image, visualCatalog);
             return r;
-        }
-        private void ApplySurface(Image image)
-        {
-            if (visualCatalog == null || !visualCatalog.TryGet("ui.panel", out var panelVisual)) return;
-            image.sprite = panelVisual.Sprite;
-            image.type = Image.Type.Sliced;
         }
 
         private static void SetButtonActive(Button button, bool active)
         {
-            var surface = active ? ActiveColor : ControlColor;
+            var surface = active ? MenuStyle.Active : MenuStyle.Control;
             if (button.targetGraphic.color == surface) return;
             button.targetGraphic.color = surface;
             var caption = button.GetComponentInChildren<Text>();
-            caption.color = active ? Accent : TextColor;
+            caption.color = active ? Accent : MenuStyle.Text;
         }
         private static void Place(RectTransform r,float x,float y,float w,float h)
         {r.anchorMin=r.anchorMax=r.pivot=new Vector2(0,1);r.anchoredPosition=new Vector2(x,-y);r.sizeDelta=new Vector2(w,h);}
@@ -315,21 +309,16 @@ namespace RimworldTweak.Presentation
         private Text Label(string name,Transform parent,int size=18)
         {
             var r=new GameObject(name,typeof(RectTransform)).GetComponent<RectTransform>();r.SetParent(parent,false);
-            var t=r.gameObject.AddComponent<Text>();t.font=font;t.fontSize=size;t.color=TextColor;t.supportRichText=false;
+            var t=r.gameObject.AddComponent<Text>();t.font=font;t.fontSize=size;t.color=MenuStyle.Text;t.supportRichText=false;
             t.raycastTarget=false;t.alignment=TextAnchor.UpperLeft;t.horizontalOverflow=HorizontalWrapMode.Wrap;t.verticalOverflow=VerticalWrapMode.Truncate;
             return t;
         }
         private Button ButtonAt(string key,string caption,Transform parent,float x,float y,float w,float h,Action action)
         {
-            var r=Box(key,parent,ControlColor);Place(r,x,y,w,h);
+            var r=Box(key,parent,MenuStyle.Control);Place(r,x,y,w,h);
             var b=r.gameObject.AddComponent<Button>();b.targetGraphic=r.GetComponent<Image>();
-            ApplySurface((Image)b.targetGraphic);
-            var colors = b.colors;
-            colors.highlightedColor = new Color(1f, 1f, .93f);
-            colors.selectedColor = new Color(.78f, .90f, 1f);
-            colors.pressedColor = new Color(.72f, .74f, .68f);
-            colors.disabledColor = new Color(.68f, .68f, .68f);
-            b.colors = colors;
+            MenuStyle.ApplySurface((Image)b.targetGraphic, visualCatalog);
+            MenuStyle.ApplyButtonColors(b);
             var text=Label("Caption",r,17);text.text=caption;text.alignment=TextAnchor.MiddleCenter;Stretch(text.rectTransform,4);
             b.onClick.AddListener(()=>{if(!Runner.SaveBusy)action();});buttons[key]=b;return b;
         }

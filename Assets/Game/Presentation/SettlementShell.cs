@@ -53,11 +53,7 @@ namespace RimworldTweak.Presentation
         private bool draftHeld;
         private bool developmentUi;
         private bool hadFocus = true;
-        private static readonly Color PanelColor = new Color(.22f, .22f, .21f, .98f);
-        private static readonly Color ControlColor = new Color(.30f, .30f, .28f);
-        private static readonly Color ActiveColor = new Color(.48f, .53f, .36f);
-        private static readonly Color TextColor = new Color(.96f, .94f, .88f);
-        private static readonly Color Accent = new Color(.73f, .80f, .56f);
+        private static Color Accent => MenuStyle.Accent;
 
         public void Initialize(SimulationRunner runner, bool startAtMenu = true, string storageRoot = null, VisualCatalog visuals = null, bool enableDevelopmentUi = false)
         {

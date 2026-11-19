@@ -39,11 +39,11 @@ Unity Hub에서 Add project from disk로 루트 폴더를 등록하거나 다음
 ```
 
 1. 패키지 해석과 컴파일 완료를 기다린다.
-2. `Assets/Game/Scenes/SimulationSandbox.unity`를 연다.
+2. `Assets/Game/Scenes/Title.unity`를 연다.
 3. Play 버튼 또는 Ctrl+P로 실행하고 Game 탭을 확인한다.
 4. 다시 실행을 중지하고 Console을 확인한다.
 
-초기 템플릿 SampleScene은 보존했다. 데모의 진입 장면은 SimulationSandbox이며 초기 정착지와 선택·이동·목적지·경로, Tick·Pause·1/3배속·Step·Reset을 표시한다. 실행 파일과 수동 확인 절차는 [MovementDemo.md](MovementDemo.md)를 따른다.
+일반 실행은 독립 타이틀에서 시작한다. ‘새 게임’을 누르면 SimulationSandbox에서 정착지가 시작된다. ‘불러오기’는 타이틀에서 저장 목록을 열고 선택한 정착지의 진행을 복원한다. [메인 화면 계획과 확인 기준](Plans/Main-Menu.md)
 
 ## 버전과 설정 관리
 

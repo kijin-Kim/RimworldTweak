@@ -148,6 +148,23 @@ namespace RimworldTweak.Tests.EditMode
             Assert.That(repository.Load(slot.SlotId).Success,Is.True);
         }
 
+        [Test] public void TitleSlotSummaryChecksStructureAndDefersWorldRestoreUntilSelection()
+        {
+            var slot = Saved("목록 검사", 12);
+            var path = SlotPath(slot.SlotId);
+            var value = ReadEnvelope(path);
+            // World construction rejects a pawn seeded on a blocked tile.
+            value.Payload.Scenario.BlockedTiles.Add(value.Payload.Scenario.Colonists[0].Position);
+            WriteEnvelope(path, value);
+            var entry = repository.ListSlotSummaries().Slots.Single();
+            Assert.That(entry.IsValid, Is.True);
+            Assert.That(entry.Tick, Is.EqualTo(12));
+            Assert.That(repository.Load(slot.SlotId).Success, Is.False);
+            value.Tick++;
+            WriteEnvelope(path, value);
+            Assert.That(repository.ListSlotSummaries().Slots.Single().IsValid, Is.False);
+        }
+
         [Test] public void OversizedWritePreservesReadableSlot()
         {
             var slot=Saved();

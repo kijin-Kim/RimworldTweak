@@ -1,4 +1,7 @@
 [
+  "RimworldTweak.Tests.PlayMode.TitleMenuTests.EmptyTitleKeepsNavigationInMenuAndStartsOnlyOnce",
+  "RimworldTweak.Tests.PlayMode.TitleMenuTests.ContinueWithoutRecentRequiresConfirmationAndMissingRecentOffersManualChoice",
+  "RimworldTweak.Tests.PlayMode.TitleMenuTests.CorruptSlotAndFailedRestoreLeaveAnActionableList",
   "RimworldTweak.Tests.PlayMode.SettlementShellIntegrationTests.GroundWeaponRequiresSingleSelectionAndPickupCanBeCancelledWhilePaused",
   "RimworldTweak.Tests.PlayMode.DemoIntegrationTests.PausedRunnerStepsExactlyOneHundredAndResetPreservesPause",
   "RimworldTweak.Tests.PlayMode.DemoIntegrationTests.AutomaticRunnerAdvancesAndPauseStopsFurtherProgress",

@@ -15,6 +15,7 @@ namespace RimworldTweak.Editor
     public static class DemoBuild
     {
         public const string ScenePath = "Assets/Game/Scenes/SimulationSandbox.unity";
+        public const string TitlePath = "Assets/Game/Scenes/Title.unity";
 
         public static void PrepareScene()
         {
@@ -33,7 +34,18 @@ namespace RimworldTweak.Editor
             bootstrap.View = view;
             bootstrap.Visuals = AssetDatabase.LoadAssetAtPath<VisualCatalog>(VisualCatalog.DefaultAssetPath);
             EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene(), ScenePath);
-            EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
+            var titleScene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var titleCamera = new GameObject("Camera").AddComponent<Camera>();
+            titleCamera.clearFlags = CameraClearFlags.SolidColor;
+            titleCamera.backgroundColor = new Color(.13f, .13f, .12f);
+            titleCamera.cullingMask = 0;
+            new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+            var title = new GameObject("Title").AddComponent<TitleBootstrap>();
+            title.Visuals = AssetDatabase.LoadAssetAtPath<VisualCatalog>(VisualCatalog.DefaultAssetPath);
+            EditorSceneManager.SaveScene(titleScene, TitlePath);
+            EditorBuildSettings.scenes = new[] {
+                new EditorBuildSettingsScene(TitlePath, true), new EditorBuildSettingsScene(ScenePath, true)
+            };
             PlayerSettings.companyName = "RimworldTweak";
             PlayerSettings.productName = "RimworldTweak";
             PlayerSettings.defaultScreenWidth = 1280;
@@ -59,7 +71,7 @@ namespace RimworldTweak.Editor
         {
             Directory.CreateDirectory(directory);
             var result = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
-                scenes = new[] { ScenePath },
+                scenes = new[] { TitlePath, ScenePath },
                 locationPathName = Path.Combine(directory, "RimworldTweak.exe"),
                 target = BuildTarget.StandaloneWindows64,
                 options = options

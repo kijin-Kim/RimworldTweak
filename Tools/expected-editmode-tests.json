@@ -1,4 +1,5 @@
 [
+  "RimworldTweak.Tests.EditMode.SaveRepositoryTests.TitleSlotSummaryChecksStructureAndDefersWorldRestoreUntilSelection",
   "RimworldTweak.Tests.EditMode.SaveRepositoryTests.PreviousLargeSettlementSlotLoadsAndCanStartNormalRaid",
   "RimworldTweak.Tests.EditMode.InitialWorldTests.SandboxHasSpecifiedInitialState",
   "RimworldTweak.Tests.EditMode.InitialWorldTests.RepeatedCreationProducesEquivalentIndependentSnapshots",

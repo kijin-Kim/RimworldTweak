@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Game/Scenes/Title.unity
+    guid: c61175400fc04a66839226f6ca9cdf86
+  - enabled: 1
     path: Assets/Game/Scenes/SimulationSandbox.unity
     guid: 047d9df3f3e7238449f3e7b12c7f2047
   m_configObjects:

@@ -6,6 +6,7 @@ using RimworldTweak.Runtime;
 using RimworldTweak.Presentation;
 using RimworldTweak.Simulation;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace RimworldTweak.Demo
 {
@@ -66,8 +67,19 @@ namespace RimworldTweak.Demo
             var index = Array.IndexOf(args, "--smoke-output");
             if (index < 0)
             {
-                try { StartInteractive(args); }
-                catch(Exception exception) { Debug.LogError("Interactive startup failed: "+exception.Message);Application.Quit(2); }
+                var entry = TitleBootstrap.TakePlayEntry();
+                if (entry == null)
+                {
+                    SceneManager.LoadScene(TitleBootstrap.TitleScene, LoadSceneMode.Single);
+                    return;
+                }
+                try { EnterSettlement(entry); }
+                catch (Exception error)
+                {
+                    Runner.SetUiBlocked(true);
+                    Debug.LogException(error);
+                    TitleBootstrap.ReturnToTitle(entry, "정착지를 열지 못했어. 저장 목록을 확인해줘.");
+                }
                 return;
             }
             View.Bind(Runner);
@@ -79,19 +91,32 @@ namespace RimworldTweak.Demo
             StartCoroutine(Smoke());
         }
 
+        // Direct setup for isolated sandbox callers. The Player enters through the title scene.
         public void StartInteractive(string[] args)
         {
-            var storageIndex=Array.IndexOf(args,"--storage-root");
-            string storageRoot=null;
-            if(storageIndex>=0)
-            {
-                if(storageIndex+1>=args.Length||string.IsNullOrWhiteSpace(args[storageIndex+1])||args[storageIndex+1].StartsWith("--",StringComparison.Ordinal))
-                    throw new ArgumentException("--storage-root requires a directory path.");
-                storageRoot=Path.GetFullPath(args[storageIndex+1]);
-            }
+            var storageRoot = TitleBootstrap.StorageRootFrom(args);
             View.gameObject.SetActive(false);
             var shell=gameObject.AddComponent<SettlementShell>();
             shell.Initialize(Runner, true, storageRoot, Visuals, Array.IndexOf(args, "--development-ui") >= 0);
+        }
+
+        private void EnterSettlement(TitleBootstrap.Entry entry)
+        {
+            View.gameObject.SetActive(false);
+            Runner.ConfigureStorage(entry.StorageRoot);
+            if (entry.SlotId == null)
+                Runner.StartNewSettlement();
+            else if (!Runner.LoadSlot(entry.SlotId))
+            {
+                Runner.SetUiBlocked(true);
+                TitleBootstrap.ReturnToTitle(entry, Runner.SaveMessage);
+                return;
+            }
+            var shell = gameObject.AddComponent<SettlementShell>();
+            // Storage and active slot are already bound before the HUD receives the restored world.
+            shell.Initialize(Runner, false, visuals: Visuals, enableDevelopmentUi: entry.DevelopmentUi);
+            shell.ReturnToTitle = () => TitleBootstrap.ReturnToTitle(entry);
+            if (entry.SlotId != null) shell.ShowRestoredSettlement();
         }
 
         private static void Require(bool condition, string message)

@@ -36,7 +36,12 @@ try {
         $info=[Diagnostics.ProcessStartInfo]::new($exe)
         $info.UseShellExecute=$false
         $info.CreateNoWindow=$true
-        $info.WindowStyle=[Diagnostics.ProcessWindowStyle]::Hidden
+        # These modes verify the window backbuffer as well as the offscreen diagnostic render.
+        $info.WindowStyle=if ($mode -in @('capture','save','load')) {
+            [Diagnostics.ProcessWindowStyle]::Normal
+        } else {
+            [Diagnostics.ProcessWindowStyle]::Hidden
+        }
         $info.WorkingDirectory=$project
         foreach($arg in @('-force-d3d11','-screen-fullscreen','0','-screen-width',"$Width",'-screen-height',"$Height",'-logFile',(Join-Path $output 'player.log'),'--ux-output',$output,'--ux-storage',$storage,'--ux-mode',$mode,'--ux-scale',"$Scale")){$info.ArgumentList.Add($arg)}
         $process=[Diagnostics.Process]::Start($info)

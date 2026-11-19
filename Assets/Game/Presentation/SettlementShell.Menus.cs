@@ -91,6 +91,7 @@ namespace RimworldTweak.Presentation
         public InputField SaveNameInput { get; private set; }
         public bool ExitRequested { get; private set; }
         public bool SuppressProcessExit { get; set; }
+        public Action ReturnToTitle { get; set; }
 
         private void OpenMenu(string title, Action back, bool pauseLayout = false, float preferredHeight = 780)
         {
@@ -187,7 +188,10 @@ namespace RimworldTweak.Presentation
             RowButton(menuContent,"load.menu","불러오기",ShowLoadMenu);
             RowButton(menuContent,"settings","화면 설정",()=>ShowSettings(ShowPauseMenu));
             RowButton(menuContent,"new","새 정착지",()=>ConfirmTransition("새 정착지를 시작할까?",()=>{Runner.StartNewSettlement();HasSettlement=true;CloseMenu();Refresh();}));
-            RowButton(menuContent,"main","메인 메뉴",()=>ConfirmTransition("메인 메뉴로 돌아갈까?",()=>{HasSettlement=false;ClearSelection();CancelTool();ShowMainMenu();}));
+            RowButton(menuContent,"main","메인 메뉴",()=>ConfirmTransition("메인 메뉴로 돌아갈까?",()=>{
+                if(ReturnToTitle!=null){ReturnToTitle();return;}
+                HasSettlement=false;ClearSelection();CancelTool();ShowMainMenu();
+            }));
             RowButton(menuContent,"exit","종료",()=>ConfirmTransition("게임을 종료할까?",RequestExit));
         }
         private void ConfirmTransition(string title, Action proceed)
@@ -229,7 +233,11 @@ namespace RimworldTweak.Presentation
         {
             MapInput.CancelGesture();
             if(!Runner.LoadSlot(id)){Feedback=Runner.SaveMessage;ShowLoadMenu();return;}
-            HasSettlement=true;CloseMenu();Refresh();ShowResult(Runner.SaveMessage);
+            HasSettlement=true;CloseMenu();Refresh();ShowRestoredSettlement();
+        }
+        public void ShowRestoredSettlement()
+        {
+            ShowResult(Runner.SaveMessage);
             if(!string.IsNullOrEmpty(Runner.SettingsWarning))ShowWarning(Runner.SettingsWarning,CloseMenu);
         }
         public void ShowSaveMenu(Action afterSave=null)

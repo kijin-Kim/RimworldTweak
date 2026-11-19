@@ -1,26 +1,19 @@
-using System;
-using System.IO;
 using RimworldTweak.Simulation;
-using UnityEngine;
 
 namespace RimworldTweak.Runtime
 {
     public sealed partial class SimulationRunner
     {
-        public SaveRepository Slots { get; private set; }
-        public UserSettingsStore SettingsStore { get; private set; }
-        public UserSettings Settings { get; private set; }
+        private SettlementStorage storage;
+        public SaveRepository Slots => storage?.Slots;
+        public UserSettingsStore SettingsStore => storage?.SettingsStore;
+        public UserSettings Settings => storage?.Settings;
         public string ActiveSlotId { get; private set; }
-        public string SettingsWarning { get; private set; } = string.Empty;
+        public string SettingsWarning => storage?.SettingsWarning ?? string.Empty;
 
         public void ConfigureStorage(string root = null)
         {
-            root = root ?? Application.persistentDataPath;
-            Slots = new SaveRepository(Path.Combine(root, "Saves"));
-            SettingsStore = new UserSettingsStore(Path.Combine(root, "Settings", "user-settings.json"));
-            var loaded = SettingsStore.Load();
-            Settings = loaded.Settings ?? new UserSettings();
-            SettingsWarning = loaded.Success ? string.Empty : "표시 설정을 읽지 못해 기본값을 사용해.";
+            storage = SettlementStorage.Open(root);
             ActiveSlotId = null;
         }
 
@@ -37,7 +30,7 @@ namespace RimworldTweak.Runtime
             if (SaveBusy || IsLoadConfirmationOpen) return false;
             if (Slots == null) ConfigureStorage();
             SaveBusy = true;
-            SettingsWarning = string.Empty;
+            storage.SettingsWarning = string.Empty;
             try
             {
                 var capture = Session.CaptureSaveData(IsPaused, SpeedMultiplier);
@@ -59,7 +52,7 @@ namespace RimworldTweak.Runtime
             if (SaveBusy) return false;
             if (Slots == null) ConfigureStorage();
             SaveBusy = true;
-            SettingsWarning = string.Empty;
+            storage.SettingsWarning = string.Empty;
             try
             {
                 var result = Slots.Load(slotId);
@@ -80,18 +73,14 @@ namespace RimworldTweak.Runtime
             if (!saved.Success)
             {
                 Settings.RecentSlotId = previous;
-                SettingsWarning = "게임은 '" + name + "'에 저장되어 있지만 이어하기 기록을 갱신하지 못했어. 다음 실행에는 목록에서 선택해줘.";
+                storage.SettingsWarning = "게임은 '" + name + "'에 저장되어 있지만 이어하기 기록을 갱신하지 못했어. 다음 실행에는 목록에서 선택해줘.";
             }
         }
 
         public bool SetUiScale(int percent)
         {
-            if (percent != 100 && percent != 125 && percent != 150) return false;
-            if (Settings == null) ConfigureStorage();
-            Settings.UiScalePercent = percent;
-            var saved = SettingsStore.Save(Settings);
-            SettingsWarning = saved.Success ? string.Empty : "이번 화면에는 적용했지만 표시 설정을 파일에 저장하지 못했어.";
-            return saved.Success;
+            if (storage == null) ConfigureStorage();
+            return storage.SetUiScale(percent);
         }
 
         public static string SlotError(string code)
