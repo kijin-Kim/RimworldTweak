@@ -97,8 +97,12 @@ namespace RimworldTweak.Tests.EditMode
         }
         [Test] public void OccupiedWallCompletionWaitsAndResumesWithoutDeletingPawn()
         {
+            foreach (BuildingKind kind in Enum.GetValues(typeof(BuildingKind))) CheckOccupiedSite(kind);
+        }
+        private static void CheckOccupiedSite(BuildingKind kind)
+        {
             var w=World(two:true);w.ToggleDraft(2);w.QueueMove(2,P(4,4));Until(w,()=>w.Colonists[1].Position==P(4,4));
-            var b=Place(w);w.Step(300);Assert.That(b.Exists,Is.True);Assert.That(w.BlockedTiles.Contains(P(4,4)),Is.False);
+            var b=Place(w,kind);w.Step(300);Assert.That(b.Exists,Is.True);Assert.That(w.BlockedTiles.Contains(P(4,4)),Is.False);
             Assert.That(b.Reason,Is.EqualTo(WorkReasonCode.AwaitingClearance));Assert.That(Wood(w),Is.EqualTo(40));
             w.QueueMove(2,P(5,4));Until(w,()=>b.Progress>0);
             Assert.That(w.TryGetWorkFeedback(1,out _),Is.True);
@@ -106,12 +110,111 @@ namespace RimworldTweak.Tests.EditMode
             var blockedProgress=b.Progress;
             Assert.That(w.TryGetWorkFeedback(1,out _),Is.False);
             w.Step(10);Assert.That(b.Progress,Is.EqualTo(blockedProgress));
+            Assert.That(w.GetWorkDiagnostic(WorkCategory.Build,b.Id),Is.EqualTo(WorkReasonCode.AwaitingClearance));
             w.QueueMove(2,P(5,4));Until(w,()=>w.Colonists[1].Position==P(5,4));
             Assert.That(w.TryGetWorkFeedback(1,out var resumed),Is.True);
             Assert.That(resumed.Progress,Is.EqualTo(blockedProgress));
             Until(w,()=>!b.Exists);Assert.That(w.Colonists[1].Position,Is.EqualTo(P(5,4)));
-            Assert.That(Wood(w),Is.EqualTo(38));
+            Assert.That(Wood(w),Is.EqualTo(40-ConstructionRules.Cost(kind)));
         }
+        [Test] public void DroppedMaterialBlocksOnlyImpassableBlueprints()
+        {
+            foreach (BuildingKind kind in Enum.GetValues(typeof(BuildingKind)))
+            {
+                var w=WorldState.Create(new ScenarioDefinition(10,10,Array.Empty<GridPosition>(),
+                    new[]{new ColonistSeed(1,P(4,5)),new ColonistSeed(2,P(2,4))},
+                    new[]{new ResourceSeed(101,ResourceKind.Wood,40,P(4,5)),new ResourceSeed(102,ResourceKind.Ingredients,3,P(2,4))}));
+                w.SetDrafted(1,true); w.SetWorkPriority(2,WorkCategory.Build,0);
+                var b=Place(w,kind);
+                Assert.That(w.QueueCreateStorage(P(6,4),P(6,4)),Is.True);
+                Until(w,()=>w.Colonists[1].CargoAmount==3 && w.Colonists[1].Position==b.Position);
+                w.SetDrafted(2,true);
+                w.QueueMove(2,P(5,4)); w.Step(5);
+                w.SetWorkPriority(1,WorkCategory.Haul,0); w.SetDrafted(1,false);
+                w.Step(450);
+                Assert.That(w.Resources.Any(r=>r.Position==b.Position && r.Kind==ResourceKind.Ingredients && r.Amount==3),Is.True);
+                Assert.That(b.Exists,Is.EqualTo(ConstructionRules.BlocksMovement(kind)));
+                if(b.Exists)
+                {
+                    Assert.That(b.Progress,Is.Zero);
+                    Assert.That(b.DeliveredWood,Is.EqualTo(b.Cost));
+                    Assert.That(w.GetWorkDiagnostic(WorkCategory.Build,b.Id),Is.EqualTo(WorkReasonCode.AwaitingClearance));
+                }
+            }
+        }
+
+        [Test] public void RaiderAndDownedColonistBothOccupyTheSite()
+        {
+            var w=World(two:true);
+            w.SetDrafted(2,true);
+            var b=Place(w,BuildingKind.Bed);
+            Until(w,()=>b.Progress==5);
+            Assert.That(w.StartNormalRaid(0),Is.True);
+            var enemy=w.Raiders[0];
+            enemy.Position=b.Position;
+            w.Step(1);
+            Assert.That(b.Progress,Is.EqualTo(5));
+            w.QueueMove(2,b.Position);
+            Until(w,()=>w.Colonists[1].Position==b.Position);
+            w.ApplyCombatDamage(2,100);
+            enemy.Position=P(8,8);
+            w.Step(3);
+            Assert.That(w.Colonists[1].IsDowned,Is.True);
+            Assert.That(w.GetWorkDiagnostic(WorkCategory.Build,b.Id),Is.EqualTo(WorkReasonCode.AwaitingClearance));
+            Assert.That(b.Progress,Is.EqualTo(5));
+        }
+
+        [Test] public void CompletingWallReplansTheLastTickOfADiagonalStep()
+        {
+            var w=World(two:true);
+            w.SetDrafted(2,true);
+            w.QueueMove(2,P(4,3));
+            Until(w,()=>w.Colonists[1].Position==P(4,3));
+            var site=Place(w);
+            Until(w,()=>site.Progress==site.Duration-7);
+            var visitor=w.Colonists[1];
+            Assert.That(w.QueueMove(2,P(5,4)),Is.True);
+            w.Step(6);
+            Assert.That(visitor.Path[0],Is.EqualTo(P(5,4)));
+            Assert.That(visitor.MovementProgress,Is.EqualTo(6));
+            w.Step(1);
+            Assert.That(site.Exists,Is.False);
+            Assert.That(visitor.Position,Is.EqualTo(P(4,3)));
+            Assert.That(visitor.Path[0],Is.EqualTo(P(5,3)));
+            w.Step(9);
+            Assert.That(visitor.Position,Is.EqualTo(P(5,4)));
+        }
+
+        [Test] public void TwoOccupantsDelayLastTickThroughSaveAndResume()
+        {
+            foreach (BuildingKind kind in Enum.GetValues(typeof(BuildingKind)))
+            {
+                var session = new SimulationSession(new ScenarioDefinition(10,10,Array.Empty<GridPosition>(),
+                    new[]{new ColonistSeed(1,P(1,1)),new ColonistSeed(2,P(4,3)),new ColonistSeed(3,P(4,3))},
+                    new[]{new ResourceSeed(101,ResourceKind.Wood,40,P(1,1))}));
+                var w=session.World;
+                w.SetDrafted(2,true); w.SetDrafted(3,true);
+                var b=Place(w,kind);
+                Until(w,()=>b.Progress==b.Duration-6);
+                w.QueueMove(2,b.Position); w.QueueMove(3,b.Position);
+                w.Step(5);
+                Assert.That(b.Progress,Is.EqualTo(b.Duration-1));
+                Assert.That(w.Colonists.Count(p=>p.Position==b.Position),Is.EqualTo(2));
+                Assert.That(SimulationSession.TryRestoreSave(session.CaptureSaveData().Data,out var loaded,out var error),Is.True,error);
+                w=loaded.World; b=w.Blueprints.Single(site=>site.Exists);
+                w.QueueMove(2,P(5,4)); w.Step(5);
+                Assert.That(w.GetWorkDiagnostic(WorkCategory.Build,b.Id),Is.EqualTo(WorkReasonCode.AwaitingClearance));
+                Assert.That(b.DeliveredWood,Is.EqualTo(b.Cost));
+                Assert.That(b.Progress,Is.EqualTo(b.Duration-1));
+                w.QueueMove(3,P(4,3)); w.Step(5);
+                Assert.That(b.Exists,Is.True);
+                w.Step(1);
+                Assert.That(b.Exists,Is.False);
+                Assert.That(w.ConstructionConsumedWood,Is.EqualTo(b.Cost));
+                Assert.That(w.Buildings.Count(site=>site.Exists),Is.EqualTo(1));
+            }
+        }
+
         [Test] public void DemolitionWaitsThirtyTicksAndRefundsOnlyOnce()
         {
             var w=World();var building=Build(w);Assert.That(w.SetDemolition(building.Id,true),Is.True);

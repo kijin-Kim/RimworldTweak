@@ -82,7 +82,11 @@ namespace RimworldTweak.Simulation
             Destination = null; path.Clear(); MovementProgress = 0; MovementTicksPerTile = 5; Status = MovementStatus.Idle;
         }
         private const int NutritionPerTick = 10;
-        private static int TileMovementTicks(bool starving) => starving ? 10 : 5;
+        private int TileMovementTicks(bool starving)
+        {
+            int ticks = path.Count == 0 ? Walking.Straight : Walking.StepCost(Position, path[0]);
+            return starving ? ticks * 2 : ticks;
+        }
 
         public int MovementTicksForNextTick(bool needsEnabled) => MovementProgress > 0
             ? MovementTicksPerTile

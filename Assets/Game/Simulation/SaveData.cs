@@ -6,7 +6,8 @@ namespace RimworldTweak.Simulation
     [DataContract]
     public sealed class SaveData
     {
-        public const int CurrentSchemaVersion = 2;
+        public const int CurrentSchemaVersion = 3;
+        public static bool SupportsSchema(int version) => version == 2 || version == CurrentSchemaVersion;
         [DataMember(Name="schemaVersion", IsRequired=true)] public int SchemaVersion;
         [DataMember(Name="scenarioId", IsRequired=true)] public string ScenarioId;
         [DataMember(Name="scenarioVersion", IsRequired=true)] public int ScenarioVersion;

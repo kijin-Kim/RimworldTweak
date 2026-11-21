@@ -235,7 +235,7 @@ namespace RimworldTweak.Simulation
                     anyAvailable = true;
                     var candidate = FindPath(colonist.Position, resource.Position);
                     if (candidate == null) continue;
-                    if (best == null || candidate.Count < route.Count || (candidate.Count == route.Count && resource.Id < best.Id))
+                    if (best == null || Walking.RouteCost(colonist.Position, candidate) < Walking.RouteCost(colonist.Position, route) || (Walking.RouteCost(colonist.Position, candidate) == Walking.RouteCost(colonist.Position, route) && resource.Id < best.Id))
                     { best = resource; route = candidate; }
                 }
                 if (best != null) { reason = string.Empty; return best; }
@@ -254,7 +254,7 @@ namespace RimworldTweak.Simulation
                 available = true;
                 var candidate = FindPath(colonist.Position, bed.Position);
                 if (candidate == null) continue;
-                if (best == null || candidate.Count < route.Count || (candidate.Count == route.Count && bed.Id < best.Id))
+                if (best == null || Walking.RouteCost(colonist.Position, candidate) < Walking.RouteCost(colonist.Position, route) || (Walking.RouteCost(colonist.Position, candidate) == Walking.RouteCost(colonist.Position, route) && bed.Id < best.Id))
                 { best = bed; route = candidate; }
             }
             reason = best != null ? string.Empty : !any ? "NoBed" : available ? "BedUnreachable" : "BedReserved";

@@ -29,6 +29,7 @@ namespace RimworldTweak.Simulation
         [DataMember(IsRequired = true)] public PositionSaveData Position;
         [DataMember(IsRequired = true)] public PositionSaveData NextCell;
         [DataMember(IsRequired = true)] public int MoveProgress;
+        [DataMember(EmitDefaultValue = false)] public bool FinishLegacyStep;
         [DataMember(IsRequired = true)] public long RetryTick;
         [DataMember(IsRequired = true)] public long RouteRevision;
         [DataMember(IsRequired = true)] public AttackSaveData Attack;
@@ -76,7 +77,7 @@ namespace RimworldTweak.Simulation
             ForcedRetreats = RaidForcedRetreats, Raiders = raiders.Select(raider => new RaiderSaveData {
                 Id = raider.Id, Health = raider.Health, Position = PositionSaveData.From(raider.Position),
                 NextCell = raider.NextCell.HasValue ? PositionSaveData.From(raider.NextCell.Value) : null,
-                MoveProgress = raider.MoveProgress, RetryTick = raider.RetryTick, RouteRevision = raider.RouteRevision,
+                FinishLegacyStep = raider.FinishLegacyStep, MoveProgress = raider.MoveProgress, RetryTick = raider.RetryTick, RouteRevision = raider.RouteRevision,
                 Attack = CaptureAttack(raider.Attack)
             }).ToList()
         };
@@ -92,7 +93,7 @@ namespace RimworldTweak.Simulation
                 RequireSave(initial.Any(site => site.Kind == BuildingKind.Stove && site.Position == scenario.InitialRaidStove.Value));
         }
 
-        private void RestoreRaid(RaidSaveData data)
+        private void RestoreRaid(RaidSaveData data, int schemaVersion)
         {
             NormalRaid = data.Kind == "Normal";
             RetargetPercent = data.RetargetPercent.GetValueOrDefault();
@@ -130,10 +131,13 @@ namespace RimworldTweak.Simulation
                     cookingOutputs.All(x => x.Id != saved.Id) &&
                     storageZones.All(x => x.Id != saved.Id && x.Slots.All(slot => slot.Id != saved.Id)));
                 RequireSave(InBounds(position) && !blockedSet.Contains(position) && saved.Health > 0 && saved.Health <= 50 &&
-                    saved.MoveProgress >= 0 && saved.MoveProgress < 5 && saved.RetryTick >= 0 &&
+                    saved.MoveProgress >= 0 && saved.MoveProgress < (next.HasValue ? Walking.StepCost(position, next.Value) : 5) && saved.RetryTick >= 0 &&
                     saved.RouteRevision >= -1 && saved.RouteRevision <= MapRevision &&
-                    (next.HasValue ? InBounds(next.Value) && TileDistance(position, next.Value) == 1 : saved.MoveProgress == 0));
+                    (next.HasValue ? CanWalkStep(position, next.Value) && (schemaVersion >= 3 || TileDistance(position, next.Value) == 1) : saved.MoveProgress == 0));
+                RequireSave(!saved.FinishLegacyStep || (schemaVersion == 3 && next.HasValue &&
+                    TileDistance(position, next.Value) == 1 && saved.MoveProgress > 0));
                 var raider = new RaiderState(saved.Id, position) {
+                    FinishLegacyStep = saved.FinishLegacyStep || (schemaVersion == 2 && saved.MoveProgress > 0),
                     Health = saved.Health, NextCell = next, MoveProgress = saved.MoveProgress,
                     RetryTick = saved.RetryTick, RouteRevision = saved.RouteRevision
                 };

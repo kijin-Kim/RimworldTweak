@@ -17,16 +17,16 @@ namespace RimworldTweak.Simulation
     {
         internal WorkCandidate(WorkReadContext context, WorkCategory category, WorkStep step, int targetId,
             int? sourceId, GridPosition cell, long order, IReadOnlyList<GridPosition> route)
-            : this(context, category, step, targetId, sourceId, cell, order, route.Count)
+            : this(context, category, step, targetId, sourceId, cell, order, route.Count, Walking.RouteCost(context.Position, route))
         {
             Route = new List<GridPosition>(route).AsReadOnly();
         }
 
         internal WorkCandidate(WorkReadContext context, WorkCategory category, WorkStep step, int targetId,
-            int? sourceId, GridPosition cell, long order, int pathLength)
+            int? sourceId, GridPosition cell, long order, int pathLength, int pathCost)
         {
             Context = context; Category = category; Step = step; TargetId = targetId; SourceId = sourceId;
-            WorkCell = cell; RequestOrder = order; PathLength = pathLength;
+            WorkCell = cell; RequestOrder = order; PathLength = pathLength; PathCost = pathCost;
         }
         internal WorkReadContext Context { get; }
         internal IReadOnlyList<GridPosition> Route { get; }
@@ -37,6 +37,7 @@ namespace RimworldTweak.Simulation
         public GridPosition WorkCell { get; }
         public long RequestOrder { get; }
         public int PathLength { get; }
+        public int PathCost { get; }
         public WorkReasonCode Reason => WorkReasonCode.None;
     }
 

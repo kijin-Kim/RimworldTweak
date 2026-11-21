@@ -1,7 +1,7 @@
 #requires -Version 7.0
 [CmdletBinding()]
 param(
-    [ValidateSet('Capture','Restart','WorkFeedback','MapPerformance','SettlementArt','RaidIntegration','SettlementCommands')][string] $Action='Capture',
+    [ValidateSet('Capture','Restart','WorkFeedback','MapPerformance','DiagonalConstruction','SettlementArt','RaidIntegration','SettlementCommands')][string] $Action='Capture',
     [int] $Width=1920,
     [int] $Height=1080,
     [ValidateSet(100,125,150)][int] $Scale=100
@@ -25,6 +25,7 @@ try {
         'WorkFeedback' {'work-feedback'}
         'SettlementArt' {'settlement-art'}
         'MapPerformance' {'map-performance'}
+        'DiagonalConstruction' {@('diagonal-site','diagonal-resume')}
         default {'capture'}
     }
     $records=@()
@@ -61,7 +62,7 @@ try {
             $process.Dispose()
             continue
         }
-        $diagnostic=$mode -in @('work-feedback','settlement-art','raid-integration','settlement-commands')
+        $diagnostic=$mode -in @('work-feedback','settlement-art','raid-integration','settlement-commands','diagonal-site','diagonal-resume')
         $imageFilter=if($diagnostic){'*-offscreen.png'}else{'*.png'}
         $images=@(Get-ChildItem -LiteralPath $output -Filter $imageFilter)
         if($images.Count -eq 0){throw 'No screenshot evidence.'}
@@ -76,6 +77,8 @@ try {
             'settlement-art' {@('settlement-default','settlement-details','settlement-distant','settlement-cooking','settlement-harvest')}
             'raid-integration' {@('raid-start','raid-result')}
             'settlement-commands' {@('weapon-equipped','medicine-selected','priority-work','rescue-carry','rescue-bed')}
+            'diagonal-site' {@('diagonal-walk','occupied-site','completed-wall')}
+            'diagonal-resume' {@('restored-wait','restored-complete')}
             'save' {'saved'}
             'load' {'restored'}
         }

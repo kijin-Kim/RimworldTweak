@@ -206,7 +206,7 @@ namespace RimworldTweak.Simulation
                         if(!resource.Exists||resource.Kind!=ResourceKind.Ingredients||resource.Amount<=0||resource.OwnerId.HasValue||resource.CreatedTick>=Tick||!CookingMaterialAllowed(o,resource))continue;
                         var path=FindPath(pawn.Position,resource.Position);
                         if(path==null||FindPath(resource.Position,o.ServiceCell)==null)continue;
-                        if(best==null||path.Count<bestRoute.Count||path.Count==bestRoute.Count&&resource.Id<best.Id){best=resource;bestRoute=path;}
+                        if(best==null||Walking.RouteCost(pawn.Position, path)<Walking.RouteCost(pawn.Position, bestRoute)||Walking.RouteCost(pawn.Position, path)==Walking.RouteCost(pawn.Position, bestRoute)&&resource.Id<best.Id){best=resource;bestRoute=path;}
                     }
                     if(best==null){o.Reason=WorkReasonCode.MissingMaterials;continue;}
                     options.Add(new FeatureWorkOption(new WorkCandidate(context,WorkCategory.Cook,WorkStep.DeliverCook,o.StoveId,best.Id,best.Position,o.RequestOrder,bestRoute),WorkReasonCode.None));

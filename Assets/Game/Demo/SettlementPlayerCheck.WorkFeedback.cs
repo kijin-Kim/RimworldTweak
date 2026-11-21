@@ -96,7 +96,7 @@ namespace RimworldTweak.Demo
             });
             if(finished)yield break;
             yield return MeasureOperation(report,"short-path",()=>RequireSample(world.FindPath(start,new GridPosition(start.X+1,start.Y))!=null,"Short path missing"));
-            yield return MeasureOperation(report,"corner-path",()=>RequireSample(world.FindPath(new GridPosition(0,0),corner)?.Count==2*(size-1),"Corner path length"));
+            yield return MeasureOperation(report,"corner-path",()=>RequireSample(world.FindPath(new GridPosition(0,0),corner)?.Count==size+1,"Corner path length"));
             yield return MeasureOperation(report,"group-edge-command",()=>{
                 foreach(var pawn in world.Colonists)
                 {
@@ -144,7 +144,83 @@ namespace RimworldTweak.Demo
                 report.slotBytes=new FileInfo(Path.Combine(runner.Slots.SaveDirectory,runner.ActiveSlotId+".save.json")).Length;
             });
             if(finished)yield break;
+            var raidWorld = WorldState.Create(size == 32 ? WorkScenario.CreateTestMap() : WorkScenario.CreateSettlement());
+            RequireSample(raidWorld.StartNormalRaid(0), "Benchmark raid could not start");
+            yield return MeasureOperation(report, "raid-pursuit-20-ticks", () => {
+                raidWorld.Step(20);
+                RequireSample(raidWorld.Tick == 20 && raidWorld.Raiders.Count == 2, "Raid benchmark diverged");
+            });
+            if (finished) yield break;
             File.WriteAllText(Path.Combine(output,"performance-"+size+".json"),JsonUtility.ToJson(report,true));
+        }
+
+        private IEnumerator CheckDiagonalConstruction(bool restore)
+        {
+            var site = new GridPosition(125,125);
+            if (!Check(() => {
+                shell.Buttons["new"].onClick.Invoke();
+                if (restore)
+                {
+                    string id = File.ReadAllText(Path.Combine(storage,"diagonal-slot.txt"));
+                    RequireSample(runner.LoadSlot(id), runner.SaveMessage);
+                    RequireSample(Hash() == File.ReadAllText(Path.Combine(storage,"waiting-hash.txt")), "Restored waiting state differs");
+                }
+                else
+                {
+                    runner.Initialize(new ScenarioDefinition(250,250,Array.Empty<GridPosition>(),
+                        new[]{new ColonistSeed(1,new GridPosition(124,125)),new ColonistSeed(2,new GridPosition(122,122))},
+                        new[]{new ResourceSeed(101,ResourceKind.Wood,2,new GridPosition(124,125))}, needsEnabled:false));
+                    runner.SetPaused(true);
+                    var world = runner.Session.World;
+                    world.SetDrafted(2,true);
+                    RequireSample(world.PlaceBlueprint(BuildingKind.Wall,site),"Blueprint refused");
+                    var b = world.Blueprints.Single();
+                    for (int i=0; i<100 && b.Progress<2; i++) world.Step(1);
+                    RequireSample(b.Progress==2 && world.QueueMove(2,site),"Could not start diagonal approach");
+                    world.Step(4);
+                    var visitor = world.Colonists[1];
+                    RequireSample(visitor.MovementProgress==4 && visitor.MovementTicksPerTile==7,"Wrong diagonal progress");
+                }
+            })) yield break;
+            yield return null;
+            var w = runner.Session.World;
+            var blueprint = w.Blueprints.Single(b=>b.Exists);
+            shell.Map.Focus(site);
+            if (!restore)
+            {
+                shell.SelectPawn(2);
+                yield return Capture("diagonal-walk");
+                if (finished) yield break;
+                if (!Check(() => {
+                    w.Step(17);
+                    RequireSample(w.Colonists[1].Position==site,"Visitor did not arrive at tick 21");
+                    int progress=blueprint.Progress;
+                    w.Step(10);
+                    RequireSample(blueprint.Progress==progress && blueprint.DeliveredWood==2 &&
+                        w.GetWorkDiagnostic(WorkCategory.Build,blueprint.Id)==WorkReasonCode.AwaitingClearance,"Construction did not wait");
+                    RequireSample(runner.SaveSlot("대각 이동과 공사 대기"),runner.SaveMessage);
+                    File.WriteAllText(Path.Combine(storage,"diagonal-slot.txt"),runner.ActiveSlotId);
+                    File.WriteAllText(Path.Combine(storage,"waiting-hash.txt"),Hash());
+                })) yield break;
+            }
+            shell.SelectObject(blueprint.Id);
+            yield return Capture(restore ? "restored-wait" : "occupied-site");
+            if (finished) yield break;
+            if (!Check(() => {
+                RequireSample(w.QueueMove(2,new GridPosition(127,127)),"Visitor cannot leave site");
+                w.Step(14);
+                for (int i=0; i<50 && blueprint.Exists; i++) w.Step(1);
+                RequireSample(!blueprint.Exists && w.ConstructionConsumedWood==2 && w.BlockedTiles.Contains(site),"Construction resume failed");
+                var from = new GridPosition(124,125);
+                var to = new GridPosition(125,126);
+                var around = w.FindPath(from,to);
+                RequireSample(around!=null && around.Count==2 && around[0]==new GridPosition(124,126),"Wall corner crossed");
+                string end = Path.Combine(storage,"finished-hash.txt");
+                if (restore) RequireSample(Hash()==File.ReadAllText(end),"Continued simulation differs after restart");
+                else File.WriteAllText(end,Hash());
+            })) yield break;
+            shell.SelectObject(w.Buildings.Single(b=>b.Exists).Id);
+            yield return Capture(restore ? "restored-complete" : "completed-wall");
         }
 
         private void PrepareConstructionRoute()

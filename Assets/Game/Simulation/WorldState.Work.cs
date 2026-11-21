@@ -174,7 +174,7 @@ namespace RimworldTweak.Simulation
                     if (slot.OwnerId.HasValue || slot.Amount >= StorageSlotState.Capacity || slot.Amount > 0 && slot.Stack.Kind != kind) continue;
                     var path = FindPath(start, slot.Position);
                     if (path == null) continue;
-                    if (best == null || path.Count < route.Count) { best = slot; route = path; }
+                    if (best == null || Walking.RouteCost(start, path) < Walking.RouteCost(start, route)) { best = slot; route = path; }
                 }
             }
             return best;

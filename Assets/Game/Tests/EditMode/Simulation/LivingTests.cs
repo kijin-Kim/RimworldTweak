@@ -299,6 +299,17 @@ namespace RimworldTweak.Tests.EditMode
             }
         }
         [Test]
+        public void FoodChoicePrefersFifteenTicksOverTwentyOneForThreeSteps()
+        {
+            var w = World(resources:new[]{new ResourceSeed(101,ResourceKind.Meal,1,P(4,4)),
+                new ResourceSeed(102,ResourceKind.Meal,1,P(4,1))});
+            w.Step(1);
+            Assert.That(w.Colonists[0].LifeTargetId,Is.EqualTo(102));
+            w.Step(14);
+            Assert.That(w.Colonists[0].Position,Is.EqualTo(P(4,1)));
+        }
+
+        [Test]
         public void FoodChoiceUsesReachablePathLengthAndDetourDelaysConsumption()
         {
             var wall = Enumerable.Range(0, 4).Select(y => P(2, y)).ToArray();
@@ -444,15 +455,15 @@ namespace RimworldTweak.Tests.EditMode
         public void DraftedBedApproacherReleasesToFloorSleeperAboveStartThreshold()
         {
             var w = World(new[] { new ColonistSeed(1, P(0, 0), 9000, 2005), new ColonistSeed(2, P(1, 1), 9000, 2005) }, Array.Empty<ResourceSeed>(), new[] { new BedSeed(201, P(7, 7)) });
-            w.Step(61); var a = w.Colonists[0]; var b = w.Colonists[1]; var bed = w.Beds[0];
-            Assert.That(a.LifeActivity, Is.EqualTo(LifeActivity.GoingToBed)); Assert.That(b.Rest, Is.EqualTo(3500));
+            w.Step(41); var a = w.Colonists[0]; var b = w.Colonists[1]; var bed = w.Beds[0];
+            Assert.That(a.LifeActivity, Is.EqualTo(LifeActivity.GoingToBed)); Assert.That(b.Rest, Is.EqualTo(3000));
             Assert.That(b.LifeActivity, Is.EqualTo(LifeActivity.SleepingOnFloor));
             var tick = w.Tick; w.ToggleDraft(1);
             Assert.That(w.Tick, Is.EqualTo(tick)); Assert.That(bed.OwnerId, Is.Null); Assert.That(a.HasSleepIntent, Is.False);
             Assert.That(a.Path.Count, Is.Zero); Assert.That(a.HasPendingCommand, Is.False);
             w.Step(1); Assert.That(bed.OwnerId, Is.EqualTo(2)); Assert.That(bed.IsOccupied, Is.False);
-            Assert.That(b.LifeActivity, Is.EqualTo(LifeActivity.GoingToBed)); Assert.That(b.Rest, Is.EqualTo(3525));
-            w.Step(9); Assert.That(b.Rest, Is.EqualTo(3480)); Assert.That(b.SleepsCompleted, Is.Zero);
+            Assert.That(b.LifeActivity, Is.EqualTo(LifeActivity.GoingToBed)); Assert.That(b.Rest, Is.EqualTo(3025));
+            w.Step(9); Assert.That(b.Rest, Is.EqualTo(2980)); Assert.That(b.SleepsCompleted, Is.Zero);
             Until(w, () => b.SleepsCompleted == 1, 230);
             Assert.That(b.HasSleepIntent, Is.False); Assert.That(bed.OwnerId, Is.Null);
             Assert.That(a.IsDrafted, Is.True);

@@ -135,14 +135,17 @@ namespace RimworldTweak.Simulation
             foreach(var d in Directions)
             {
                 var p=new GridPosition(site.X+d.X,site.Y+d.Y); var path=FindPath(start,p);
-                if(path!=null && (best==null || path.Count<best.Count)) { best=path; cell=p; }
+                if(path!=null && (best==null || Walking.RouteCost(start, path)<Walking.RouteCost(start, best))) { best=path; cell=p; }
             }
             return best;
         }
+        private WorkReasonCode BlueprintOwnerReason(BlueprintState site) =>
+            site.DeliveredWood >= site.Cost && !Clearance(site) ? WorkReasonCode.AwaitingClearance : WorkReasonCode.TargetReserved;
+
         private bool Clearance(BlueprintState b)
         {
+            if (IsOccupied(b.Position)) return false;
             if(!ConstructionRules.BlocksMovement(b.Kind)) return true;
-            foreach(var pawn in Colonists) if(pawn.Position==b.Position) return false;
             foreach(var r in Resources) if(r.Exists && r.Amount>0 && r.Position==b.Position) return false;
             return true;
         }
@@ -152,7 +155,7 @@ namespace RimworldTweak.Simulation
             foreach(var b in blueprints) if(b.Exists)
             {
                 b.Reason=WorkReasonCode.None;
-                if(b.OwnerId.HasValue) { b.Reason=WorkReasonCode.TargetReserved; continue; }
+                if(b.OwnerId.HasValue) { b.Reason=BlueprintOwnerReason(b); continue; }
                 var approach=ApproachSite(pawn.Position,b.Position,out var cell);
                 if(approach==null) { b.Reason=WorkReasonCode.Unreachable; continue; }
                 if(b.DeliveredWood>=b.Cost)
@@ -167,7 +170,7 @@ namespace RimworldTweak.Simulation
                     if(!r.Exists||r.Kind!=ResourceKind.Wood||r.Amount<=0||r.OwnerId.HasValue||r.CreatedTick>=Tick) continue;
                     var path=FindPath(pawn.Position,r.Position); if(path==null) continue;
                     if(ApproachSite(r.Position,b.Position,out _) == null) continue;
-                    if(best==null||path.Count<route.Count||path.Count==route.Count&&r.Id<best.Id) { best=r; route=path; }
+                    if(best==null||Walking.RouteCost(pawn.Position, path)<Walking.RouteCost(pawn.Position, route)||Walking.RouteCost(pawn.Position, path)==Walking.RouteCost(pawn.Position, route)&&r.Id<best.Id) { best=r; route=path; }
                 }
                 if(best==null) { b.Reason=WorkReasonCode.MissingMaterials; continue; }
                 options.Add(new FeatureWorkOption(new WorkCandidate(context,WorkCategory.Build,WorkStep.DeliverBuild,b.Id,best.Id,best.Position,b.RequestOrder,route),WorkReasonCode.None));
@@ -187,9 +190,9 @@ namespace RimworldTweak.Simulation
                 var zone=GrowingZone(c.ZoneId);
                 if(c.Stage==CropStage.Growing) continue;
                 if(c.Stage==CropStage.Empty&&!zone.SowingEnabled) {c.Reason=WorkReasonCode.Disabled;continue;}
-                var distance=FindPathLength(pawn.Position,c.Position); if(distance<0) {c.Reason=WorkReasonCode.Unreachable;continue;}
+                var distance=FindPathCost(pawn.Position,c.Position,out var steps); if(distance<0) {c.Reason=WorkReasonCode.Unreachable;continue;}
                 var step=c.Stage==CropStage.Empty?WorkStep.Sow:WorkStep.Harvest;
-                options.Add(new FeatureWorkOption(new WorkCandidate(context,WorkCategory.Farm,step,c.Id,null,c.Position,c.RequestOrder,distance),WorkReasonCode.None));
+                options.Add(new FeatureWorkOption(new WorkCandidate(context,WorkCategory.Farm,step,c.Id,null,c.Position,c.RequestOrder,steps,distance),WorkReasonCode.None));
             }
             PrepareCookingOptions(context,pawn,options);
             context.SetFeatureInputs(options);
@@ -220,7 +223,7 @@ namespace RimworldTweak.Simulation
                     if(c==null||c.Stage!=(candidate.Step==WorkStep.Sow?CropStage.Empty:CropStage.Mature)||candidate.Step==WorkStep.Sow&&!GrowingZone(c.ZoneId).SowingEnabled) return false;
                     // The caller already verified the candidate's tick, origin and terrain revision.
                     route = ReadPath(pawn.Position,candidate.WorkCell);
-                    if(route==null || route.Count!=candidate.PathLength) return false;
+                    if(route==null || Walking.RouteCost(pawn.Position, route)!=candidate.PathCost) return false;
                     claim=c.Claim;
                 }
                 else return false;
@@ -341,6 +344,7 @@ namespace RimworldTweak.Simulation
             if(blocked) {if(blockedSet.Add(position)) blockedTiles.Add(position);}
             else {blockedSet.Remove(position);blockedTiles.Remove(position);}
             MapRevision++; availabilityRevision++;
+            RefreshRaiderSteps();
             foreach(var pawn in Colonists) if((pawn.Status==MovementStatus.Moving||pawn.Status==MovementStatus.Blocked)&&pawn.Destination.HasValue)
                 pawn.SetRoute(pawn.Destination.Value,FindPath(pawn.Position,pawn.Destination.Value));
         }

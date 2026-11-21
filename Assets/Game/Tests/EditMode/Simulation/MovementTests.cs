@@ -38,6 +38,97 @@ namespace RimworldTweak.Tests.EditMode
         }
 
         [Test]
+        public void WeightedPathsMatchIndependentRelaxationAcrossBothMapSizes()
+        {
+            const int height = 8;
+            var wall = Enumerable.Range(0,height).Where(y => y != 5).Select(y=>P(17,y)).ToArray();
+            var blocked = new HashSet<GridPosition>(wall);
+            const int width = 39;
+            var costs = new int[width,height];
+            for (int x = 0; x < width; x++)
+                for (int y = 0; y < height; y++) costs[x,y] = 100000;
+            costs[0,0] = 0;
+            // Independent reference uses repeated full-grid relaxation, with no priority queue or parents.
+            bool changed;
+            do
+            {
+                changed = false;
+                for (int x = 0; x < width; x++)
+                for (int y = 0; y < height; y++)
+                for (int dx = -1; dx <= 1; dx++)
+                for (int dy = -1; dy <= 1; dy++)
+                {
+                    int nx=x+dx, ny=y+dy;
+                    if (nx<0 || nx>=width || ny<0 || ny>=height || blocked.Contains(P(nx,ny))) continue;
+                    if (dx!=0 && dy!=0 && (blocked.Contains(P(nx,y)) || blocked.Contains(P(x,ny)))) continue;
+                    int cost=costs[x,y]+(dx!=0 && dy!=0 ? 7 : 5);
+                    if (cost >= costs[nx,ny]) continue;
+                    costs[nx,ny]=cost;
+                    changed=true;
+                }
+            } while(changed);
+            WorldState CreateMap(int size) => WorldState.Create(new ScenarioDefinition(size,height,wall,
+                new[]{new ColonistSeed(1,P(0,0))},Array.Empty<ResourceSeed>()));
+            var dense=CreateMap(250); var sparse=CreateMap(251);
+            var goals = new[]{P(36,7),P(12,2),P(15,4),P(23,0),P(34,1)};
+            foreach (var goal in goals.Concat(goals.Reverse()))
+            {
+                var route=dense.FindPath(P(0,0),goal);
+                Assert.That(sparse.FindPath(P(0,0),goal),Is.EqualTo(route));
+                Assert.That(CreateMap(250).FindPath(P(0,0),goal),Is.EqualTo(route));
+                var previous=P(0,0);
+                var cost=0;
+                foreach (var cell in route)
+                {
+                    int dx=Math.Abs(cell.X-previous.X), dy=Math.Abs(cell.Y-previous.Y);
+                    Assert.That(Math.Max(dx,dy),Is.EqualTo(1));
+                    Assert.That(blocked.Contains(cell),Is.False);
+                    if (dx*dy!=0)
+                    {
+                        Assert.That(blocked.Contains(P(cell.X,previous.Y)),Is.False);
+                        Assert.That(blocked.Contains(P(previous.X,cell.Y)),Is.False);
+                    }
+                    cost+=dx*dy==0?5:7; previous=cell;
+                }
+                Assert.That(previous,Is.EqualTo(goal));
+                Assert.That(cost,Is.EqualTo(costs[goal.X,goal.Y]));
+            }
+        }
+
+        [Test]
+        public void DiagonalTimingCornerClearanceAndRestore()
+        {
+            foreach (bool starving in new[] { false, true })
+            {
+                var scenario = new ScenarioDefinition(5, 5, Array.Empty<GridPosition>(),
+                    new[] { new ColonistSeed(1, P(0,0), starving ? 0 : 9000, 9000) },
+                    Array.Empty<ResourceSeed>(), null, true);
+                var session = new SimulationSession(scenario);
+                var world = session.World;
+                Assert.That(Move(world, 1, P(3,3)), Is.True);
+                int elapsed = starving ? 9 : 4;
+                session.Step(elapsed);
+                Assert.That(world.Colonists[0].MovementTicksPerTile, Is.EqualTo(starving ? 14 : 7));
+                var data = session.CaptureSaveData().Data;
+                Assert.That(SimulationSession.TryRestoreSave(data, out var restored, out var error), Is.True, error);
+                for (var tick = elapsed; tick < (starving ? 42 : 21); tick++)
+                {
+                    Assert.That(world.Colonists[0].Position, Is.Not.EqualTo(P(3,3)));
+                    session.Step(1); restored.Step(1);
+                    SameState(world, restored.World);
+                }
+                Assert.That(world.Colonists[0].Position, Is.EqualTo(P(3,3)));
+                data.World.Colonists[0].MovementTicksPerTile = 5;
+                Assert.That(SimulationSession.TryRestoreSave(data, out _, out _), Is.False);
+            }
+            var corner = WorldState.Create(new ScenarioDefinition(2,2,new[]{P(1,0)},
+                new[]{new ColonistSeed(1,P(0,0))}, Array.Empty<ResourceSeed>()));
+            Assert.That(corner.FindPath(P(0,0),P(1,1)), Is.EqualTo(new[]{P(0,1),P(1,1)}));
+            corner.QueueSetBlocked(P(0,1),true); corner.Step(1);
+            Assert.That(corner.FindPath(P(0,0),P(1,1)), Is.Null);
+        }
+
+        [Test]
         public void StraightMovementArrivesAtTwentyTicksAndLeavesResourcesUnchanged()
         {
             var w = World(); var c = w.Colonists[0];
@@ -63,11 +154,11 @@ namespace RimworldTweak.Tests.EditMode
         public void DetourIsShortestDeterministicAndNeverEntersBlockedTile()
         {
             var w = World(new[] { P(3, 1) });
-            var expected = new[] { P(2, 1), P(2, 2), P(3, 2), P(4, 2), P(5, 2), P(5, 1) };
+            var expected = new[] { P(2, 2), P(3, 2), P(4, 2), P(5, 1) };
             Assert.That(w.FindPath(P(1, 1), P(5, 1)), Is.EqualTo(expected));
             Assert.That(w.FindPath(P(1, 1), P(5, 1)), Is.EqualTo(expected));
             Move(w, 1, P(5, 1));
-            for (var i = 0; i < 29; i++) { w.Step(1); Assert.That(w.Colonists[0].Position, Is.Not.EqualTo(P(3, 1))); }
+            for (var i = 0; i < 23; i++) { w.Step(1); Assert.That(w.Colonists[0].Position, Is.Not.EqualTo(P(3, 1))); }
             Assert.That(w.Colonists[0].Position, Is.Not.EqualTo(P(5, 1)));
             w.Step(1); Assert.That(w.Colonists[0].Position, Is.EqualTo(P(5, 1)));
         }

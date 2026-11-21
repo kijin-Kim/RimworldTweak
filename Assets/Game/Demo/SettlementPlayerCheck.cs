@@ -416,6 +416,11 @@ namespace RimworldTweak.Demo
                     if(finished)yield break;
                 }
             }
+            else if (mode == "diagonal-site" || mode == "diagonal-resume")
+            {
+                yield return CheckDiagonalConstruction(mode == "diagonal-resume");
+                if (finished) yield break;
+            }
             else if(mode=="work-feedback")
             {
                 if(!Check(()=>shell.Buttons["new"].onClick.Invoke()))yield break;

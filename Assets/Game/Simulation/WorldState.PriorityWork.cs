@@ -121,7 +121,7 @@ namespace RimworldTweak.Simulation
                 available = true;
                 var path = ReadPath(pawn.Position, item.Position);
                 if (path == null || ReadApproachPath(item.Position, destination) == null) continue;
-                if (best != null && (path.Count > route.Count || path.Count == route.Count && item.Id > best.Id)) continue;
+                if (best != null && (Walking.RouteCost(pawn.Position, path) > Walking.RouteCost(pawn.Position, route) || Walking.RouteCost(pawn.Position, path) == Walking.RouteCost(pawn.Position, route) && item.Id > best.Id)) continue;
                 best = item;
                 route = path;
             }

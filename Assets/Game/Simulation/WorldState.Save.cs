@@ -25,7 +25,7 @@ namespace RimworldTweak.Simulation
                 ConstructionConsumedWood=ConstructionConsumedWood,DemolitionReturnedWood=DemolitionReturnedWood,CookingConsumedIngredients=CookingConsumedIngredients,CookingProducedMeals=CookingProducedMeals
             };
         }
-        internal static WorldState RestoreSave(WorldSaveData d)
+        internal static WorldState RestoreSave(WorldSaveData d, int schemaVersion)
         {
             var pawns=d.Colonists.Select(ColonistState.RestoreSave).OrderBy(x=>x.Id).ToList();
             var resources=d.Resources.Select(ResourceState.RestoreSave).ToList();
@@ -63,7 +63,7 @@ namespace RimworldTweak.Simulation
                 w.cookingOutputs.Add(output);
             }
             foreach(var x in d.WorkPolicies)foreach(var p in x.Priorities)w.PolicyFor(x.PawnId).SetPriority(SaveState.Enum<WorkCategory>(p.Category),p.Priority);
-            w.RestoreRaid(d.Raid);
+            w.RestoreRaid(d.Raid, schemaVersion);
             w.RestoreEquipment(d.Equipment);
             w.RestorePriorityWork(d.PriorityWork);
             w.RestoreRescues(d.Rescues);
@@ -72,7 +72,7 @@ namespace RimworldTweak.Simulation
                 var orders=(w.HasEquipOrder(pawn.Id)?1:0)+(w.PriorityWorkTarget(pawn.Id).HasValue?1:0)+(w.HasRescueCommand(pawn.Id)?1:0);
                 RequireSave(orders<=1);
             }
-            w.ValidateRestoredActions();
+            w.ValidateRestoredActions(schemaVersion);
             return w;
         }
         internal void ValidateSaveLedger(ScenarioDefinition original)
@@ -177,7 +177,7 @@ namespace RimworldTweak.Simulation
         }
         private static void RequireSave(bool condition) {if(!condition)throw new ArgumentException("SaveInvalidData");}
         // Validate authorities once per physical claim, allowing slot/stack and stove/order aliases.
-        private void ValidateRestoredActions()
+        private void ValidateRestoredActions(int schemaVersion)
         {
             ValidateSaveStructure();
             var claims=new Dictionary<InteractionClaim,int>();
@@ -246,14 +246,17 @@ namespace RimworldTweak.Simulation
                 {
                     RequireSave(pawn.Destination.HasValue&&pawn.Path.Count>0);
                     var position=pawn.Position;var valid=true;
-                    foreach(var cell in pawn.Path){if(Math.Abs(cell.X-position.X)+Math.Abs(cell.Y-position.Y)!=1||!InBounds(cell)||blockedSet.Contains(cell))valid=false;position=cell;}
+                    foreach (var cell in pawn.Path)
+                    {
+                        if (!CanWalkStep(position, cell) || (schemaVersion == 2 && TileDistance(position, cell) != 1)) valid = false;
+                        position = cell;
+                    }
                     valid &= position==pawn.Destination.Value;
-                    var route=ReadPath(pawn.Position,pawn.Destination.Value);
-                    if(!valid||route==null||route.Count==0||route[0]!=pawn.Path[0])
+                    if(!valid)
                     {
                         // Only this detached candidate is changed. A valid saved next cell retains sub-tile progress.
                         if(pawn.IsWorking||pawn.IsLifeBusy){EndLife(pawn);pawn.WorkReason="RestoreInvalid";}
-                        else pawn.SetRoute(pawn.Destination.Value,route);
+                        else pawn.SetRoute(pawn.Destination.Value,ReadPath(pawn.Position,pawn.Destination.Value));
                     }
                 }
             }

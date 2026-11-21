@@ -68,7 +68,7 @@ namespace RimworldTweak.Simulation
                 if (aCare != bCare) return aCare ? -1 : 1;
                 if (aCare) result = a.RequestOrder.CompareTo(b.RequestOrder);
             }
-            if (result == 0) result = a.PathLength.CompareTo(b.PathLength);
+            if (result == 0) result = a.PathCost.CompareTo(b.PathCost);
             if (result == 0) result = a.RequestOrder.CompareTo(b.RequestOrder);
             if (result == 0) result = a.TargetId.CompareTo(b.TargetId);
             if (result == 0) result = a.Step.CompareTo(b.Step);

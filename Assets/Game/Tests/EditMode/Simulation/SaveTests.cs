@@ -29,6 +29,39 @@ namespace RimworldTweak.Tests.EditMode
             var root=Path.GetFullPath(Path.Combine(UnityEngine.Application.dataPath,"..","TestResults","SaveFileTests"))+Path.DirectorySeparatorChar;
             if(directory!=null&&directory.StartsWith(root,StringComparison.OrdinalIgnoreCase)&&Directory.Exists(directory))Directory.Delete(directory,true);
         }
+        [Test] public void FrozenFourWayWalksKeepCargoAndRaidersAcrossImmediateResave()
+        {
+            foreach (string name in new[] { "haul", "legacy-rules3", "legacy-rules4" })
+            {
+                var fixture = Path.Combine(UnityEngine.Application.dataPath, "..", "Tools", "TestFixtures", "MovementV2", name+".json");
+                var input = File.ReadAllBytes(fixture);
+                var data = files.Load(fixture).Data;
+                Assert.That(data.SchemaVersion, Is.EqualTo(2));
+                Assert.That(SimulationSession.TryRestoreSave(data,out var loaded,out var error), Is.True, error);
+                var p = loaded.World.Colonists[0];
+                var cells = p.Path.ToArray();
+                Assert.That(p.MovementProgress, Is.EqualTo(4));
+                if (name == "haul")
+                {
+                    Assert.That(p.CargoAmount, Is.EqualTo(10));
+                    Assert.That(loaded.World.FindPath(p.Position,p.Destination.Value)[0], Is.Not.EqualTo(cells[0]));
+                }
+                var upgraded = loaded.CaptureSaveData().Data;
+                Assert.That(upgraded.SchemaVersion, Is.EqualTo(3));
+                var repository = new SaveRepository(directory);
+                var slot = repository.SaveNew(name, upgraded);
+                Assert.That(slot.Success, Is.True, slot.ErrorCode);
+                Assert.That(SimulationSession.TryRestoreSave(repository.Load(slot.Slot.SlotId).Data,out var roundTrip,out error), Is.True, error);
+                Assert.That(roundTrip.World.Colonists[0].Path, Is.EqualTo(cells));
+                roundTrip.Step(1);
+                Assert.That(roundTrip.World.Colonists[0].Position, Is.EqualTo(cells[0]));
+                if (name == "haul") Assert.That(roundTrip.World.Colonists[0].CargoAmount, Is.EqualTo(10));
+                foreach (var enemy in roundTrip.World.Raiders)
+                    Assert.That(enemy.Position, Is.EqualTo(data.World.Raid.Raiders.Single(r=>r.Id==enemy.Id).NextCell.ToPosition()));
+                CollectionAssert.AreEqual(input,File.ReadAllBytes(fixture));
+            }
+        }
+
         [Test] public void JsonRoundTripKeepsExactLongDecimalAndStringEnums()
         {
             var data=Data();data.World.Tick=9007199254740993L;
@@ -85,15 +118,15 @@ namespace RimworldTweak.Tests.EditMode
             var start = P(0,0);
             var goal = P(249,249);
             var original = world.FindPath(start,goal);
-            Assert.That(original.Count, Is.EqualTo(498));
-            Assert.That(world.FindPath(start,P(248,249)).Count, Is.EqualTo(497));
+            Assert.That(original.Count, Is.EqualTo(251));
+            Assert.That(world.FindPath(start,P(248,249)).Count, Is.EqualTo(250));
             Assert.That(world.QueueSetBlocked(P(248,249),true), Is.True);
             Assert.That(world.QueueSetBlocked(P(249,248),true), Is.True);
             session.Step(1);
             Assert.That(world.FindPath(start,goal), Is.Null);
             Assert.That(world.QueueSetBlocked(P(248,249),false), Is.True);
             session.Step(1);
-            Assert.That(world.FindPath(start,goal).Count, Is.EqualTo(498));
+            Assert.That(world.FindPath(start,goal).Count, Is.EqualTo(251));
             Assert.That(original.Last(), Is.EqualTo(goal));
             Assert.That(world.QueueCreateStorage(P(31,29),P(0,0)), Is.True);
             Assert.That(world.CanCreateGrowingZone(P(33,33),P(31,29)), Is.False);
@@ -136,7 +169,7 @@ namespace RimworldTweak.Tests.EditMode
         [Test] public void CorruptTrailingAndOversizeFilesAreRejectedWithoutMutation()
         {
             Assert.That(files.Save(path,Data()).Success,Is.True);var valid=File.ReadAllText(path);
-            foreach(var bad in new[]{"{broken",valid+"{}",valid.Replace("\"schemaVersion\":2,","")})
+            foreach(var bad in new[]{"{broken",valid+"{}",valid.Replace("\"schemaVersion\":3,","")})
             {
                 File.WriteAllText(path,bad);var result=files.Load(path);Assert.That(result.Success,Is.False,"Malformed JSON suffix: "+bad.Substring(Math.Max(0,bad.Length-80)));
                 Assert.That(result.ErrorCode,Is.EqualTo("SaveInvalidData"));Assert.That(File.ReadAllText(path),Is.EqualTo(bad));
@@ -147,7 +180,7 @@ namespace RimworldTweak.Tests.EditMode
         [Test] public void UnsupportedVersionAndNumericEnumAreRejected()
         {
             var data=Data();Assert.That(files.Save(path,data).Success,Is.True);var valid=File.ReadAllText(path);
-            File.WriteAllText(path,valid.Replace("\"schemaVersion\":2","\"schemaVersion\":99"));
+            File.WriteAllText(path,valid.Replace("\"schemaVersion\":3","\"schemaVersion\":99"));
             Assert.That(files.Load(path).ErrorCode,Is.EqualTo("SaveUnsupportedVersion"));
             data.World.Resources[0].Kind="0";Assert.That(SaveValidation.Validate(data).IsValid,Is.False);
         }

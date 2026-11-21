@@ -42,7 +42,7 @@ namespace RimworldTweak.Simulation
             if(category==WorkCategory.Build)
             {
                 foreach(var b in blueprints)if(b.Exists&&(!targetId.HasValue||b.Id==targetId))
-                    reasons.Add(b.OwnerId.HasValue?WorkReasonCode.TargetReserved:!AnyWorkerReaches(category,b.Position,true)?WorkReasonCode.Unreachable:
+                    reasons.Add(b.OwnerId.HasValue?BlueprintOwnerReason(b):!AnyWorkerReaches(category,b.Position,true)?WorkReasonCode.Unreachable:
                         b.DeliveredWood>=b.Cost?(Clearance(b)?WorkReasonCode.None:WorkReasonCode.AwaitingClearance):MaterialDiagnostic(category,ResourceKind.Wood,b.Position,true));
                 foreach(var b in buildings)if(b.Exists&&b.DemolitionDesignated&&(!targetId.HasValue||b.Id==targetId))
                     reasons.Add(b.OwnerId.HasValue?WorkReasonCode.TargetReserved:AnyWorkerReaches(category,b.Position,true)?WorkReasonCode.None:WorkReasonCode.Unreachable);
@@ -161,7 +161,7 @@ namespace RimworldTweak.Simulation
             CollectRecoveryCandidates(context, pawn, candidates);
             if (priorityOrders.Count > 0) candidates.RemoveAll(c => PriorityTargetHeldByOther(pawn.Id, c.TargetId));
             candidates.Sort((a, b) => {
-                var result = a.PathLength.CompareTo(b.PathLength);
+                var result = a.PathCost.CompareTo(b.PathCost);
                 if (result == 0) result = a.RequestOrder.CompareTo(b.RequestOrder);
                 return result != 0 ? result : a.TargetId.CompareTo(b.TargetId);
             });

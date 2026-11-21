@@ -70,7 +70,7 @@ namespace RimworldTweak.Runtime
                         {
                             if (header.LocalName == "schemaVersion" && header.GetAttribute("type") == "number")
                             {
-                                if (header.ReadElementContentAsInt() != SaveData.CurrentSchemaVersion)
+                                if (!SaveData.SupportsSchema(header.ReadElementContentAsInt()))
                                     throw new UnsupportedSaveVersionException();
                                 break;
                             }

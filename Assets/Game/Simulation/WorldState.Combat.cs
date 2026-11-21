@@ -45,6 +45,12 @@ namespace RimworldTweak.Simulation
         public AttackState Attack { get; } = new AttackState();
         internal GridPosition? NextCell { get; set; }
         internal int MoveProgress { get; set; }
+        internal bool FinishLegacyStep { get; set; }
+        // Derived path only. Positions and map version are sufficient to rebuild it after load.
+        internal long PursuitRevision { get; set; } = -1;
+        internal GridPosition PursuitStart { get; set; }
+        internal GridPosition PursuitTarget { get; set; }
+        internal IReadOnlyList<GridPosition> PursuitPath { get; set; }
         internal long RetryTick { get; set; }
         internal long RouteRevision { get; set; } = -1;
     }
@@ -147,6 +153,7 @@ namespace RimworldTweak.Simulation
             }
             if (raider.Attack.TargetId == nearest?.Id) return;
             raider.Attack.Cancel();
+            raider.FinishLegacyStep = false;
             raider.Attack.TargetId = nearest?.Id;
             raider.RetryTick = 0;
         }
@@ -266,7 +273,7 @@ namespace RimworldTweak.Simulation
             foreach (var offset in Directions)
             {
                 var path = ReadPath(start, new GridPosition(target.X + offset.X, target.Y + offset.Y));
-                if (path != null && (best == null || path.Count < best.Count)) best = path;
+                if (path != null && (best == null || Walking.RouteCost(start, path) < Walking.RouteCost(start, best))) best = path;
             }
             return best;
         }
@@ -278,7 +285,17 @@ namespace RimworldTweak.Simulation
                 var attack = raider.Attack;
                 IReadOnlyList<GridPosition> pursuit = null;
                 if (attack.TargetId is int pursuedId && colonistsById.TryGetValue(pursuedId, out var pursuedPawn) && !pursuedPawn.IsDowned)
-                    pursuit = ReadApproachPath(raider.Position, pursuedPawn.Position);
+                {
+                    if (raider.PursuitRevision != MapRevision || raider.PursuitStart != raider.Position ||
+                        raider.PursuitTarget != pursuedPawn.Position)
+                    {
+                        raider.PursuitPath = ReadApproachPath(raider.Position, pursuedPawn.Position);
+                        raider.PursuitRevision = MapRevision;
+                        raider.PursuitStart = raider.Position;
+                        raider.PursuitTarget = pursuedPawn.Position;
+                    }
+                    pursuit = raider.PursuitPath;
+                }
                 attack.BlockedReason = pursuit == null ? "Unreachable" : string.Empty;
                 if (attack.Advance(pursuit != null && pursuit.Count == 0)) AddDamage(damage, attack.TargetId.Value, 10);
                 AdvanceRaiderMove(raider, pursuit);
@@ -293,7 +310,7 @@ namespace RimworldTweak.Simulation
                 {
                     if (pawn.IsDowned) continue;
                     var approach = ReadApproachPath(raider.Position, pawn.Position);
-                    if (approach == null || (path != null && approach.Count >= path.Count)) continue;
+                    if (approach == null || (path != null && Walking.RouteCost(raider.Position, approach) >= Walking.RouteCost(raider.Position, path))) continue;
                     path = approach;
                     target = pawn.Id;
                 }
@@ -306,7 +323,7 @@ namespace RimworldTweak.Simulation
                 if (path == null) raider.RetryTick = Tick + 10;
             }
             var adjacent = path != null && path.Count == 0;
-            if (raider.Attack.TargetId != target) raider.Attack.Cancel();
+            if (raider.Attack.TargetId != target) { raider.FinishLegacyStep = false; raider.Attack.Cancel(); }
             raider.Attack.TargetId = target;
             raider.Attack.BlockedReason = path == null ? "Unreachable" : string.Empty;
             if (raider.Attack.Advance(adjacent)) AddDamage(damage, target.Value, 10);
@@ -316,19 +333,35 @@ namespace RimworldTweak.Simulation
         private static void AdvanceRaiderMove(RaiderState raider, IReadOnlyList<GridPosition> path)
         {
             GridPosition? next = path != null && path.Count > 0 ? path[0] : null;
+            if (raider.FinishLegacyStep && next.HasValue) next = raider.NextCell;
+            else raider.FinishLegacyStep = false;
             if (raider.NextCell != next) raider.MoveProgress = 0;
             raider.NextCell = next;
-            if (!next.HasValue || ++raider.MoveProgress < 5) return;
+            if (!next.HasValue || ++raider.MoveProgress < Walking.StepCost(raider.Position, next.Value)) return;
+            raider.FinishLegacyStep = false;
             raider.Position = next.Value;
             raider.NextCell = null;
             raider.MoveProgress = 0;
+        }
+
+        private void RefreshRaiderSteps()
+        {
+            foreach (var raider in raiders)
+            {
+                raider.FinishLegacyStep = false;
+                if (raider.NextCell.HasValue && !CanWalkStep(raider.Position, raider.NextCell.Value))
+                {
+                    raider.NextCell = null;
+                    raider.MoveProgress = 0;
+                }
+            }
         }
 
         private void EndRaid(RaidOutcome outcome, bool retreat)
         {
             RaidOutcome = outcome;
             foreach (var pawn in Colonists) pawn.Attack.Cancel();
-            foreach (var raider in raiders) raider.Attack.Cancel();
+            foreach (var raider in raiders) { raider.FinishLegacyStep = false; raider.Attack.Cancel(); }
             RaidPhase = retreat && raiders.Count > 0 ? RaidPhase.Retreating : RaidPhase.Resolved;
             RaidRemaining = RaidPhase == RaidPhase.Retreating ? RaidRetreatTicks : 0;
             if (RaidPhase == RaidPhase.Resolved) raiders.Clear();
@@ -340,7 +373,7 @@ namespace RimworldTweak.Simulation
             {
                 var first = ReadPath(raider.Position, RaidEntrance(0));
                 var second = ReadPath(raider.Position, RaidEntrance(1));
-                AdvanceRaiderMove(raider, first == null || (second != null && second.Count < first.Count) ? second : first);
+                AdvanceRaiderMove(raider, first == null || (second != null && Walking.RouteCost(raider.Position, second) < Walking.RouteCost(raider.Position, first)) ? second : first);
             }
             raiders.RemoveAll(raider => raider.Position == RaidEntrance(0) || raider.Position == RaidEntrance(1));
             if (--RaidRemaining > 0 && raiders.Count > 0) return;

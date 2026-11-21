@@ -63,9 +63,11 @@ namespace RimworldTweak.Simulation
                 if (!bed.Exists || bed.IsOccupied || (bed.OwnerId.HasValue && bed.Id != previous?.BedId)) continue;
                 available = true;
                 var route = ReadPath(patient.Position, bed.Position);
-                if (route == null || route.Count > distance ||
-                    (route.Count == distance && selected != null && bed.Id >= selected.Id)) continue;
-                distance = route.Count;
+                if (route == null) continue;
+                var cost = Walking.RouteCost(patient.Position, route);
+                if (cost > distance ||
+                    (cost == distance && selected != null && bed.Id >= selected.Id)) continue;
+                distance = cost;
                 selected = bed;
             }
             return selected != null ? string.Empty : available ? "Unreachable" : "NoRescueBed";

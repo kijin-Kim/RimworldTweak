@@ -28,6 +28,37 @@ namespace RimworldTweak.Tests.PlayMode
         private static GridPosition P(int x,int y)=>new GridPosition(x,y);
 
         [UnityTest]
+        public IEnumerator DiagonalScreenPositionSurvivesPauseSpeedChangeSelectionAndReload()
+        {
+            Setup();
+            runner.Initialize(new ScenarioDefinition(12,12,Array.Empty<GridPosition>(),
+                new[]{new ColonistSeed(1,P(3,3))},Array.Empty<ResourceSeed>()));
+            runner.SetPaused(true);
+            yield return null;
+            runner.Session.World.SetDrafted(1,true);
+            Assert.That(runner.MoveColonist(1,P(6,6)),Is.True);
+            runner.SetSpeed(1);
+            runner.AdvanceTime(.4m);
+            runner.SetPaused(true);
+            shell.SendMessage("LateUpdate");
+            Vector3 Foot() => shell.Map.transform.Find("World map content/pawn.1").position;
+            Vector3 paused=Foot();
+            Assert.That(paused.x,Is.EqualTo(3.5f+4f/7).Within(.001f));
+            Assert.That(paused.y,Is.EqualTo(paused.x).Within(.001f));
+            shell.HandleMapClick(P(4,4),false);
+            Assert.That(shell.SelectedPawnId,Is.EqualTo(1));
+            runner.AdvanceTime(.5m);
+            Assert.That(runner.SaveSlot("Diagonal"),Is.True,runner.SaveMessage);
+            Assert.That(runner.LoadSlot(runner.ActiveSlotId),Is.True,runner.SaveMessage);
+            shell.SendMessage("LateUpdate");
+            yield return null; // The old world markers are destroyed at the frame boundary.
+            Assert.That(Vector3.Distance(paused,Foot()),Is.LessThan(.001f));
+            runner.SetSpeed(3); runner.AdvanceTime(.1m); shell.SendMessage("LateUpdate");
+            Assert.That(runner.Session.World.Colonists[0].Position,Is.EqualTo(P(4,4)));
+            Assert.That(Foot().x,Is.EqualTo(4.5f).Within(.001f));
+        }
+
+        [UnityTest]
         public IEnumerator PawnMovesBetweenSimulationTicksAndFreezesAtItsRenderedPosition()
         {
             Setup();

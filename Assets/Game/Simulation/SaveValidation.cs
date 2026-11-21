@@ -19,7 +19,7 @@ namespace RimworldTweak.Simulation
         public static SaveValidationResult Validate(SaveData data)
         {
             if(data==null)return new SaveValidationResult(false,"SaveInvalidData","data");
-            if(data.SchemaVersion!=SaveData.CurrentSchemaVersion||data.ScenarioVersion!=1||(data.RulesVersion!=2&&data.RulesVersion!=3&&data.RulesVersion!=4)||data.ContractVersion!="settlement-raid-v1")
+            if(!SaveData.SupportsSchema(data.SchemaVersion)||data.ScenarioVersion!=1||(data.RulesVersion!=2&&data.RulesVersion!=3&&data.RulesVersion!=4)||data.ContractVersion!="settlement-raid-v1")
                 return new SaveValidationResult(false,"SaveUnsupportedVersion","header");
             try { ValidateCore(data); return new SaveValidationResult(true); }
             catch(InvalidSave e){return new SaveValidationResult(false,"SaveInvalidData",e.Path);}
@@ -71,7 +71,14 @@ namespace RimworldTweak.Simulation
                 Check(Defined<MovementStatus>(p.Status)&&Defined<WorkActivity>(p.WorkActivity)&&Defined<LifeActivity>(p.LifeActivity)&&Defined<ResourceKind>(p.CargoKind),"Colonist.Enum");
                 Check(p.FeatureStep==null||Defined<WorkStep>(p.FeatureStep),"Colonist.FeatureStep");
                 Check(p.Nutrition>=0&&p.Nutrition<=10000&&p.Rest>=0&&p.Rest<=10000,"Colonist.Needs");
-                Check(p.MovementTicksPerTile==5||p.MovementTicksPerTile==10,"Colonist.MovementTicksPerTile");
+                bool diagonal = d.SchemaVersion >= 3 && p.Path.Count > 0 && p.Path[0].X != p.Position.X && p.Path[0].Y != p.Position.Y;
+                bool straightTime = p.MovementTicksPerTile == 5 || p.MovementTicksPerTile == 10;
+                bool diagonalTime = p.MovementTicksPerTile == 7 || p.MovementTicksPerTile == 14;
+                // Between steps the duration belongs to the previous cell; the next step locks its own time.
+                bool adjacent = p.Path.Count > 0 && Math.Abs(p.Path[0].X - p.Position.X) <= 1 &&
+                    Math.Abs(p.Path[0].Y - p.Position.Y) <= 1 && (p.Path[0].X != p.Position.X || p.Path[0].Y != p.Position.Y);
+                Check(p.MovementProgress == 0 || !adjacent ? straightTime || (d.SchemaVersion >= 3 && diagonalTime) :
+                    (diagonal ? diagonalTime : straightTime), "Colonist.MovementTicksPerTile");
                 Check(p.MovementProgress>=0&&p.MovementProgress<p.MovementTicksPerTile&&p.CargoAmount>=0&&p.CargoAmount<=10,"Colonist.ProgressCargo");
                 Check(p.ActionId>=0&&p.ActionProgress>=0&&p.ActionDuration>=0&&p.MealsEaten>=0&&p.RawMealsEaten>=0&&p.SleepsCompleted>=0&&p.StarvationTicks>=0,"Colonist.Counters");
                 Check(p.WorkReadyTick>=0&&p.NextWorkSearchTick>=0&&p.NextBedSearchTick>=0&&p.NextFoodSearchTick>=0&&p.LastWorkRevision>=-1&&p.LastBedRevision>=-1&&p.LastFoodRevision>=-1,"Colonist.Retry");

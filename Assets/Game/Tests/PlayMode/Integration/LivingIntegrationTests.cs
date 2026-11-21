@@ -265,7 +265,7 @@ namespace RimworldTweak.Tests.PlayMode
             view.DraftButton.onClick.Invoke();
             Assert.That(view.ReservationText.text, Does.Contain("MEALS 18 / 0 / 18").And.Contain("FOOD 101 FREE"));
             var bedRunner = Runner(new ScenarioDefinition(8, 8, Array.Empty<GridPosition>(), new[] { new ColonistSeed(1, P(0, 0), 9000, 2005), new ColonistSeed(2, P(1, 1), 9000, 2005) }, Array.Empty<ResourceSeed>(), new[] { new BedSeed(201, P(7, 7)) }, true));
-            var bedView = View(bedRunner); bedRunner.Session.Step(61); bedView.SelectColonist(1);
+            var bedView = View(bedRunner); bedRunner.Session.Step(41); bedView.SelectColonist(1);
             Assert.That(bedView.ReservationText.text, Does.Contain("BED 201  APPROACH C1"));
             bedView.DraftButton.onClick.Invoke(); Assert.That(bedView.ReservationText.text, Does.Contain("FREE"));
             bedRunner.StepOnce(); bedView.SelectColonist(2);

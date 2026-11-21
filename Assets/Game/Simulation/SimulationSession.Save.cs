@@ -38,7 +38,7 @@ namespace RimworldTweak.Simulation
                     s.Beds.Select(x=>new BedSeed(x.Id,x.Position.ToPosition())),s.NeedsEnabled,
                     s.Gatherables.Select(x=>new GatherSeed(x.Id,SaveState.Enum<GatherKind>(x.Kind),x.Position.ToPosition())),s.InitialRaidStove?.ToPosition(),s.StartWithWeapons);
                 var candidate=new SimulationSession(scenario);
-                candidate.World=WorldState.RestoreSave(data.World);candidate.World.ValidateInitialRaidStove(scenario);candidate.World.ValidateSaveLedger(scenario);candidate.ResetCount=data.Session.ResetCount;
+                candidate.World=WorldState.RestoreSave(data.World, data.SchemaVersion);candidate.World.ValidateInitialRaidStove(scenario);candidate.World.ValidateSaveLedger(scenario);candidate.ResetCount=data.Session.ResetCount;
                 candidate.PendingSeconds=decimal.Parse(data.Session.PendingSeconds,CultureInfo.InvariantCulture);
                 restored=candidate;error=string.Empty;return true;
             }
